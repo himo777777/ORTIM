@@ -72,7 +72,7 @@ export class InstructorService {
 
     const totalParticipants = cohort.enrollments.length;
     const completedParticipants = cohort.enrollments.filter(
-      e => e.status === 'completed'
+      (e: { status: string }) => e.status === 'completed'
     ).length;
 
     return {

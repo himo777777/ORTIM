@@ -14,7 +14,7 @@ import { AuthService } from './auth.service';
 import { BankIdService } from './bankid.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { User } from '@prisma/client';
+import { User } from '../types/prisma-types';
 
 class RefreshTokenDto {
   refreshToken: string;

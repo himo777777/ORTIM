@@ -36,8 +36,8 @@ export class QuizService {
 
     let correctAnswers = 0;
     const answerResults = data.answers.map(answer => {
-      const question = questions.find(q => q.id === answer.questionId);
-      const correctOption = question?.options.find(o => o.isCorrect);
+      const question = questions.find((q: { id: string }) => q.id === answer.questionId);
+      const correctOption = question?.options.find((o: { isCorrect: boolean; optionLabel: string }) => o.isCorrect);
       const isCorrect = correctOption?.optionLabel === answer.selectedOption;
       if (isCorrect) correctAnswers++;
       return {
