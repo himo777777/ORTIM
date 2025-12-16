@@ -1,0 +1,362 @@
+// B-ORTIM Database Schema
+// PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ANVÄNDARE OCH ROLLER
+// ============================================
+
+enum UserRole {
+  PARTICIPANT
+  INSTRUCTOR
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(cuid())
+  personnummer String    @unique
+  firstName    String
+  lastName     String
+  email        String?   @unique
+  phone        String?
+  role         UserRole  @default(PARTICIPANT)
+  workplace    String?
+  speciality   String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastLoginAt  DateTime?
+
+  // Relations
+  enrollments       Enrollment[]
+  quizAttempts      QuizAttempt[]
+  chapterProgress   ChapterProgress[]
+  certificates      Certificate[]
+  instructorCohorts Cohort[]           @relation("CohortInstructor")
+  osceAssessments   OSCEAssessment[]   @relation("AssessedBy")
+  lipusEvaluations  LipusEvaluation[]
+  reviewCards       SpacedRepetitionCard[]
+
+  @@index([personnummer])
+  @@index([email])
+}
+
+// ============================================
+// KURSSTRUKTUR
+// ============================================
+
+model Course {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  name            String
+  fullName        String
+  version         String
+  lipusNumber     String?
+  lipusValidUntil DateTime?
+  description     String?   @db.Text
+  estimatedHours  Int       @default(16)
+  passingScore    Int       @default(70)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  parts   CoursePart[]
+  cohorts Cohort[]
+
+  @@index([code])
+}
+
+model CoursePart {
+  id          String  @id @default(cuid())
+  courseId    String
+  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  partNumber  Int
+  title       String
+  description String?
+  sortOrder   Int
+
+  chapters Chapter[]
+
+  @@unique([courseId, partNumber])
+  @@index([courseId])
+}
+
+model Chapter {
+  id              String   @id @default(cuid())
+  partId          String
+  part            CoursePart @relation(fields: [partId], references: [id], onDelete: Cascade)
+  chapterNumber   Int
+  title           String
+  slug            String   @unique
+  content         String   @db.Text
+  contentVersion  Int      @default(1)
+  estimatedMinutes Int     @default(30)
+  sortOrder       Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  learningObjectives LearningObjective[]
+  quizQuestions      QuizQuestion[]
+  algorithms         Algorithm[]
+  progress           ChapterProgress[]
+
+  @@unique([partId, chapterNumber])
+  @@index([slug])
+}
+
+model LearningObjective {
+  id          String  @id @default(cuid())
+  chapterId   String
+  chapter     Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  code        String
+  type        String
+  description String
+  sortOrder   Int
+
+  @@index([chapterId])
+}
+
+model Algorithm {
+  id          String   @id @default(cuid())
+  chapterId   String?
+  chapter     Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  code        String   @unique
+  title       String
+  description String?
+  svgContent  String   @db.Text
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+
+  @@index([code])
+}
+
+// ============================================
+// QUIZ OCH EXAMINATION
+// ============================================
+
+enum BloomLevel {
+  KNOWLEDGE
+  COMPREHENSION
+  APPLICATION
+  ANALYSIS
+  SYNTHESIS
+}
+
+model QuizQuestion {
+  id             String     @id @default(cuid())
+  chapterId      String?
+  chapter        Chapter?   @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  questionCode   String     @unique
+  bloomLevel     BloomLevel
+  questionText   String     @db.Text
+  explanation    String     @db.Text
+  reference      String?
+  isActive       Boolean    @default(true)
+  isExamQuestion Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  // Relations
+  options          QuizOption[]
+  attempts         QuizAttemptAnswer[]
+  spacedRepetition SpacedRepetitionCard[]
+
+  @@index([chapterId])
+  @@index([bloomLevel])
+}
+
+model QuizOption {
+  id          String       @id @default(cuid())
+  questionId  String
+  question    QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionLabel String
+  optionText  String       @db.Text
+  isCorrect   Boolean      @default(false)
+  sortOrder   Int
+
+  @@index([questionId])
+}
+
+model QuizAttempt {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           String
+  chapterId      String?
+  cohortId       String?
+  totalQuestions Int
+  correctAnswers Int
+  score          Float
+  passed         Boolean?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  timeSpentSeconds Int?
+  syncedAt       DateTime?
+
+  // Relations
+  answers QuizAttemptAnswer[]
+
+  @@index([userId])
+  @@index([type])
+}
+
+model QuizAttemptAnswer {
+  id               String       @id @default(cuid())
+  attemptId        String
+  attempt          QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         QuizQuestion @relation(fields: [questionId], references: [id])
+  selectedOption   String?
+  isCorrect        Boolean
+  timeSpentSeconds Int?
+
+  @@index([attemptId])
+  @@index([questionId])
+}
+
+// ============================================
+// SPACED REPETITION
+// ============================================
+
+model SpacedRepetitionCard {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  easeFactor     Float        @default(2.5)
+  interval       Int          @default(1)
+  repetitions    Int          @default(0)
+  nextReviewAt   DateTime     @default(now())
+  lastReviewedAt DateTime?
+
+  @@unique([userId, questionId])
+  @@index([userId, nextReviewAt])
+}
+
+// ============================================
+// PROGRESSION OCH CERTIFIERING
+// ============================================
+
+model ChapterProgress {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapterId      String
+  chapter        Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  lastAccessedAt DateTime  @default(now())
+  readProgress   Float     @default(0)
+  quizPassed     Boolean   @default(false)
+  bestQuizScore  Float?
+
+  @@unique([userId, chapterId])
+  @@index([userId])
+}
+
+model Cohort {
+  id              String    @id @default(cuid())
+  courseId        String
+  course          Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  instructorId    String
+  instructor      User      @relation("CohortInstructor", fields: [instructorId], references: [id])
+  name            String
+  description     String?
+  startDate       DateTime
+  endDate         DateTime?
+  maxParticipants Int?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  enrollments      Enrollment[]
+  lipusEvaluations LipusEvaluation[]
+
+  @@index([courseId])
+  @@index([instructorId])
+}
+
+model Enrollment {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohortId    String
+  cohort      Cohort    @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  enrolledAt  DateTime  @default(now())
+  status      String    @default("active")
+  completedAt DateTime?
+
+  // Relations
+  osceAssessments OSCEAssessment[]
+
+  @@unique([userId, cohortId])
+  @@index([cohortId])
+}
+
+model OSCEAssessment {
+  id            String     @id @default(cuid())
+  enrollmentId  String
+  enrollment    Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  assessorId    String
+  assessor      User       @relation("AssessedBy", fields: [assessorId], references: [id])
+  stationNumber Int
+  stationName   String
+  passed        Boolean
+  score         Float?
+  comments      String?    @db.Text
+  assessedAt    DateTime   @default(now())
+
+  @@index([enrollmentId])
+}
+
+model Certificate {
+  id                String   @id @default(cuid())
+  certificateNumber String   @unique
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohortId          String?
+  courseCode        String
+  courseName        String
+  issuedAt          DateTime @default(now())
+  validUntil        DateTime
+  examScore         Float
+  examPassed        Boolean
+  oscePassed        Boolean?
+  lipusNumber       String?
+  verificationUrl   String   @unique
+  pdfUrl            String?
+
+  @@index([userId])
+  @@index([certificateNumber])
+  @@index([verificationUrl])
+}
+
+// ============================================
+// LIPUS-UTVÄRDERING
+// ============================================
+
+model LipusEvaluation {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohortId         String?
+  cohort           Cohort?  @relation(fields: [cohortId], references: [id], onDelete: SetNull)
+  overallRating    Int
+  wouldRecommend   Boolean?
+  responses        Json
+  freeTextFeedback String?  @db.Text
+  submittedAt      DateTime @default(now())
+
+  @@index([cohortId])
+}
