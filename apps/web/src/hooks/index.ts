@@ -10,4 +10,5 @@ export * from './useNotifications';
 export * from './useOffline';
 export * from './useWebSocket';
 export * from './useAnalytics';
+export * from './useDebounce';
 export { useToast, toast } from './use-toast';

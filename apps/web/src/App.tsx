@@ -1,9 +1,13 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { AppShell } from '@/components/layout/AppShell';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Toaster } from '@/components/ui/toaster';
+import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
+import { FocusMode } from '@/components/study/FocusMode';
+import { LiveRegion } from '@/components/accessibility/LiveRegion';
+import { SkipLinks, SkipLinkTarget } from '@/components/accessibility/SkipLinks';
 
 // Lazy load pages for better performance
 const LoginPage = lazy(() => import('@/pages/public/LoginPage'));
@@ -71,8 +75,41 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const { isAuthenticated, user } = useAuthStore();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Check if user needs onboarding
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Check localStorage for onboarding completion
+      const onboardingKey = `b-ortim-onboarding-${user.id}`;
+      const hasCompletedOnboarding = localStorage.getItem(onboardingKey);
+      if (!hasCompletedOnboarding) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [isAuthenticated, user]);
+
+  const handleOnboardingComplete = () => {
+    if (user) {
+      localStorage.setItem(`b-ortim-onboarding-${user.id}`, 'true');
+    }
+    setShowOnboarding(false);
+  };
+
   return (
     <>
+      {/* Accessibility: Skip links */}
+      <SkipLinks
+        links={[
+          { id: 'main-content', label: 'Hoppa till huvudinnehåll' },
+          { id: 'navigation', label: 'Hoppa till navigation' },
+        ]}
+      />
+
+      {/* Accessibility: Live region for announcements */}
+      <LiveRegion />
+
       <Suspense
         fallback={
           <div className="flex h-screen items-center justify-center">
@@ -185,7 +222,19 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
+
+      {/* Toaster for notifications */}
       <Toaster />
+
+      {/* Onboarding modal for new users */}
+      <OnboardingModal
+        open={showOnboarding}
+        onOpenChange={setShowOnboarding}
+        onComplete={handleOnboardingComplete}
+      />
+
+      {/* Focus mode overlay */}
+      <FocusMode />
     </>
   );
 }
