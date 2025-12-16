@@ -7,6 +7,9 @@ export default defineConfig({
     plugins: [
         react(),
         VitePWA({
+            strategies: 'injectManifest',
+            srcDir: 'src',
+            filename: 'sw.ts',
             registerType: 'autoUpdate',
             includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
             manifest: {
@@ -36,56 +39,12 @@ export default defineConfig({
                     },
                 ],
             },
-            workbox: {
+            injectManifest: {
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-                runtimeCaching: [
-                    {
-                        urlPattern: /^https:\/\/api\..*\/chapters\/.*/i,
-                        handler: 'CacheFirst',
-                        options: {
-                            cacheName: 'chapter-content',
-                            expiration: {
-                                maxEntries: 50,
-                                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
-                            },
-                            cacheableResponse: {
-                                statuses: [0, 200],
-                            },
-                        },
-                    },
-                    {
-                        urlPattern: /^https:\/\/api\..*\/algorithms\/.*/i,
-                        handler: 'CacheFirst',
-                        options: {
-                            cacheName: 'algorithms',
-                            expiration: {
-                                maxEntries: 30,
-                                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-                            },
-                            cacheableResponse: {
-                                statuses: [0, 200],
-                            },
-                        },
-                    },
-                    {
-                        urlPattern: /^https:\/\/api\..*/i,
-                        handler: 'NetworkFirst',
-                        options: {
-                            cacheName: 'api-cache',
-                            networkTimeoutSeconds: 10,
-                            expiration: {
-                                maxEntries: 100,
-                                maxAgeSeconds: 24 * 60 * 60, // 24 hours
-                            },
-                            cacheableResponse: {
-                                statuses: [0, 200],
-                            },
-                        },
-                    },
-                ],
             },
             devOptions: {
                 enabled: true,
+                type: 'module',
             },
         }),
     ],

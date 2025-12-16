@@ -35,14 +35,17 @@ model User {
   lastLoginAt  DateTime?
 
   // Relations
-  enrollments       Enrollment[]
-  quizAttempts      QuizAttempt[]
-  chapterProgress   ChapterProgress[]
-  certificates      Certificate[]
-  instructorCohorts Cohort[]           @relation("CohortInstructor")
-  osceAssessments   OSCEAssessment[]   @relation("AssessedBy")
-  lipusEvaluations  LipusEvaluation[]
-  reviewCards       SpacedRepetitionCard[]
+  enrollments         Enrollment[]
+  quizAttempts        QuizAttempt[]
+  chapterProgress     ChapterProgress[]
+  certificates        Certificate[]
+  instructorCohorts   Cohort[]           @relation("CohortInstructor")
+  osceAssessments     OSCEAssessment[]   @relation("AssessedBy")
+  lipusEvaluations    LipusEvaluation[]
+  reviewCards         SpacedRepetitionCard[]
+  pushSubscriptions   PushSubscription[]
+  notifications       Notification[]
+  passwordResetTokens PasswordResetToken[]
 
   @@index([personnummer])
   @@index([email])
@@ -359,4 +362,55 @@ model LipusEvaluation {
   submittedAt      DateTime @default(now())
 
   @@index([cohortId])
+}
+
+// ============================================
+// NOTIFIKATIONER
+// ============================================
+
+model PushSubscription {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  data      Json?
+  read      Boolean   @default(false)
+  sentAt    DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([userId, read])
+  @@index([sentAt])
+}
+
+// ============================================
+// LÖSENORDSÅTERSTÄLLNING
+// ============================================
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
 }

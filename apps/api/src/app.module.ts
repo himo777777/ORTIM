@@ -7,6 +7,9 @@ import { QuizModule } from './quiz/quiz.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { InstructorModule } from './instructor/instructor.module';
 import { AdminModule } from './admin/admin.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ReportsModule } from './reports/reports.module';
+import { EmailModule } from './email/email.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AppController } from './app.controller';
 
@@ -36,6 +39,9 @@ import { AppController } from './app.controller';
     CertificatesModule,
     InstructorModule,
     AdminModule,
+    NotificationsModule,
+    ReportsModule,
+    EmailModule,
   ],
   controllers: [AppController],
 })

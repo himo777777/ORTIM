@@ -965,6 +965,89 @@ export const api = {
     deleteAlgorithm: (id: string) =>
       request(`/admin/algorithms/${id}`, { method: 'DELETE' }),
   },
+
+  // ===========================================
+  // NOTIFICATIONS
+  // ===========================================
+  notifications: {
+    getVapidPublicKey: () =>
+      request<{ vapidPublicKey: string | null }>('/notifications/vapid-public-key'),
+
+    subscribe: (subscription: {
+      endpoint: string;
+      keys: { p256dh: string; auth: string };
+    }) =>
+      request<{ success: boolean; message: string }>('/notifications/subscribe', {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+      }),
+
+    unsubscribe: (endpoint: string) =>
+      request<{ success: boolean; message: string }>('/notifications/unsubscribe', {
+        method: 'DELETE',
+        body: JSON.stringify({ endpoint }),
+      }),
+
+    unsubscribeAll: () =>
+      request<{ success: boolean; message: string }>('/notifications/unsubscribe-all', {
+        method: 'DELETE',
+      }),
+
+    getAll: () =>
+      request<
+        Array<{
+          id: string;
+          type: string;
+          title: string;
+          body: string;
+          data: Record<string, unknown> | null;
+          read: boolean;
+          sentAt: string;
+          readAt: string | null;
+        }>
+      >('/notifications'),
+
+    getUnread: () =>
+      request<
+        Array<{
+          id: string;
+          type: string;
+          title: string;
+          body: string;
+          data: Record<string, unknown> | null;
+          read: boolean;
+          sentAt: string;
+          readAt: string | null;
+        }>
+      >('/notifications/unread'),
+
+    getUnreadCount: () =>
+      request<{ count: number }>('/notifications/unread-count'),
+
+    markAsRead: (id: string) =>
+      request<{ success: boolean }>(`/notifications/${id}/read`, { method: 'POST' }),
+
+    markAllAsRead: () =>
+      request<{ success: boolean }>('/notifications/read-all', { method: 'POST' }),
+
+    sendTest: () =>
+      request<{ notification: unknown; sent: number; failed: number }>(
+        '/notifications/test',
+        { method: 'POST' }
+      ),
+
+    send: (data: {
+      userIds?: string[];
+      role?: 'PARTICIPANT' | 'INSTRUCTOR' | 'ADMIN';
+      title: string;
+      body: string;
+      data?: Record<string, unknown>;
+    }) =>
+      request('/notifications/send', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
 };
 
 export { ApiError };

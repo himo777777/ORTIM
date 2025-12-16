@@ -6,4 +6,6 @@ export * from './useReview';
 export * from './useCertificate';
 export * from './useInstructor';
 export * from './useAdmin';
+export * from './useNotifications';
+export * from './useOffline';
 export { useToast, toast } from './use-toast';
