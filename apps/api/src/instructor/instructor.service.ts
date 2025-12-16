@@ -82,4 +82,124 @@ export class InstructorService {
       averageProgress: 0, // TODO: Calculate from chapter progress
     };
   }
+
+  async getCohortParticipants(cohortId: string) {
+    const cohort = await this.prisma.cohort.findUnique({
+      where: { id: cohortId },
+      include: {
+        enrollments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                workplace: true,
+                speciality: true,
+              },
+            },
+            osceAssessments: {
+              orderBy: { stationNumber: 'asc' },
+            },
+          },
+          orderBy: { enrolledAt: 'asc' },
+        },
+      },
+    });
+
+    if (!cohort) return null;
+
+    // Get chapter progress for each participant
+    const participantIds = cohort.enrollments.map((e) => e.user.id);
+    const progressData = await this.prisma.chapterProgress.findMany({
+      where: { userId: { in: participantIds } },
+    });
+
+    // Group progress by user
+    const progressByUser = progressData.reduce((acc, p) => {
+      if (!acc[p.userId]) acc[p.userId] = [];
+      acc[p.userId].push(p);
+      return acc;
+    }, {} as Record<string, typeof progressData>);
+
+    return cohort.enrollments.map((enrollment) => {
+      const userProgress = progressByUser[enrollment.user.id] || [];
+      const completedChapters = userProgress.filter((p) => p.quizPassed).length;
+      const totalChapters = 17; // B-ORTIM has 17 chapters
+
+      // Calculate OSCE status
+      const osceStations = enrollment.osceAssessments;
+      const osceCompleted = osceStations.length;
+      const oscePassed = osceStations.filter((a) => a.passed).length;
+
+      return {
+        enrollmentId: enrollment.id,
+        status: enrollment.status,
+        user: enrollment.user,
+        progress: {
+          chaptersCompleted: completedChapters,
+          totalChapters,
+          percentage: Math.round((completedChapters / totalChapters) * 100),
+        },
+        osce: {
+          completed: osceCompleted,
+          passed: oscePassed,
+          total: 5, // Standard OSCE stations
+          assessments: osceStations,
+        },
+      };
+    });
+  }
+
+  async createOsceAssessment(assessorId: string, enrollmentId: string, data: {
+    stationNumber: number;
+    stationName: string;
+    passed: boolean;
+    score?: number;
+    comments?: string;
+  }) {
+    return this.prisma.oSCEAssessment.create({
+      data: {
+        enrollmentId,
+        assessorId,
+        stationNumber: data.stationNumber,
+        stationName: data.stationName,
+        passed: data.passed,
+        score: data.score,
+        comments: data.comments,
+        assessedAt: new Date(),
+      },
+    });
+  }
+
+  async updateOsceAssessment(assessmentId: string, data: {
+    passed?: boolean;
+    score?: number;
+    comments?: string;
+  }) {
+    return this.prisma.oSCEAssessment.update({
+      where: { id: assessmentId },
+      data: {
+        ...data,
+        assessedAt: new Date(),
+      },
+    });
+  }
+
+  async getOsceAssessments(enrollmentId: string) {
+    return this.prisma.oSCEAssessment.findMany({
+      where: { enrollmentId },
+      include: {
+        assessor: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { stationNumber: 'asc' },
+    });
+  }
 }

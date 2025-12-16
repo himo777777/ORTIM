@@ -120,6 +120,14 @@ function App() {
                 </InstructorRoute>
               }
             />
+            <Route
+              path="instructor/cohorts/:id/osce"
+              element={
+                <InstructorRoute>
+                  <OSCEPage />
+                </InstructorRoute>
+              }
+            />
           </Route>
 
           {/* Catch-all redirect */}

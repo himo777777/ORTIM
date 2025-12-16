@@ -433,6 +433,81 @@ export const api = {
         completedParticipants: number;
         averageProgress: number;
       }>(`/instructor/cohorts/${id}/stats`),
+
+    getCohortParticipants: (id: string) =>
+      request<
+        Array<{
+          enrollmentId: string;
+          status: string;
+          user: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            email: string | null;
+            workplace: string | null;
+            speciality: string | null;
+          };
+          progress: {
+            chaptersCompleted: number;
+            totalChapters: number;
+            percentage: number;
+          };
+          osce: {
+            completed: number;
+            passed: number;
+            total: number;
+            assessments: Array<{
+              id: string;
+              stationNumber: number;
+              stationName: string;
+              passed: boolean;
+              score: number | null;
+              comments: string | null;
+              assessedAt: string;
+            }>;
+          };
+        }>
+      >(`/instructor/cohorts/${id}/participants`),
+
+    createOsceAssessment: (enrollmentId: string, data: {
+      stationNumber: number;
+      stationName: string;
+      passed: boolean;
+      score?: number;
+      comments?: string;
+    }) =>
+      request(`/instructor/osce/${enrollmentId}`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    updateOsceAssessment: (assessmentId: string, data: {
+      passed?: boolean;
+      score?: number;
+      comments?: string;
+    }) =>
+      request(`/instructor/osce/${assessmentId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    getOsceAssessments: (enrollmentId: string) =>
+      request<
+        Array<{
+          id: string;
+          stationNumber: number;
+          stationName: string;
+          passed: boolean;
+          score: number | null;
+          comments: string | null;
+          assessedAt: string;
+          assessor: {
+            id: string;
+            firstName: string;
+            lastName: string;
+          };
+        }>
+      >(`/instructor/enrollments/${enrollmentId}/osce`),
   },
 
   // Content (for offline sync)
