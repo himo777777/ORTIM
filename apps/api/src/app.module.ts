@@ -6,6 +6,7 @@ import { CoursesModule } from './courses/courses.module';
 import { QuizModule } from './quiz/quiz.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { InstructorModule } from './instructor/instructor.module';
+import { AdminModule } from './admin/admin.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AppController } from './app.controller';
 
@@ -34,6 +35,7 @@ import { AppController } from './app.controller';
     QuizModule,
     CertificatesModule,
     InstructorModule,
+    AdminModule,
   ],
   controllers: [AppController],
 })

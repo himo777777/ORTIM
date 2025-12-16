@@ -23,6 +23,12 @@ const CohortsPage = lazy(() => import('@/pages/instructor/CohortsPage'));
 const CohortDetailPage = lazy(() => import('@/pages/instructor/CohortDetailPage'));
 const OSCEPage = lazy(() => import('@/pages/instructor/OSCEPage'));
 
+// Admin pages
+const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
+const AdminUsersPage = lazy(() => import('@/pages/admin/UsersPage'));
+const AdminCoursesPage = lazy(() => import('@/pages/admin/CoursesPage'));
+const AdminQuestionsPage = lazy(() => import('@/pages/admin/QuestionsPage'));
+
 // Protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -47,6 +53,17 @@ function InstructorRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore();
 
   if (user?.role !== 'INSTRUCTOR' && user?.role !== 'ADMIN') {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+// Admin route wrapper
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuthStore();
+
+  if (user?.role !== 'ADMIN') {
     return <Navigate to="/" replace />;
   }
 
@@ -126,6 +143,40 @@ function App() {
                 <InstructorRoute>
                   <OSCEPage />
                 </InstructorRoute>
+              }
+            />
+
+            {/* Admin routes */}
+            <Route
+              path="admin"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="admin/users"
+              element={
+                <AdminRoute>
+                  <AdminUsersPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="admin/courses"
+              element={
+                <AdminRoute>
+                  <AdminCoursesPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="admin/questions"
+              element={
+                <AdminRoute>
+                  <AdminQuestionsPage />
+                </AdminRoute>
               }
             />
           </Route>

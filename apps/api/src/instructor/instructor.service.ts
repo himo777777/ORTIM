@@ -111,27 +111,29 @@ export class InstructorService {
     if (!cohort) return null;
 
     // Get chapter progress for each participant
-    const participantIds = cohort.enrollments.map((e) => e.user.id);
+    const participantIds = cohort.enrollments.map((e: { user: { id: string } }) => e.user.id);
     const progressData = await this.prisma.chapterProgress.findMany({
       where: { userId: { in: participantIds } },
     });
 
     // Group progress by user
-    const progressByUser = progressData.reduce((acc, p) => {
+    type ProgressItem = typeof progressData[number];
+    const progressByUser = progressData.reduce((acc: Record<string, ProgressItem[]>, p: ProgressItem) => {
       if (!acc[p.userId]) acc[p.userId] = [];
       acc[p.userId].push(p);
       return acc;
-    }, {} as Record<string, typeof progressData>);
+    }, {} as Record<string, ProgressItem[]>);
 
-    return cohort.enrollments.map((enrollment) => {
+    type EnrollmentType = typeof cohort.enrollments[number];
+    return cohort.enrollments.map((enrollment: EnrollmentType) => {
       const userProgress = progressByUser[enrollment.user.id] || [];
-      const completedChapters = userProgress.filter((p) => p.quizPassed).length;
+      const completedChapters = userProgress.filter((p: ProgressItem) => p.quizPassed).length;
       const totalChapters = 17; // B-ORTIM has 17 chapters
 
       // Calculate OSCE status
       const osceStations = enrollment.osceAssessments;
       const osceCompleted = osceStations.length;
-      const oscePassed = osceStations.filter((a) => a.passed).length;
+      const oscePassed = osceStations.filter((a: { passed: boolean }) => a.passed).length;
 
       return {
         enrollmentId: enrollment.id,

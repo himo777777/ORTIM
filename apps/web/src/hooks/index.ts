@@ -5,4 +5,5 @@ export * from './useAlgorithm';
 export * from './useReview';
 export * from './useCertificate';
 export * from './useInstructor';
+export * from './useAdmin';
 export { useToast, toast } from './use-toast';

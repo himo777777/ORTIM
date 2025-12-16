@@ -557,6 +557,414 @@ export const api = {
         }>;
       }>(`/content/updates?since=${since}`),
   },
+
+  // Admin
+  admin: {
+    getDashboard: () =>
+      request<{
+        stats: {
+          users: number;
+          instructors: number;
+          courses: number;
+          activeCohorts: number;
+          questions: number;
+          algorithms: number;
+          certificates: number;
+          activeEnrollments: number;
+        };
+        recentUsers: Array<{
+          id: string;
+          firstName: string;
+          lastName: string;
+          role: string;
+          createdAt: string;
+        }>;
+        recentCertificates: Array<{
+          id: string;
+          certificateNumber: string;
+          courseName: string;
+          issuedAt: string;
+          user: { firstName: string; lastName: string };
+        }>;
+      }>('/admin/dashboard'),
+
+    // Users
+    getUsers: (params?: { skip?: number; take?: number; search?: string; role?: string }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.skip) searchParams.set('skip', params.skip.toString());
+      if (params?.take) searchParams.set('take', params.take.toString());
+      if (params?.search) searchParams.set('search', params.search);
+      if (params?.role) searchParams.set('role', params.role);
+      return request<{
+        users: Array<{
+          id: string;
+          personnummer: string;
+          firstName: string;
+          lastName: string;
+          email: string | null;
+          phone: string | null;
+          role: string;
+          workplace: string | null;
+          speciality: string | null;
+          createdAt: string;
+          lastLoginAt: string | null;
+          _count: { enrollments: number; certificates: number };
+        }>;
+        total: number;
+        skip: number;
+        take: number;
+      }>(`/admin/users?${searchParams}`);
+    },
+
+    getUser: (id: string) =>
+      request<{
+        id: string;
+        personnummer: string;
+        firstName: string;
+        lastName: string;
+        email: string | null;
+        phone: string | null;
+        role: string;
+        workplace: string | null;
+        speciality: string | null;
+        createdAt: string;
+        lastLoginAt: string | null;
+        enrollments: Array<{
+          id: string;
+          status: string;
+          enrolledAt: string;
+          cohort: {
+            id: string;
+            name: string;
+            course: { name: string; code: string };
+          };
+        }>;
+        certificates: Array<{
+          id: string;
+          certificateNumber: string;
+          courseName: string;
+          issuedAt: string;
+        }>;
+        _count: { quizAttempts: number; chapterProgress: number };
+      }>(`/admin/users/${id}`),
+
+    createUser: (data: {
+      personnummer: string;
+      firstName: string;
+      lastName: string;
+      email?: string;
+      phone?: string;
+      role?: string;
+      workplace?: string;
+      speciality?: string;
+    }) =>
+      request('/admin/users', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    updateUser: (id: string, data: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      phone?: string;
+      role?: string;
+      workplace?: string;
+      speciality?: string;
+    }) =>
+      request(`/admin/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    deleteUser: (id: string) =>
+      request(`/admin/users/${id}`, { method: 'DELETE' }),
+
+    // Courses
+    getCourses: () =>
+      request<
+        Array<{
+          id: string;
+          code: string;
+          name: string;
+          fullName: string;
+          version: string;
+          lipusNumber: string | null;
+          description: string | null;
+          estimatedHours: number;
+          passingScore: number;
+          isActive: boolean;
+          createdAt: string;
+          _count: { parts: number; cohorts: number };
+          parts: Array<{
+            id: string;
+            partNumber: number;
+            title: string;
+            _count: { chapters: number };
+          }>;
+        }>
+      >('/admin/courses'),
+
+    getCourse: (id: string) =>
+      request<{
+        id: string;
+        code: string;
+        name: string;
+        fullName: string;
+        version: string;
+        lipusNumber: string | null;
+        description: string | null;
+        estimatedHours: number;
+        passingScore: number;
+        isActive: boolean;
+        parts: Array<{
+          id: string;
+          partNumber: number;
+          title: string;
+          description: string | null;
+          chapters: Array<{
+            id: string;
+            chapterNumber: number;
+            title: string;
+            slug: string;
+            estimatedMinutes: number;
+            isActive: boolean;
+            _count: { quizQuestions: number; algorithms: number };
+          }>;
+        }>;
+        cohorts: Array<{
+          id: string;
+          name: string;
+          startDate: string;
+          isActive: boolean;
+          instructor: { firstName: string; lastName: string };
+          _count: { enrollments: number };
+        }>;
+      }>(`/admin/courses/${id}`),
+
+    createCourse: (data: {
+      code: string;
+      name: string;
+      fullName: string;
+      version: string;
+      lipusNumber?: string;
+      description?: string;
+      estimatedHours?: number;
+      passingScore?: number;
+    }) =>
+      request('/admin/courses', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    updateCourse: (id: string, data: {
+      name?: string;
+      fullName?: string;
+      version?: string;
+      lipusNumber?: string;
+      description?: string;
+      estimatedHours?: number;
+      passingScore?: number;
+      isActive?: boolean;
+    }) =>
+      request(`/admin/courses/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    createChapter: (data: {
+      partId: string;
+      chapterNumber: number;
+      title: string;
+      slug: string;
+      content: string;
+      estimatedMinutes?: number;
+    }) =>
+      request('/admin/chapters', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    updateChapter: (id: string, data: {
+      title?: string;
+      content?: string;
+      estimatedMinutes?: number;
+      isActive?: boolean;
+    }) =>
+      request(`/admin/chapters/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    // Questions
+    getQuestions: (params?: {
+      skip?: number;
+      take?: number;
+      search?: string;
+      chapterId?: string;
+      bloomLevel?: string;
+    }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.skip) searchParams.set('skip', params.skip.toString());
+      if (params?.take) searchParams.set('take', params.take.toString());
+      if (params?.search) searchParams.set('search', params.search);
+      if (params?.chapterId) searchParams.set('chapterId', params.chapterId);
+      if (params?.bloomLevel) searchParams.set('bloomLevel', params.bloomLevel);
+      return request<{
+        questions: Array<{
+          id: string;
+          questionCode: string;
+          bloomLevel: string;
+          questionText: string;
+          explanation: string;
+          reference: string | null;
+          isActive: boolean;
+          isExamQuestion: boolean;
+          createdAt: string;
+          chapter: { title: string; slug: string } | null;
+          options: Array<{
+            id: string;
+            optionLabel: string;
+            optionText: string;
+            isCorrect: boolean;
+            sortOrder: number;
+          }>;
+          _count: { attempts: number };
+        }>;
+        total: number;
+        skip: number;
+        take: number;
+      }>(`/admin/questions?${searchParams}`);
+    },
+
+    getQuestion: (id: string) =>
+      request<{
+        id: string;
+        questionCode: string;
+        bloomLevel: string;
+        questionText: string;
+        explanation: string;
+        reference: string | null;
+        isActive: boolean;
+        isExamQuestion: boolean;
+        chapter: {
+          id: string;
+          title: string;
+          slug: string;
+        } | null;
+        options: Array<{
+          id: string;
+          optionLabel: string;
+          optionText: string;
+          isCorrect: boolean;
+          sortOrder: number;
+        }>;
+      }>(`/admin/questions/${id}`),
+
+    createQuestion: (data: {
+      questionCode: string;
+      chapterId?: string;
+      bloomLevel: string;
+      questionText: string;
+      explanation: string;
+      reference?: string;
+      isExamQuestion?: boolean;
+      options: Array<{
+        optionLabel: string;
+        optionText: string;
+        isCorrect: boolean;
+      }>;
+    }) =>
+      request('/admin/questions', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    updateQuestion: (id: string, data: {
+      chapterId?: string;
+      bloomLevel?: string;
+      questionText?: string;
+      explanation?: string;
+      reference?: string;
+      isActive?: boolean;
+      isExamQuestion?: boolean;
+    }) =>
+      request(`/admin/questions/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    updateQuestionOptions: (id: string, options: Array<{
+      id?: string;
+      optionLabel: string;
+      optionText: string;
+      isCorrect: boolean;
+    }>) =>
+      request(`/admin/questions/${id}/options`, {
+        method: 'PUT',
+        body: JSON.stringify({ options }),
+      }),
+
+    deleteQuestion: (id: string) =>
+      request(`/admin/questions/${id}`, { method: 'DELETE' }),
+
+    // Algorithms
+    getAlgorithms: () =>
+      request<
+        Array<{
+          id: string;
+          code: string;
+          title: string;
+          description: string | null;
+          version: number;
+          isActive: boolean;
+          chapter: { title: string; slug: string } | null;
+        }>
+      >('/admin/algorithms'),
+
+    getAlgorithm: (id: string) =>
+      request<{
+        id: string;
+        code: string;
+        title: string;
+        description: string | null;
+        svgContent: string;
+        version: number;
+        isActive: boolean;
+        chapter: {
+          id: string;
+          title: string;
+          slug: string;
+        } | null;
+      }>(`/admin/algorithms/${id}`),
+
+    createAlgorithm: (data: {
+      code: string;
+      title: string;
+      description?: string;
+      svgContent: string;
+      chapterId?: string;
+    }) =>
+      request('/admin/algorithms', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    updateAlgorithm: (id: string, data: {
+      title?: string;
+      description?: string;
+      svgContent?: string;
+      chapterId?: string;
+      isActive?: boolean;
+    }) =>
+      request(`/admin/algorithms/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    deleteAlgorithm: (id: string) =>
+      request(`/admin/algorithms/${id}`, { method: 'DELETE' }),
+  },
 };
 
 export { ApiError };
