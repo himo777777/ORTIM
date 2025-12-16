@@ -6,15 +6,15 @@ services:
     container_name: bortim-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: bortim
-      POSTGRES_PASSWORD: bortim_secret
-      POSTGRES_DB: bortim
+      POSTGRES_USER: ${DB_USER:-bortim}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-bortim_secret}
+      POSTGRES_DB: ${DB_NAME:-bortim}
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U bortim -d bortim']
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-bortim} -d ${DB_NAME:-bortim}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,7 +34,87 @@ services:
       retries: 5
     command: redis-server --appendonly yes
 
-  # Optional: Adminer for database management (dev only)
+  # API Server
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: bortim-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${DB_USER:-bortim}:${DB_PASSWORD:-bortim_secret}@postgres:5432/${DB_NAME:-bortim}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_EXPIRATION: 1h
+      REFRESH_TOKEN_EXPIRATION: 7d
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: mailto:admin@bortim.se
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@bortim.se}
+      APP_URL: ${APP_URL:-http://localhost}
+      BANKID_API_URL: ${BANKID_API_URL:-https://appapi2.test.bankid.com}
+      RATE_LIMIT_TTL: 60
+      RATE_LIMIT_MAX: 100
+    ports:
+      - '3000:3000'
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - full
+
+  # Web Frontend
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: /api
+        VITE_APP_URL: ${APP_URL:-http://localhost}
+    container_name: bortim-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - '80:80'
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - full
+
+  # Database migrations (run once)
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: bortim-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-bortim}:${DB_PASSWORD:-bortim_secret}@postgres:5432/${DB_NAME:-bortim}
+    command: npx prisma migrate deploy --schema=./apps/api/prisma/schema.prisma
+    restart: 'no'
+    profiles:
+      - migrate
+
+  # Adminer for database management (dev only)
   adminer:
     image: adminer:latest
     container_name: bortim-adminer

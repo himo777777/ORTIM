@@ -10,6 +10,8 @@ import { AdminModule } from './admin/admin.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReportsModule } from './reports/reports.module';
 import { EmailModule } from './email/email.module';
+import { WebsocketModule } from './websocket/websocket.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AppController } from './app.controller';
 
@@ -42,6 +44,8 @@ import { AppController } from './app.controller';
     NotificationsModule,
     ReportsModule,
     EmailModule,
+    WebsocketModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
 })
