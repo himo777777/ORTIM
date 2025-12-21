@@ -11,6 +11,8 @@ import {
   Plus,
   BookOpen,
   TrendingUp,
+  FileText,
+  BarChart3,
 } from 'lucide-react';
 
 export default function InstructorDashboard() {
@@ -167,7 +169,7 @@ export default function InstructorDashboard() {
       {/* Quick actions */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Snabbåtgärder</h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Link to="/instructor/cohorts">
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="flex items-center gap-4 py-6">
@@ -184,24 +186,42 @@ export default function InstructorDashboard() {
             </Card>
           </Link>
 
-          <Card className="hover:shadow-md transition-shadow cursor-pointer opacity-50">
-            <CardContent className="flex items-center gap-4 py-6">
-              <div className="p-3 rounded-lg bg-green-500/10">
-                <ClipboardCheck className="h-6 w-6 text-green-500" />
-              </div>
-              <div>
-                <h3 className="font-semibold">OSCE-bedömningar</h3>
-                <p className="text-sm text-muted-foreground">
-                  Kommer snart
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <Link to="/instructor/content">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="flex items-center gap-4 py-6">
+                <div className="p-3 rounded-lg bg-blue-500/10">
+                  <FileText className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Innehållshantering</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Skapa kapitel och frågor
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/instructor/osce">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="flex items-center gap-4 py-6">
+                <div className="p-3 rounded-lg bg-green-500/10">
+                  <ClipboardCheck className="h-6 w-6 text-green-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">OSCE-bedömningar</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Bedöm praktiska moment
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
 
           <Card className="hover:shadow-md transition-shadow cursor-pointer opacity-50">
             <CardContent className="flex items-center gap-4 py-6">
               <div className="p-3 rounded-lg bg-amber-500/10">
-                <TrendingUp className="h-6 w-6 text-amber-500" />
+                <BarChart3 className="h-6 w-6 text-amber-500" />
               </div>
               <div>
                 <h3 className="font-semibold">Statistik & Rapporter</h3>

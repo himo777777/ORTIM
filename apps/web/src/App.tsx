@@ -26,6 +26,10 @@ const InstructorDashboard = lazy(() => import('@/pages/instructor/InstructorDash
 const CohortsPage = lazy(() => import('@/pages/instructor/CohortsPage'));
 const CohortDetailPage = lazy(() => import('@/pages/instructor/CohortDetailPage'));
 const OSCEPage = lazy(() => import('@/pages/instructor/OSCEPage'));
+const ContentManagementPage = lazy(() => import('@/pages/instructor/ContentManagementPage'));
+const ChapterEditorPage = lazy(() => import('@/pages/instructor/ChapterEditorPage'));
+const QuestionEditorPage = lazy(() => import('@/pages/instructor/QuestionEditorPage'));
+const CourseBuilderPage = lazy(() => import('@/pages/instructor/CourseBuilderPage'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
@@ -179,6 +183,54 @@ function App() {
               element={
                 <InstructorRoute>
                   <OSCEPage />
+                </InstructorRoute>
+              }
+            />
+            <Route
+              path="instructor/content"
+              element={
+                <InstructorRoute>
+                  <ContentManagementPage />
+                </InstructorRoute>
+              }
+            />
+            <Route
+              path="instructor/content/courses"
+              element={
+                <InstructorRoute>
+                  <CourseBuilderPage />
+                </InstructorRoute>
+              }
+            />
+            <Route
+              path="instructor/content/course/:id"
+              element={
+                <InstructorRoute>
+                  <CourseBuilderPage />
+                </InstructorRoute>
+              }
+            />
+            <Route
+              path="instructor/content/chapter/:id"
+              element={
+                <InstructorRoute>
+                  <ChapterEditorPage />
+                </InstructorRoute>
+              }
+            />
+            <Route
+              path="instructor/content/questions"
+              element={
+                <InstructorRoute>
+                  <AdminQuestionsPage />
+                </InstructorRoute>
+              }
+            />
+            <Route
+              path="instructor/content/question/:id"
+              element={
+                <InstructorRoute>
+                  <QuestionEditorPage />
                 </InstructorRoute>
               }
             />
