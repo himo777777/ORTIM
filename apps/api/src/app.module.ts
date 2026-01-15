@@ -13,6 +13,7 @@ import { EmailModule } from './email/email.module';
 import { WebsocketModule } from './websocket/websocket.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { SentryModule } from './common/sentry/sentry.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -33,6 +34,9 @@ import { AppController } from './app.controller';
 
     // Database
     PrismaModule,
+
+    // Error tracking
+    SentryModule,
 
     // Feature modules
     AuthModule,
