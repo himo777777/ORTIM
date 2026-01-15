@@ -408,6 +408,20 @@ Vid behov, komplettera med:
 - Nervskada vid långvarig tourniquet
 - Reperfusionsskada
 - Kompartmentsyndrom
+
+## Kliniskt fall
+
+> **Fall 4.1:** En 28-årig man inkommer efter motorsågsolycka med djup laceration på vänster lår. Arteriell blödning. Prehospitalt applicerades tourniquet 14:32.
+>
+> **Åtgärd:** Direkt till operation. Tourniquet-tid dokumenterad. A. femoralis superficialis laceration - primärsutur. Total tourniquet-tid: 47 minuter. Postoperativt: övervakning för kompartmentsyndrom.
+
+## Nyckelbudskap
+
+✓ Direkt tryck först - tourniquet när otillräckligt
+✓ Placera tourniquet 5-7 cm proximalt om skadan
+✓ ALLTID dokumentera tid för applicering
+✓ Lossa ALDRIG tourniquet prehospitalt
+✓ Övervaka för kompartmentsyndrom efter reperfusion
 `,
     5: `# Arteriella kärlskador
 
@@ -457,6 +471,20 @@ Kärlskador klassificeras enligt:
 ### Temporära åtgärder
 - Shunting
 - Fasciotomi vid behov
+
+## Kliniskt fall
+
+> **Fall 5.1:** En 45-årig kvinna inkommer efter knäledsluxation som spontant reponerat. Foten är blek och kall. Kapillär återfyllnad > 4 sek. A. dorsalis pedis ej palpabel. ABI = 0.4.
+>
+> **Åtgärd:** Akut CT-angio visar ocklusion av a. poplitea. Kärlkirurg tillkallas. Trombektomi + shunt + fasciotomi. Definitiv kärlrekonstruktion efter stabilisering. Grad IIb ischemi - god prognos då åtgärd inom 4 timmar.
+
+## Nyckelbudskap
+
+✓ ABI < 0.9 = misstänkt kärlskada
+✓ ABI < 0.5 = allvarlig ischemi - akut åtgärd
+✓ "Golden 6 hours" för revaskularisering
+✓ Knäledsluxation = hög risk för a. poplitea skada
+✓ Fasciotomi vid revaskularisering efter längre ischemi
 `,
     6: `# Kompartmentsyndrom
 
@@ -501,6 +529,22 @@ Fyra kompartment:
 2. Lateralt
 3. Ytligt posteriort
 4. Djupt posteriort
+
+## Kliniskt fall
+
+> **Fall 6.1:** En 32-årig man inkommer 6 timmar efter tibiafraktur. Ökande smärta trots morfin. Vaden spänd, svullen. Svår smärta vid passiv dorsalflexion av stortån. BT 130/80, kompartmenttryck 42 mmHg.
+>
+> **Analys:** Delta-tryck = 80 - 42 = 38 mmHg. Kliniska tecken tydliga.
+>
+> **Åtgärd:** Akut fasciotomi av alla fyra kompartment. Muskeln viabel vid inspektion. Sår lämnas öppna med VAC-förband. Sekundär stängning dag 4.
+
+## Nyckelbudskap
+
+✓ Smärta vid passiv töjning = MEST SENSITIVA tecknet
+✓ Delta-tryck < 30 mmHg → fasciotomi
+✓ Vänta INTE på sena tecken (paralys, pulslöshet)
+✓ Alla kompartment måste öppnas
+✓ Tibiafraktur = vanligaste orsaken
 `,
     7: `# Öppna frakturer
 
@@ -555,6 +599,28 @@ En öppen fraktur föreligger när det finns en kommunikation mellan frakturen o
 - Debridering av devitaliserad vävnad
 - Stabilisering av fraktur
 - Mjukdelstäckning
+
+## Kliniskt fall
+
+> **Fall 7.1:** En 19-årig MC-förare inkommer efter höghastighetsolycka. Öppen tibiafraktur med 8 cm sår, exponerat ben, kontaminerat med jord. Distal cirkulation intakt.
+>
+> **Klassifikation:** Gustilo-Anderson typ IIIA (stort sår, kontamination, men mjukdelstäckning möjlig).
+>
+> **Åtgärd:**
+> 1. Foto av såret vid ankomst
+> 2. Steril fuktig täckning
+> 3. IV Cefuroxim + Gentamicin inom 45 min
+> 4. Tetanusbooster
+> 5. Till op inom 6h: debridering, extern fixation
+> 6. Sekundär mjukdelstäckning dag 5
+
+## Nyckelbudskap
+
+✓ Antibiotika inom 1 timme - minskar infektionsrisk signifikant
+✓ Fotografera före täckning
+✓ Typ IIIC = kärlskada → kärlkirurg
+✓ "6-timmarsregeln" för debridering
+✓ Extern fixation ofta förstahandsval initialt
 `,
     8: `# Bäckenringskador
 
@@ -601,6 +667,26 @@ Bäckenringen består av:
 - Skrotalhematom
 - Proximal femurfraktur
 - Neurologiska bortfall
+
+## Kliniskt fall
+
+> **Fall 8.1:** En 55-årig man inkommer efter påkörning som fotgängare. BT 85/60, puls 120. Instabilt bäcken vid palpation. CT visar APC typ III ("open book") med > 5 cm symfyssprängning.
+>
+> **Åtgärd:**
+> 1. Bäckenbälte appliceras omedelbart
+> 2. Massiv transfusion initieras
+> 3. CT-angio: aktiv blödning från a. iliaca interna
+> 4. Angioembolisering
+> 5. Extern fixation av bäckenringen
+> 6. Patient stabiliseras - definitiv fixation dag 5
+
+## Nyckelbudskap
+
+✓ Bäckenbälte på ALLA misstänkta bäckenskador
+✓ APC/VS = hög blödningsrisk
+✓ Hemodynamisk instabilitet → angio eller packing
+✓ Placera bälte över trochantrarna, inte crista
+✓ Undvik överkompression vid LC-skador
 `,
     9: `# Amputationsskador
 
@@ -810,6 +896,27 @@ DCO innebär temporär stabilisering av frakturer hos fysiologiskt instabila pat
 - Minimal blödning
 - Möjliggör mjukdelsövervakning
 - Kan konverteras senare
+
+## Kliniskt fall
+
+> **Fall 13.1:** En 42-årig kvinna inkommer efter frontalolycka. GCS 10, BT 90/65. Bilateral femurfraktur, lungkontusion, mjältruptur. Temp 34.2°C, pH 7.18, laktat 6.1 mmol/L, INR 1.8.
+>
+> **Bedömning:** "Lethal triad" - hypotermi, acidos, koagulopati. ISS > 25.
+>
+> **DCO-beslut:**
+> - Steg 1 (dag 0): Laparotomi + splenektomi, extern fixation båda femur. Op-tid 78 min.
+> - Steg 2 (dag 1-3): IVA - uppvärmning, koagulationsfaktorer, laktatnormalisering.
+> - Steg 3 (dag 4): Konvertering till märgspik bilateralt.
+>
+> **Utfall:** Patienten kunde mobiliseras dag 7, utskriven dag 14.
+
+## Nyckelbudskap
+
+✓ "Lethal triad" = hypotermi + acidos + koagulopati
+✓ Fysiologi före anatomi - stabilisera patienten först
+✓ Extern fixation = "brygga" till definitiv behandling
+✓ Konvertering till intern fixation efter 72h om stabil
+✓ "Life over limb" - rädda livet först
 `,
     14: `# Transport och överflyttning
 
@@ -1126,6 +1233,267 @@ function getQuizQuestions() {
       ],
       explanation: 'Patienten uppfyller kriterier för DCO: bilateral femurfraktur, lungskada, hypotermi, acidos och förhöjt laktat. Extern fixation med definitiv kirurgi efter fysiologisk stabilisering.',
       reference: 'B-ORTIM Kursbok, Kapitel 13',
+    },
+    // Kapitel 3: Prioritering
+    {
+      code: '3.1',
+      chapterNumber: 3,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vilken tidsgräns gäller generellt för revaskularisering vid kärlskada med ischemi?',
+      options: [
+        { text: '< 6 timmar', correct: true },
+        { text: '< 12 timmar', correct: false },
+        { text: '< 24 timmar', correct: false },
+        { text: '< 2 timmar', correct: false },
+      ],
+      explanation: 'Vid kärlskada med ischemi är tidsgränsen för revaskularisering generellt < 6 timmar för varm ischemi för att undvika irreversibel vävnadsskada.',
+      reference: 'B-ORTIM Kursbok, Kapitel 3',
+    },
+    {
+      code: '3.2',
+      chapterNumber: 3,
+      bloomLevel: 'APPLICATION',
+      question: 'En multitraumapatient har en öppen femurfraktur och en instabil bäckenskada med pågående blödning. Vilken skada prioriteras först?',
+      options: [
+        { text: 'Bäckenskadan - livshotande blödning prioriteras', correct: true },
+        { text: 'Femurfrakturen - öppna frakturer kräver omedelbar åtgärd', correct: false },
+        { text: 'Båda behandlas samtidigt', correct: false },
+        { text: 'Det beror på patientens ålder', correct: false },
+      ],
+      explanation: 'Livshotande tillstånd (ABCDE) prioriteras alltid före extremitetshotande tillstånd. Bäckenblödning kan vara livshotande.',
+      reference: 'B-ORTIM Kursbok, Kapitel 3',
+    },
+    // Kapitel 9: Amputationer
+    {
+      code: '9.1',
+      chapterNumber: 9,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Hur ska ett amputat förvaras för optimal preservation?',
+      options: [
+        { text: 'I fuktig kompress, plastpåse, sedan i isbad - aldrig direkt kontakt med is', correct: true },
+        { text: 'Direkt på is för maximal kylning', correct: false },
+        { text: 'I rumstemperatur för att undvika köldskada', correct: false },
+        { text: 'Nedsänkt i koksaltlösning', correct: false },
+      ],
+      explanation: 'Amputatet ska lindas i fuktig kompress, läggas i plastpåse och sedan kylas i isbad. Direkt kontakt med is orsakar köldskada på vävnaden.',
+      reference: 'B-ORTIM Kursbok, Kapitel 9',
+    },
+    {
+      code: '9.2',
+      chapterNumber: 9,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vilken amputation har ALLTID replantationsindikation oavsett nivå?',
+      options: [
+        { text: 'Amputationer hos barn', correct: true },
+        { text: 'Amputationer hos vuxna', correct: false },
+        { text: 'Amputationer proximalt om handleden', correct: false },
+        { text: 'Rena snittyamputationer', correct: false },
+      ],
+      explanation: 'Hos barn finns alltid replantationsindikation oavsett nivå på grund av den överlägsna läkningskapaciteten.',
+      reference: 'B-ORTIM Kursbok, Kapitel 9',
+    },
+    // Kapitel 10: Barn
+    {
+      code: '10.1',
+      chapterNumber: 10,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken Salter-Harris typ har HÖGST risk för tillväxtrubbning?',
+      options: [
+        { text: 'Typ IV och V', correct: true },
+        { text: 'Typ I', correct: false },
+        { text: 'Typ II', correct: false },
+        { text: 'Typ III', correct: false },
+      ],
+      explanation: 'Salter-Harris typ IV (genom alla tre: fys, epifys, metafys) och typ V (kompressionsskada av fysen) har högst risk för tillväxtrubbning.',
+      reference: 'B-ORTIM Kursbok, Kapitel 10',
+    },
+    {
+      code: '10.2',
+      chapterNumber: 10,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför är fysens skador vanligare än ligamentskador hos barn?',
+      options: [
+        { text: 'Tillväxtzonerna (fyserna) är sårbarare än ligament hos barn', correct: true },
+        { text: 'Barn har starkare ligament', correct: false },
+        { text: 'Barn har sämre koordination', correct: false },
+        { text: 'Det beror på vitamin D-brist', correct: false },
+      ],
+      explanation: 'Hos barn är tillväxtzonerna (fyserna) den svagaste länken i det muskuloskeletala systemet, svagare än ligament.',
+      reference: 'B-ORTIM Kursbok, Kapitel 10',
+    },
+    // Kapitel 11: Crush syndrome
+    {
+      code: '11.1',
+      chapterNumber: 11,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken är den mest akuta livshotande komplikationen vid crush syndrome?',
+      options: [
+        { text: 'Hyperkalemi med risk för hjärtarytmi', correct: true },
+        { text: 'Myoglobinuri', correct: false },
+        { text: 'Metabol acidos', correct: false },
+        { text: 'Hypovolemi', correct: false },
+      ],
+      explanation: 'Hyperkalemi är den mest akut livshotande komplikationen vid crush syndrome då den kan orsaka fatala hjärtarytmier.',
+      reference: 'B-ORTIM Kursbok, Kapitel 11',
+    },
+    {
+      code: '11.2',
+      chapterNumber: 11,
+      bloomLevel: 'APPLICATION',
+      question: 'En person har varit fastklämd under rasmassorna i 4 timmar. Vilken åtgärd ska påbörjas INNAN friläggning?',
+      options: [
+        { text: 'IV-access och aggressiv vätskebehandling', correct: true },
+        { text: 'Omedelbar friläggning', correct: false },
+        { text: 'Avvakta ambulans', correct: false },
+        { text: 'Ge smärtstillande först', correct: false },
+      ],
+      explanation: 'Före friläggning vid prolongerad kompression ska IV-access etableras och aggressiv vätskebehandling påbörjas för att motverka reperfusionsskadan.',
+      reference: 'B-ORTIM Kursbok, Kapitel 11',
+    },
+    // Kapitel 12: Speciella populationer
+    {
+      code: '12.1',
+      chapterNumber: 12,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken åtgärd är speciellt viktig vid extremitetstrauma hos äldre patienter på antikoagulantia?',
+      options: [
+        { text: 'Reversering av antikoagulation vid aktiv blödning', correct: true },
+        { text: 'Avvakta med behandling tills INR normaliserats spontant', correct: false },
+        { text: 'Undvika all kirurgi', correct: false },
+        { text: 'Ge dubbel dos smärtlindring', correct: false },
+      ],
+      explanation: 'Vid aktiv blödning hos antikoagulerade patienter är reversering av antikoagulationen en viktig åtgärd för blödningskontroll.',
+      reference: 'B-ORTIM Kursbok, Kapitel 12',
+    },
+    {
+      code: '12.2',
+      chapterNumber: 12,
+      bloomLevel: 'APPLICATION',
+      question: 'En gravid kvinna i tredje trimestern inkommer med femurfraktur. Vilken position ska hon ligga i under undersökning?',
+      options: [
+        { text: 'Vänstersidesläge för att undvika vena cava-kompression', correct: true },
+        { text: 'Ryggläge med benen höjda', correct: false },
+        { text: 'Högersidesläge', correct: false },
+        { text: 'Sittande position', correct: false },
+      ],
+      explanation: 'Gravida i tredje trimestern ska ligga i vänstersidesläge för att undvika kompression av vena cava från uterus, vilket annars kan ge cirkulatorisk påverkan.',
+      reference: 'B-ORTIM Kursbok, Kapitel 12',
+    },
+    // Kapitel 14: Transport
+    {
+      code: '14.1',
+      chapterNumber: 14,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad står MIST för vid överrapportering av traumapatienter?',
+      options: [
+        { text: 'Mechanism, Injuries, Signs, Treatment', correct: true },
+        { text: 'Monitor, Intubate, Stabilize, Transport', correct: false },
+        { text: 'Major, Intermediate, Secondary, Tertiary', correct: false },
+        { text: 'Medical, Immediate, Surgical, Therapeutic', correct: false },
+      ],
+      explanation: 'MIST är en strukturerad överrapportering: Mechanism (skademekanism), Injuries (skador), Signs (vitalparametrar), Treatment (given behandling).',
+      reference: 'B-ORTIM Kursbok, Kapitel 14',
+    },
+    {
+      code: '14.2',
+      chapterNumber: 14,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vilken regel gäller vid frakturimmobilisering för transport?',
+      options: [
+        { text: 'Immobilisera leden ovan och nedan frakturen', correct: true },
+        { text: 'Endast immobilisera frakturstället', correct: false },
+        { text: 'Immobilisera hela extremiteten', correct: false },
+        { text: 'Använd alltid gips', correct: false },
+      ],
+      explanation: 'Grundprincipen vid frakturimmobilisering är att immobilisera leden ovan och nedan frakturen för att förhindra rörelse i frakturområdet.',
+      reference: 'B-ORTIM Kursbok, Kapitel 14',
+    },
+    // Kapitel 15: Dokumentation och juridik
+    {
+      code: '15.1',
+      chapterNumber: 15,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad ska dokumenteras vid initial bedömning av extremitetsskada?',
+      options: [
+        { text: 'Tidpunkt, skademekanism, fynd, neurovaskulär status, åtgärder', correct: true },
+        { text: 'Endast diagnos och behandling', correct: false },
+        { text: 'Endast patientens symtom', correct: false },
+        { text: 'Endast röntgenfynd', correct: false },
+      ],
+      explanation: 'Komplett initial dokumentation inkluderar tidpunkt för ankomst, skademekanism, fynd vid undersökning, neurovaskulär status och given behandling.',
+      reference: 'B-ORTIM Kursbok, Kapitel 15',
+    },
+    {
+      code: '15.2',
+      chapterNumber: 15,
+      bloomLevel: 'APPLICATION',
+      question: 'En medvetslös patient behöver akut fasciotomi för misstänkt kompartmentsyndrom. Samtycke kan inte inhämtas. Vad gäller?',
+      options: [
+        { text: 'Nödrätten tillåter behandling vid livs- eller extremitetshotande tillstånd', correct: true },
+        { text: 'Man måste vänta tills patienten vaknar', correct: false },
+        { text: 'Endast anhöriga kan ge samtycke', correct: false },
+        { text: 'Etisk kommitté måste kontaktas först', correct: false },
+      ],
+      explanation: 'Vid livs- eller extremitetshotande tillstånd där samtycke inte kan inhämtas gäller nödrätten. Dokumentera att samtycke inte kunde inhämtas.',
+      reference: 'B-ORTIM Kursbok, Kapitel 15',
+    },
+    // Kapitel 16: Teamarbete
+    {
+      code: '16.1',
+      chapterNumber: 16,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad innebär "closed-loop kommunikation"?',
+      options: [
+        { text: 'Order ges, bekräftas, utförs, och slutförande rapporteras tillbaka', correct: true },
+        { text: 'Endast teamledaren talar', correct: false },
+        { text: 'Kommunikation sker via mellanhänder', correct: false },
+        { text: 'Information dokumenteras skriftligt', correct: false },
+      ],
+      explanation: 'Closed-loop kommunikation innebär: order ges av teamledare, mottagaren bekräftar, utför uppgiften, och rapporterar att den är genomförd.',
+      reference: 'B-ORTIM Kursbok, Kapitel 16',
+    },
+    {
+      code: '16.2',
+      chapterNumber: 16,
+      bloomLevel: 'APPLICATION',
+      question: 'Under ett traumaomhändertagande blir situationen kaotisk. Enligt CRM-principerna, vad bör du göra?',
+      options: [
+        { text: 'Kalla på hjälp tidigt och utnyttja teamets resurser', correct: true },
+        { text: 'Arbeta snabbare för att lösa situationen', correct: false },
+        { text: 'Ta över alla uppgifter själv', correct: false },
+        { text: 'Avvakta och se om situationen löser sig', correct: false },
+      ],
+      explanation: 'Enligt CRM-principerna (Crisis Resource Management) ska man kalla på hjälp tidigt och utnyttja teamets resurser effektivt.',
+      reference: 'B-ORTIM Kursbok, Kapitel 16',
+    },
+    // Kapitel 17: Examination
+    {
+      code: '17.1',
+      chapterNumber: 17,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilka praktiska moment ingår i B-ORTIM OSCE-examinationen?',
+      options: [
+        { text: 'Tourniquet, ABI-mätning, bäckenbälte, passiv töjningstest, LIMB, SBAR', correct: true },
+        { text: 'Endast teoretiska frågor', correct: false },
+        { text: 'Endast kirurgiska ingrepp', correct: false },
+        { text: 'Endast anamnestagning', correct: false },
+      ],
+      explanation: 'OSCE-stationerna inkluderar tourniquet-applikation, ABI-mätning, bäckenbälte, passiv töjningstest, LIMB-bedömning och SBAR-kommunikation.',
+      reference: 'B-ORTIM Kursbok, Kapitel 17',
+    },
+    {
+      code: '17.2',
+      chapterNumber: 17,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Hur länge gäller B-ORTIM certifikatet?',
+      options: [
+        { text: '4 år', correct: true },
+        { text: '1 år', correct: false },
+        { text: '2 år', correct: false },
+        { text: 'Livstid', correct: false },
+      ],
+      explanation: 'B-ORTIM certifikatet gäller i 4 år, varefter recertifiering krävs.',
+      reference: 'B-ORTIM Kursbok, Kapitel 17',
     },
   ];
 }
