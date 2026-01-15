@@ -194,6 +194,145 @@ async function main() {
 
   console.log('✅ Quiz questions created');
 
+  // ============================================
+  // A-ORTIM (Advanced) Course
+  // ============================================
+
+  const advancedCourse = await prisma.course.upsert({
+    where: { code: 'A-ORTIM-2025' },
+    update: {},
+    create: {
+      code: 'A-ORTIM-2025',
+      name: 'A-ORTIM',
+      fullName: 'Advanced Orthopaedic Resuscitation and Trauma Initial Management',
+      version: '1.0',
+      description: 'Fördjupningskurs för läkare som genomfört B-ORTIM. Fokus på operativa tekniker, komplexa scenarion och traumateamledning.',
+      estimatedHours: 24,
+      passingScore: 75,
+      isActive: true,
+    },
+  });
+
+  console.log('✅ A-ORTIM course created');
+
+  // A-ORTIM course parts
+  const advancedParts = [
+    { partNumber: 1, title: 'Fördjupad diagnostik', description: 'Avancerad bilddiagnostik och bedömning', sortOrder: 1 },
+    { partNumber: 2, title: 'Operativa tekniker', description: 'Kirurgiska tekniker vid extremitetstrauma', sortOrder: 2 },
+    { partNumber: 3, title: 'Komplexa scenarion', description: 'Multitrauma och svåra beslut', sortOrder: 3 },
+    { partNumber: 4, title: 'Ledarskap och system', description: 'Teamledning och kvalitetsarbete', sortOrder: 4 },
+  ];
+
+  const createdAdvancedParts = [];
+  for (const part of advancedParts) {
+    const created = await prisma.coursePart.upsert({
+      where: { courseId_partNumber: { courseId: advancedCourse.id, partNumber: part.partNumber } },
+      update: {},
+      create: { ...part, courseId: advancedCourse.id },
+    });
+    createdAdvancedParts.push(created);
+  }
+
+  console.log('✅ A-ORTIM parts created');
+
+  // A-ORTIM chapters
+  const advancedChapters = [
+    // Del 1: Fördjupad diagnostik
+    { partIndex: 0, chapterNumber: 1, title: 'Avancerad bilddiagnostik', slug: 'a-bilddiagnostik', estimatedMinutes: 45, content: getAdvancedChapterContent(1) },
+    { partIndex: 0, chapterNumber: 2, title: 'Neurovaskulär bedömning', slug: 'a-neurovaskulär', estimatedMinutes: 40, content: getAdvancedChapterContent(2) },
+    { partIndex: 0, chapterNumber: 3, title: 'Intraoperativ bedömning', slug: 'a-intraoperativ', estimatedMinutes: 35, content: getAdvancedChapterContent(3) },
+
+    // Del 2: Operativa tekniker
+    { partIndex: 1, chapterNumber: 4, title: 'Vaskulär reparation', slug: 'a-vaskular', estimatedMinutes: 50, content: getAdvancedChapterContent(4) },
+    { partIndex: 1, chapterNumber: 5, title: 'Fasciotomitekniker', slug: 'a-fasciotomi', estimatedMinutes: 45, content: getAdvancedChapterContent(5) },
+    { partIndex: 1, chapterNumber: 6, title: 'Extern fixation avancerat', slug: 'a-extern-fix', estimatedMinutes: 50, content: getAdvancedChapterContent(6) },
+    { partIndex: 1, chapterNumber: 7, title: 'Mjukdelstäckning', slug: 'a-mjukdelar', estimatedMinutes: 45, content: getAdvancedChapterContent(7) },
+
+    // Del 3: Komplexa scenarion
+    { partIndex: 2, chapterNumber: 8, title: 'Multitrauma-koordinering', slug: 'a-multitrauma', estimatedMinutes: 55, content: getAdvancedChapterContent(8) },
+    { partIndex: 2, chapterNumber: 9, title: 'Mangled Extremity', slug: 'a-mangled', estimatedMinutes: 50, content: getAdvancedChapterContent(9) },
+    { partIndex: 2, chapterNumber: 10, title: 'Bäckentrauma avancerat', slug: 'a-backen', estimatedMinutes: 55, content: getAdvancedChapterContent(10) },
+    { partIndex: 2, chapterNumber: 11, title: 'Pediatrisk polytrauma', slug: 'a-barn-poly', estimatedMinutes: 45, content: getAdvancedChapterContent(11) },
+
+    // Del 4: Ledarskap och system
+    { partIndex: 3, chapterNumber: 12, title: 'Traumateamledning', slug: 'a-teamledning', estimatedMinutes: 40, content: getAdvancedChapterContent(12) },
+    { partIndex: 3, chapterNumber: 13, title: 'Masskadesituationer', slug: 'a-masskada', estimatedMinutes: 45, content: getAdvancedChapterContent(13) },
+    { partIndex: 3, chapterNumber: 14, title: 'Kvalitet och förbättring', slug: 'a-kvalitet', estimatedMinutes: 35, content: getAdvancedChapterContent(14) },
+  ];
+
+  const createdAdvancedChapters = [];
+  for (let i = 0; i < advancedChapters.length; i++) {
+    const chapter = advancedChapters[i]!;
+    const part = createdAdvancedParts[chapter.partIndex]!;
+    const created = await prisma.chapter.upsert({
+      where: { slug: chapter.slug },
+      update: {},
+      create: {
+        partId: part.id,
+        chapterNumber: chapter.chapterNumber,
+        title: chapter.title,
+        slug: chapter.slug,
+        content: chapter.content,
+        estimatedMinutes: chapter.estimatedMinutes,
+        sortOrder: i + 1,
+        isActive: true,
+      },
+    });
+    createdAdvancedChapters.push(created);
+  }
+
+  console.log('✅ A-ORTIM chapters created');
+
+  // A-ORTIM quiz questions
+  const advancedQuestions = getAdvancedQuizQuestions();
+  for (const q of advancedQuestions) {
+    const chapter = createdAdvancedChapters.find(c => c.chapterNumber === q.chapterNumber);
+
+    await prisma.quizQuestion.upsert({
+      where: { questionCode: q.code },
+      update: {},
+      create: {
+        chapterId: chapter?.id,
+        questionCode: q.code,
+        bloomLevel: q.bloomLevel as BloomLevel,
+        questionText: q.question,
+        explanation: q.explanation,
+        reference: q.reference,
+        isActive: true,
+        isExamQuestion: true,
+        options: {
+          create: q.options.map((opt, idx) => ({
+            optionLabel: String.fromCharCode(65 + idx),
+            optionText: opt.text,
+            isCorrect: opt.correct,
+            sortOrder: idx + 1,
+          })),
+        },
+      },
+    });
+  }
+
+  console.log('✅ A-ORTIM quiz questions created');
+
+  // Create A-ORTIM cohort
+  const advancedCohort = await prisma.cohort.upsert({
+    where: { id: 'a-ortim-cohort-1' },
+    update: {},
+    create: {
+      id: 'a-ortim-cohort-1',
+      courseId: advancedCourse.id,
+      instructorId: instructorUser.id,
+      name: 'A-ORTIM HT2025-Stockholm',
+      description: 'Höstterminen 2025, Stockholm - Fördjupningskurs',
+      startDate: new Date('2025-08-15'),
+      endDate: new Date('2025-12-15'),
+      maxParticipants: 20,
+      isActive: true,
+    },
+  });
+
+  console.log('✅ A-ORTIM cohort created');
+
   // Create a cohort
   const cohort = await prisma.cohort.upsert({
     where: { id: 'test-cohort-1' },
@@ -1494,6 +1633,1283 @@ function getQuizQuestions() {
       ],
       explanation: 'B-ORTIM certifikatet gäller i 4 år, varefter recertifiering krävs.',
       reference: 'B-ORTIM Kursbok, Kapitel 17',
+    },
+  ];
+}
+
+// A-ORTIM Advanced Chapter Content
+function getAdvancedChapterContent(chapterNumber: number): string {
+  const contents: Record<number, string> = {
+    1: `# Avancerad bilddiagnostik
+
+## CT-angiografi vid extremitetstrauma
+
+### Indikationer
+- Misstänkt kärlskada vid normal ABI men klinisk misstanke
+- Penetrerande trauma nära kärlstrukturer
+- Komplexa frakturer med kärlnärhet
+- Preoperativ planering vid vaskulär rekonstruktion
+
+### Tolkning av CT-angio
+
+#### Direkta tecken på kärlskada
+- **Extravasering** - Kontrastläckage utanför kärlet
+- **Pseudoaneurysm** - Fokalt utbuktande med kontrastfyllnad
+- **AV-fistel** - Tidig venfyllnad
+- **Ocklusion** - Abrupt kontrastuppehåll
+- **Intimaskada** - Intimal flap, lumeninskränkning
+
+#### Indirekta tecken
+- Hematom kring kärl
+- Benförskjutning mot kärlstrukturer
+- Mjukdelssvullnad
+
+### MR vid mjukdelsskador
+
+#### Indikationer
+- Plexusskador
+- Muskelsenskador
+- Ligamentskador vid luxationer
+- Nervrotsskador
+
+## Interventionell radiologi
+
+### Endovaskulära tekniker
+- **Embolisering** - Vid pågående blödning
+- **Stentgraft** - Vid pseudoaneurysm eller AV-fistel
+- **Trombektomi** - Vid akut ocklusion
+
+### Samarbete med IR-avdelningen
+- Tidig kontakt vid bäckentrauma
+- Ha patient redo för angio vid instabilitet
+- Kommunicera tidsramar tydligt
+
+## Nyckelbudskap
+
+✓ CT-angio är förstahandsval vid misstänkt kärlskada
+✓ Kan göras utan fördröjning vid stabil patient
+✓ Interventionell radiologi är ett alternativ till öppen kirurgi
+✓ Koordinera med kärl-/IR-jour tidigt
+`,
+    2: `# Neurovaskulär bedömning
+
+## Nervskador vid extremitetstrauma
+
+### Anatomisk översikt
+
+#### Övre extremitet
+| Nerv | Typisk skada | Motoriskt bortfall | Sensoriskt bortfall |
+|------|--------------|-------------------|---------------------|
+| N. radialis | Humerusfraktur | Handleds-/fingerextension | Dorsalt hand (1:a interosseum) |
+| N. medianus | Armbågsluxation, handledsfrx | Tumopposition, flexion dig II-III | Volart dig I-III |
+| N. ulnaris | Armbågstrauma | Fingerabduktion, dig IV-V flexion | Dig IV-V |
+
+#### Nedre extremitet
+| Nerv | Typisk skada | Motoriskt bortfall | Sensoriskt bortfall |
+|------|--------------|-------------------|---------------------|
+| N. peroneus | Fibulahals-frx, knälux | Fotdorsalflex, eversion | Fotrygg, lateralt underben |
+| N. tibialis | Knäledsluxation | Plantarflexion, tåflexion | Fotsula |
+| N. ischiadicus | Höftluxation, bäckenfrx | Beroende på nivå | Nedanför knä |
+
+### Plexus brachialis-skador
+
+#### Klassifikation
+- **Supraklavikulära** (rotskador) - Allvarligare prognos
+- **Infraklavikulära** (trunkus/fasciklar) - Bättre prognos
+
+#### Kliniska mönster
+- **Erb-Duchenne (C5-C6)** - "Porter's tip" position
+- **Klumpke (C8-T1)** - Handledens och fingrarnas flexorer
+- **Total plexusskada** - Komplett arm-förlamning
+
+### Mikrovaskulär anatomi
+
+#### Perfusionszoner
+- Muskel är mest känslig för ischemi (4-6h)
+- Nerv något mer tålig (6-8h)
+- Hud och ben tåligast (8-12h)
+
+## Kliniskt fall
+
+> **Fall A2.1:** En 25-årig man inkommer efter MC-olycka. Kraftig axelsmärta, armen hänger slapt. Kan ej lyfta armen, ej böja armbågen. Sensorik bevarad ulnart men nedsatt radialt.
+>
+> **Bedömning:** Supraklavikulär plexusskada C5-C6 (Erb-Duchenne-mönster).
+>
+> **Utredning:** MR plexus, EMG efter 3-4 veckor. Tidig kontakt handkirurg.
+
+## Nyckelbudskap
+
+✓ Dokumentera neurologisk status FÖRE sövning/åtgärd
+✓ N. peroneus är den vanligaste nervskadan vid trauma
+✓ Plexusskador kräver MR och specialist-uppföljning
+✓ Tidigt EMG (3-4v) för prognosbedömning
+`,
+    3: `# Intraoperativ bedömning
+
+## Vävnadsviabilitet
+
+### Kliniska tecken på viabelt vävnad
+
+#### Muskel - "De 4 C:na"
+- **Color** - Röd, ej gråblek
+- **Consistency** - Fast, ej mosig
+- **Contractility** - Kontraherar vid stimulering
+- **Capacity to bleed** - Blöder vid incision
+
+#### Hud
+- Kapillär återfyllnad
+- Dermalt blödning
+- Färg och temperatur
+
+### Fluorescein-angiografi
+
+#### Metod
+1. IV injektion av fluorescein (10-15 mg/kg)
+2. Belysning med Wood's lampa
+3. Bedöm fluorescens i vävnaden
+
+#### Tolkning
+- Stark fluorescens = god perfusion
+- Ingen/svag fluorescens = hotad vävnad
+- Användbart vid lambåkirurgi och amputationsnivå
+
+### Indocyaningrön (ICG) angiografi
+
+#### Fördelar över fluorescein
+- Snabbare metabolism
+- Kan upprepas
+- Tydligare kontrast
+- Near-infrared visualisering
+
+### Intraoperativa beslut
+
+#### Debridering - "När i tvivel, ta bort mer"
+- Osäker vävnad revideras om 24-48h ("second look")
+- Var generös med debridering initialt
+- Infekterad/nekrotisk vävnad = värre än defekt
+
+#### Nervreparation
+- Primär repair om skarp transsektion
+- Grafting vid defekt > 2 cm
+- Tidig märkning för senare rekonstruktion
+
+## Kliniskt fall
+
+> **Fall A3.1:** Under operation av öppen tibiafraktur typ IIIB ser du att m. tibialis anterior har gråblek färg och kontraherar inte vid elektrisk stimulering.
+>
+> **Åtgärd:** Muskeln är icke-viabel. Debridera tills blödande, kontraktil vävnad nås. Dokumentera omfattningen. Planera för second-look om 48h.
+
+## Nyckelbudskap
+
+✓ "De 4 C:na" för muskelbedömning
+✓ ICG-angio är bättre än fluorescein men dyrare
+✓ Vid tveksamhet: second-look operation
+✓ Generös debridering minskar infektionsrisk
+`,
+    4: `# Vaskulär reparation
+
+## Temporär shunting
+
+### Indikationer
+- Kombinerad kärl- och skelettskada
+- Instabil patient (DCO)
+- Lång transporttid till kärlkirurg
+
+### Teknik
+
+#### Carotid shunt (Argyle/Javid)
+1. Exponera kärlstumpar proximalt och distalt
+2. Spola med hepariniserad koksalt
+3. Inserera shunten, fixera med silkesligaturer
+4. Kontrollera backflow och distalt flöde
+
+#### Improvisation
+- Infusionsslang med adaptrar
+- Nasogastrisk sond
+- Thoraxdrän (mindre diameter)
+
+### Tidsramar
+- Shunt kan sitta 6-24 timmar
+- Dokumentera tid för insertion
+- Monitorera distalt kontinuerligt
+
+## Definitiv vaskulär rekonstruktion
+
+### Primär repair
+- Indikation: Ren transsektion, ingen spänning
+- Teknik: 6-0 prolene, everterade suturer
+- Komplett debridering av kärlkanter först
+
+### Interpositionsgraft
+
+#### Autolog ven
+- V. saphena magna (förstahandsval)
+- V. cephalica/basilica
+- Reverseras eller använd som "non-reversed" med valvotom
+
+#### Syntetiskt
+- PTFE (polytetrafluoroetylen)
+- Dacron
+- Används vid kontaminerade sår med försiktighet
+
+### Postoperativ monitorering
+- Doppler var 2:a timme första dygnet
+- Kontrollera distala pulsar
+- Observera för kompartmentsyndrom
+
+## Fasciotomi vid revaskularisering
+
+### Profylaktisk fasciotomi
+**Indikationer:**
+- Ischemitid > 4-6 timmar
+- Kombinerad artär + venskada
+- Massiv mjukdelsskada
+- Hypotension under ischemiperioden
+
+## Kliniskt fall
+
+> **Fall A4.1:** Patient med suprakondylär humerusfraktur och avsaknad a. brachialis-puls. Du planerar ORIF + kärlrekonstruktion.
+>
+> **Operationsplan:**
+> 1. Först: reducera fraktur, temporär K-wire fixation
+> 2. Exponera a. brachialis - segmentell skada 3 cm
+> 3. V. saphena graft från kontralateralt ben
+> 4. End-to-end anastomos med 6-0 prolene
+> 5. Definitiv plattfixation
+> 6. Fasciotomi av underarmen profylaktiskt
+
+## Nyckelbudskap
+
+✓ "Stabilisera sedan revaskularisera" - eller shunta först
+✓ Shunt köper tid för skelettfixation
+✓ Autolog ven > syntetiskt material
+✓ Profylaktisk fasciotomi vid >4-6h ischemi
+`,
+    5: `# Fasciotomitekniker
+
+## Underbenets kompartment
+
+### Dubbelincisionsteknik (standard)
+
+#### Lateral incision
+1. Markera fibulahuvud och laterala malleol
+2. Incision 1 cm framför fibula, hel längden
+3. Öppna anteriora kompartmentet först
+4. Identifiera intermuskulära septumet
+5. Öppna laterala kompartmentet
+
+#### Medial incision
+1. 2 cm posteriort om tibiakanten
+2. Incision hel underbenslängden
+3. Öppna ytliga posteriora kompartmentet
+4. Incision djupt genom soleus-fascia
+5. Öppna djupa posteriora kompartmentet
+
+### Enkelincisionsteknik (sällsynt)
+- Fibulektomi med åtkomst till alla 4 kompartment
+- Används vid svårt skadad fibula
+
+## Underarmens kompartment
+
+### Volar dekompression
+1. Börja proximalt om armbågsvecket
+2. Kors armbågen snett (undvik nerv)
+3. Fortsätt till handleden (kan förlänga till karpaltunnel)
+4. Öppna lacertus fibrosus
+5. Öppna djupa flexorfascian
+
+### Dorsal dekompression
+- Ofta ej nödvändig om volar gjorts
+- Rak incision dorsalt vid behov
+- Öppna mobila wad
+
+## Lår och höft
+
+### Lårets kompartment
+- Anteriort, posteriort, medialt
+- Lateral incision från trochanter major till laterala femurkondylen
+- Rak medial incision för adduktorerna
+
+### Glutealregionen
+- Sällan nödvändigt
+- Tänk på vid bäckentrauma med gluteal hematom
+
+## Hand
+
+### Intrinsic muscles
+- 2 dorsala incisioner över metakarpale II och IV
+- Öppnar alla interosseuskompartment
+
+## Postoperativ vård
+
+### Sårbehandling
+- Låt såren ligga öppna
+- Fuktiga förband eller VAC
+- Second-look efter 48-72h
+- Sekundär stängning eller hudtransplant
+
+### Komplikationer
+- Infektion
+- Nervskada (vid incision)
+- Blödning
+- Adherenser
+
+## Nyckelbudskap
+
+✓ Dubbelincision på underben = säkrast
+✓ ALLA kompartment måste öppnas
+✓ Låt såren ligga öppna - aldrig primärstäng
+✓ Second-look är regel, inte undantag
+`,
+    6: `# Extern fixation avancerat
+
+## Frame-konstruktion
+
+### Principer
+- **Monotube/monolateral** - Enklast, snabbast
+- **Bilateral/biplanar** - Starkare, använd vid instabila frakturer
+- **Ringfixatorer** - Maximal stabilitet, komplexa rekonstruktioner
+
+### Pinplacering
+
+#### Säkra zoner
+| Region | Säker zon | Riskstrukturer |
+|--------|-----------|----------------|
+| Proximala femur | Lateral | N. ischiadicus |
+| Distala femur | Lateral | Popliteakärl |
+| Proximala tibia | Medial, anteromedial | N. peroneus |
+| Distala tibia | Anteromedial | Ingen större |
+
+#### Teknik
+1. Incision genom hud, ej "stab"
+2. Trubbig dissektion till ben
+3. Förborra med skarp borr (kylning!)
+4. Handkraft sista 1 cm
+5. Bicortikal fixation
+
+### Frame-konfiguration
+
+#### Femurfraktur
+- Minst 2 pins proximal och 2 distal
+- 30° offset mellan pins
+- Röret anteriort eller lateralt
+
+#### Tibiafraktur
+- Anteromedial pinplacering
+- Röret medialt
+- Ankel-spanning vid distal fraktur
+
+## Spanning extern fixator
+
+### Knäspanning
+- Proximala tibiapins + distala femurpins
+- Fixatorrör över knäledens lateralsida
+- Knäet i 10-20° flexion
+
+### Armbågsspanning
+- Humeruspins + ulnapins
+- Flexion 90°
+
+## Konvertering till intern fixation
+
+### Timing
+- Mjukdelarna måste läka först (7-14 dagar)
+- Inga tecken på pin-site infektion
+- Patient fysiologiskt stabil
+
+### Infektionsrisk
+- Ökar efter 2 veckor med extern fix
+- Pin-site odling före konvertering
+- Antibiotika perioperativt
+
+## Kliniskt fall
+
+> **Fall A6.1:** 35-årig man med öppen tibiafraktur typ IIIB och stort mjukdelsdefekt. Du planerar extern fixation.
+>
+> **Frame-design:**
+> - 2 pins i proximala tibia (anteromedial)
+> - 2 pins i distala tibia (anteromedial)
+> - Monolateral frame
+> - Planera second-look dag 2, lambå dag 5-7
+
+## Nyckelbudskap
+
+✓ Pins i säkra zoner - känn anatomin
+✓ Bicortikal, ej genom mjukdelar
+✓ Konvertering till intern fix inom 2 veckor
+✓ Externa fixatorer är "bryggor" - inte definitivt
+`,
+    7: `# Mjukdelstäckning
+
+## Behandlingstrappa
+
+### Nivå 1: Primärslutning
+- Sällan möjligt vid typ III öppna frakturer
+- Endast vid rent sår, ingen spänning
+- Aldrig vid tveksam viabilitet
+
+### Nivå 2: Sekundärslutning
+- Efter några dagars VAC/fuktiga förband
+- När såret är rent och granulerar
+- Ofta med hudtransplantat
+
+### Nivå 3: Hudtransplantat (SSG)
+- Split-skin graft (delhudstransplantat)
+- Kräver granulationsbädd
+- Tar ej på exponerat ben/sena utan periost
+
+### Nivå 4: Lokala lambåer
+- Rotationslambåer
+- Transpositionslambåer
+- Behåller egen blodförsörjning
+
+### Nivå 5: Fria lambåer (mikrokirurgi)
+- Latissimus dorsi (stora defekter)
+- Gracilis (mindre defekter)
+- ALT (anterolateral thigh)
+- Kräver mikrovaskulär anastomos
+
+## VAC-terapi
+
+### Indikationer
+- Sår som ej kan stängas primärt
+- Främja granulationsvävnad
+- Minska ödem
+- Skydda medan man väntar på lambå
+
+### Inställningar
+- Kontinuerligt: -125 mmHg
+- Intermittent: -75 till -125 mmHg (främjar granulation)
+- Byt förband var 2-3:e dag
+
+## Timing av mjukdelstäckning
+
+### "Fix and flap" konceptet
+- Definitiv skelettfixation + lambå inom 72-96h
+- Minskar infektionsrisk signifikant
+- Kräver tillgång till plastikkirurg
+
+### Klinisk verklighet
+- Ofta staged approach i Sverige
+- Första op: debridering + extern fix
+- Dag 2-5: re-debridering
+- Dag 5-10: lambå/SSG
+
+## Kliniskt fall
+
+> **Fall A7.1:** Öppen tibiafraktur typ IIIB med 10x8 cm mjukdelsdefekt över tibiakanten. Exponerat ben utan periost.
+>
+> **Plan:**
+> 1. Dag 0: Debridering, extern fix, VAC
+> 2. Dag 2: Second-look, ytterligare debridering
+> 3. Dag 5: Plastikkirurg bedömer - fri latissimus dorsi lambå
+> 4. Dag 5-7: Mikrovaskulär lambåoperation
+> 5. SSG över muskel dag 10
+
+## Nyckelbudskap
+
+✓ "Fix and flap" inom 72-96h är målet
+✓ VAC är bro till definitiv täckning
+✓ Exponerat ben utan periost = kräver lambå
+✓ Tidig plastikkirurgisk kontakt
+`,
+    8: `# Multitrauma-koordinering
+
+## Prioritering vid konkurrerande skador
+
+### Primary survey först - ALLTID
+A - Airway
+B - Breathing
+C - Circulation (inkl. massiv blödning)
+D - Disability
+E - Exposure
+
+### Ortopedins plats i prioriteringen
+
+#### Omedelbart (C-problem)
+- Massiv extremitetsblödning
+- Instabil bäckenring med blödning
+- Traumatisk amputation
+
+#### Brådskande (timmar)
+- Kärlskada med ischemi (<6h)
+- Öppen fraktur (antibiotika <1h, debrid <6h)
+- Kompartmentsyndrom
+
+#### Elektiv akut (inom dygn)
+- Slutna frakturer
+- Luxationer (efter reposition)
+
+## Parallell handläggning
+
+### "Damage control resuscitation"
+- Permissiv hypotension (MAP >65)
+- Begränsa kristalloider
+- Tidig blodprodukter (1:1:1)
+- TXA inom 3h
+
+### Samtidiga åtgärder
+- Thoraxdrän + bäckenbälte samtidigt
+- Ex-fix kan göras på IVA/trauma-rummet
+- Kommunikation mellan team essentiellt
+
+## Operationsordning vid multitrauma
+
+### Principen "Life > Limb > Function"
+
+#### Exempel: Buk + bäcken + femur
+1. Laparotomi för bukblödning
+2. Preperitonal packing vid bäcken
+3. Extern fixation bäcken
+4. Extern fixation femur
+5. ICU för resuscitering
+6. Relook/definitiv kirurgi dag 2-4
+
+### Timing av ortopedisk fixation
+- **ETC** (Early Total Care): Allt i en seans - stabil patient
+- **DCO** (Damage Control): Staged - instabil patient
+
+## Kommunikation
+
+### Traumateam-möte
+- Kort briefing: vem gör vad
+- Regelbunden uppdatering var 15 min
+- Tydlig teamledare
+
+### SBAR vid konsultation
+- Situation: "Multitrauma med bäcken + femur"
+- Background: "55-årig man, trafikolycka"
+- Assessment: "Instabil bäcken APC-III, öppen femurfraktur"
+- Recommendation: "Behöver ex-fix av bäcken nu"
+
+## Nyckelbudskap
+
+✓ ABCDE först - ortopedi är del av C
+✓ Parallella team sparar tid
+✓ DCO vid instabil patient, ETC vid stabil
+✓ Kommunicera, kommunicera, kommunicera
+`,
+    9: `# Mangled Extremity
+
+## Definition
+En extremitet med kombinerad skada på minst 3 av:
+- Ben
+- Mjukdelar
+- Kärl
+- Nerver
+
+## MESS Score
+
+### Mangled Extremity Severity Score
+
+| Komponent | Poäng |
+|-----------|-------|
+| **Skelett/mjukdelar** | |
+| Låg energi | 1 |
+| Medel energi | 2 |
+| Hög energi | 3 |
+| Mycket hög (crush) | 4 |
+| **Ischemi** | |
+| Puls reducerad/avsaknad | 1* |
+| Pulslös, parestetisk | 2* |
+| Kall, paralytisk | 3* |
+| **Chock** | |
+| BT >90 konsistent | 0 |
+| Transient hypotension | 1 |
+| Persistent hypotension | 2 |
+| **Ålder** | |
+| <30 år | 0 |
+| 30-50 år | 1 |
+| >50 år | 2 |
+
+*Dubblas om ischemi >6h
+
+### Tolkning
+- MESS ≥7: Hög sannolikhet för amputation
+- MESS <7: Limb salvage ofta möjlig
+- **OBS:** Används som vägledning, ej ensamt beslutsunderlag
+
+## Andra scoringsystem
+
+### NISSSA
+- Nerve injury, Ischemia, Soft tissue, Skeletal, Shock, Age
+- Mer komplex, inkluderar nervstatus
+
+### LSI (Limb Salvage Index)
+- Inkluderar djup venös skada
+- Bättre prediktion i vissa studier
+
+## Amputation vs limb salvage
+
+### Faktorer som talar för amputation
+- MESS ≥7
+- Total tibialis posterior-skada
+- Varm ischemitid >6-8h
+- Crush-skada med utbredd muskelskada
+- Äldre patient med komorbiditeter
+- Patientens önskemål
+
+### Faktorer som talar för salvage
+- Barn/ungdom
+- Partiell nervfunktion bevarad
+- Kort ischemitid
+- Ren traumamekanism
+- God allmänhälsa
+
+## Det svåra samtalet
+
+### Information till patient/anhörig
+- Ärlig prognos
+- Beskriva alternativen
+- Tid för beslut om möjligt
+- Respektera patientens autonomi
+
+### Psykologiska aspekter
+- Tidig kontakt kurator/psykolog
+- Protetkontakt tidigt vid amputation
+- Långsiktig uppföljning
+
+## Kliniskt fall
+
+> **Fall A9.1:** 28-årig man, MC-olycka. Öppen tibiafraktur med 15 cm defekt, popliteaocklusion, total peroneuspares. Ischemitid 5h. MESS = 8.
+>
+> **Diskussion:** MESS talar för amputation, men patient är ung. Diskutera med patient och anhöriga. Överväg revaskularisering + extern fix + lambå som ett försök. Tydlig plan om amputation om limb salvage misslyckas.
+
+## Nyckelbudskap
+
+✓ MESS är vägledning, ej absolut gräns
+✓ N. tibialis posterior-funktion är nyckel för gång
+✓ Involvera patient i beslutet
+✓ Amputation är ej misslyckande - kan vara bästa utfallet
+`,
+    10: `# Bäckentrauma avancerat
+
+## Hemodynamisk instabilitet
+
+### Definition
+- BT <90 systoliskt trots 2L kristalloid
+- Behov av vasopressor
+- Pågående transfusionsbehov
+
+### Blödningskällor vid bäckentrauma
+1. Venös plexus (vanligast) - 80%
+2. Cancellöst ben
+3. Arteriell (a. iliaca interna grenar) - 20%
+
+## Prehospital stabilisering
+
+### Bäckenbälte
+- Appliceras på alla misstänkta bäckenskador
+- Över trochantranterna
+- Kontrollera att det sitter rätt
+
+### Circumferential sheet
+- Alternativ om bälte saknas
+- Lakan runt bäckenet, knut anteriort
+
+## Algoritm för instabil bäckenskada
+
+### Hemodynamiskt instabil patient
+
+1. **Traumarummet**
+   - ABCDE
+   - Bäckenbälte
+   - MTP (massiv transfusion)
+
+2. **Beslutspunkt: Röntgen/FAST**
+   - FAST positiv → Laparotomi + packing
+   - FAST negativ → Bäckenorsakad blödning trolig
+
+3. **Blödningskontroll bäcken**
+   - Preperitonal packing (snabb, effektiv för venös blödning)
+   - ELLER angioembolisering (för arteriell blödning)
+   - ELLER REBOA (temporär)
+
+4. **Mekanisk stabilisering**
+   - Extern fixation
+   - C-clamp vid posterior instabilitet
+
+## Preperitonal packing
+
+### Teknik
+1. Nedre medellinjeincision
+2. Öppna ENDAST preperitonealt (gå ej in i buken)
+3. Packa med 3-5 dukar per sida
+4. Temporärstäng buken
+5. Relook efter 24-48h
+
+### Fördelar
+- Snabbt (15-20 min)
+- Kontrollerar venös blödning effektivt
+- Kan göras av ortoped/traumakirurg
+
+## Extern fixation av bäcken
+
+### Indikationer
+- "Open book" (APC) skador
+- Mekanisk instabilitet
+- Del av DCO
+
+### Anterior frame
+- Pins i crista iliaca ELLER supraacetabulärt
+- Enkelt, snabbt
+- Stabiliserar främre ringen
+
+### C-clamp
+- Vid bakre instabilitet (SI-led)
+- Komprimerar bakre ringen
+- Kräver erfarenhet - risk för nervskada
+
+## Kliniskt fall
+
+> **Fall A10.1:** 45-årig kvinna, fotgängare påkörd. BT 70/40 trots 2L Ringer. CT visar APC-III med aktiv blödning från v. iliaca interna-grenar.
+>
+> **Åtgärd:**
+> 1. MTP igång
+> 2. Till op - preperitonal packing (20 min)
+> 3. Extern fixation anteriort
+> 4. Till IVA
+> 5. Relook + ev. angio dag 2
+
+## Nyckelbudskap
+
+✓ Bäckenblödning = ofta venös (packing effektivt)
+✓ Preperitonal packing kan göras av ortoped
+✓ Angio vid arteriell blödning (kontrast-blush på CT)
+✓ Anterior ex-fix stabiliserar "open book"
+`,
+    11: `# Pediatrisk polytrauma
+
+## Fysiologiska skillnader
+
+### Kardiovaskulärt
+- Högre hjärtfrekvens normalt
+- Bibehåller BT längre (kompenserar)
+- När BT faller = mycket allvarligt (>30% blodförlust)
+- Tachykardi är tidigt tecken
+
+### Anatomi
+- Stort huvud = högre cervikalskaderisk
+- Eftergivlig thorax = lungkontusion utan revbensfraktur
+- Stor mjälte/lever = högre risk för bukskada
+
+### Normal vitalparametrar
+| Ålder | HF | BT systoliskt | AF |
+|-------|-----|---------------|-----|
+| Spädbarn | 120-160 | 70-90 | 30-40 |
+| 1-5 år | 100-130 | 80-100 | 20-30 |
+| 6-12 år | 80-110 | 90-110 | 16-24 |
+
+## Ortopediska säröverväganden
+
+### Frakturmönster
+- Greenstick och torus-frakturer
+- Fysiolysis (Salter-Harris)
+- Suprakondylär humerusfraktur = vanlig + kärlskaderisk
+- Femurfraktur = misstänk barnmisshandel hos <3 år
+
+### Icke-accidentellt trauma (NAI)
+**Varningssignaler:**
+- Frakturer hos icke-mobilt barn
+- Multipla frakturer i olika läkningsstadier
+- Metafysära "bucket handle" frakturer
+- Oförklarlig skademekanism
+
+### Handläggning vid NAI-misstanke
+1. Behandla skadorna
+2. Anmäl till socialtjänsten (lagkrav)
+3. Dokumentera noggrant
+4. Skelettröntgen (skeletal survey)
+
+## Vätske- och blodbehandling
+
+### Volym
+- Bolus: 20 ml/kg Ringer
+- Upprepa x2 vid behov
+- Om fortsatt instabil: blodtransfusion
+
+### Blodprodukter
+- 10-20 ml/kg erytrocyter
+- Tidig TXA (15 mg/kg)
+- MTP-protokoll anpassat för barn
+
+## Damage control hos barn
+
+### Samma principer som vuxna
+- Extern fixation
+- Temporär stabilisering
+- Definitiv kirurgi efter stabilisering
+
+### Skillnader
+- Barn tål hypotermi sämre
+- Snabbare förlust av temperatur
+- Aktiv uppvärmning prioriteras
+
+## Kliniskt fall
+
+> **Fall A11.1:** 8-årig pojke påkörd av bil. GCS 13, HR 140, BT 85/55. Femurfraktur dx, bäckensmärta, bukspänning.
+>
+> **Bedömning:** Kompenserad chock (tachykardi, lågt normalt BT).
+>
+> **Åtgärd:**
+> 1. 20 ml/kg Ringer x2
+> 2. FAST: Fri vätska
+> 3. Till op: Laparotomi (mjältruptur)
+> 4. Extern fixation femur
+> 5. Bäcken stabil - konservativ
+
+## Nyckelbudskap
+
+✓ Barn kompenserar länge - tachykardi är varningstecken
+✓ Suprakondylär humerusfraktur = kolla kärl (a. brachialis)
+✓ NAI måste övervägas - anmälningsplikt
+✓ Aktiv uppvärmning är kritiskt
+`,
+    12: `# Traumateamledning
+
+## Teamledarens roll
+
+### Före patientens ankomst
+- Samla information (MIST)
+- Fördela roller
+- Briefing: "Förväntad patient, roller, första åtgärder"
+- Säkerställ utrustning
+
+### Under mottagandet
+- Stå "vid fotändan" - överblick
+- ABCDE-ordning
+- Delegera - utför ej själv
+- Closed-loop kommunikation
+- Regelbunden sammanfattning
+
+### Beslutsfattande
+- Strukturerat: ABCDE → Undersökning → Plan
+- Högt tänkande: "Jag tänker att... vad säger ni?"
+- Efterfråga input från teamet
+
+## Icke-tekniska färdigheter (NTS)
+
+### Situationsmedvetenhet
+- Perception: Vad händer?
+- Comprehension: Vad betyder det?
+- Projection: Vad kommer hända?
+
+### Beslutsfattande
+- Recognize-primed decisions (erfarenhet)
+- Rule-based decisions (protokoll)
+- Analytiska beslut (vid tid)
+
+### Teamwork
+- Informationsdelning
+- Stöd till teammedlemmar
+- Konflikthantering
+
+### Uppgiftshantering
+- Prioritering
+- Resursutnyttjande
+- Tidshantering
+
+## Kommunikation
+
+### Closed-loop
+1. Order: "Ge 1g Cyklokapron"
+2. Bekräftelse: "1g Cyklokapron"
+3. Utförande
+4. Rapport: "Cyklokapron given"
+
+### Check-back
+"Så vi har en 35-årig man med bäckenfraktur och fri vätska på FAST. BT är nu 90. Planen är laparotomi följt av extern fixation. Stämmer det?"
+
+### Speak up
+Alla i teamet har rätt och skyldighet att påtala fel eller säkerhetsrisker
+
+## Debriefing
+
+### Hot debrief (direkt efter)
+- 5 minuter
+- Vad gick bra?
+- Vad kan förbättras?
+- Emotionell ventilering
+
+### Cold debrief (senare)
+- Strukturerad genomgång
+- Systemförbättringar
+- Utbildningsbehov
+
+## Kliniskt fall
+
+> **Fall A12.1:** Du är traumaledare. Patient ankommer, teamet verkar okoordinerat, flera pratar samtidigt.
+>
+> **Åtgärd:**
+> 1. "STOPP - jag är teamledare"
+> 2. "Vi börjar om. ABCDE"
+> 3. Fördela tydliga roller
+> 4. "Rapportera till mig innan ni gör något"
+> 5. Fortsätt strukturerat
+
+## Nyckelbudskap
+
+✓ Teamledare leder - utför ej
+✓ Closed-loop kommunikation alltid
+✓ "Speak up" - alla är säkerhetsbarriärer
+✓ Debriefing efter varje fall
+`,
+    13: `# Masskadesituationer
+
+## Definition och aktivering
+
+### Masskada
+Situation där antalet skadade överstiger tillgängliga resurser med normala rutiner
+
+### Aktivering
+- Prehospital information: ≥5 allvarligt skadade
+- Kommando etableras
+- Personalförstärkning
+- Materialanskaffning
+
+## Triage
+
+### START (Simple Triage And Rapid Treatment)
+
+#### Steg 1: Kan gå?
+- JA → GRÖN (kan vänta)
+- NEJ → Fortsätt
+
+#### Steg 2: Andas?
+- NEJ efter friläggning av luftväg → SVART (avliden)
+- JA → Fortsätt
+
+#### Steg 3: Andningsfrekvens
+- >30/min → RÖD (omedelbar)
+- <30 → Fortsätt
+
+#### Steg 4: Kapillär återfyllnad
+- >2 sek → RÖD (omedelbar)
+- <2 sek → Fortsätt
+
+#### Steg 5: Följer uppmaningar?
+- NEJ → RÖD (omedelbar)
+- JA → GUL (kan vänta något)
+
+### Retriaging
+- Kontinuerlig omvärdering
+- Patienter kan försämras/förbättras
+- Dokumentera varje triagering
+
+## Ortopediska prioriteringar vid masskada
+
+### Omedelbart (RÖD)
+- Tourniquet vid massiv blödning
+- Bäckenbälte vid instabilt bäcken
+- Reposition av felställd fraktur med kärlpåverkan
+
+### Brådskande (GUL)
+- Fasciotomi vid kompartment
+- Öppna frakturer (antibiotika ges, debridering väntar)
+- Extern fixation som temporär stabilisering
+
+### Kan vänta (GRÖN)
+- Slutna frakturer
+- Gipsning
+- Mjukdelsskador
+
+## Resursprioritering
+
+### Personal
+- Ortoped till triage av extremitetsskador
+- Erfarna till de rödaste patienterna
+- Dokumentatör per patient
+
+### Material
+- Tourniquets
+- Bäckenbälten
+- Extern fixationsutrustning
+- Gips
+
+### Lokaler
+- Traumarum för RÖD
+- Observation för GUL
+- Väntrum för GRÖN
+
+## Kommunikation
+
+### Kommandostruktur
+- Sjukvårdsledare (medicinskt ansvarig)
+- Sektionsledare (akuten, operation, IVA)
+- Teamledare (per patient)
+
+### Rapportering
+- Regelbunden lägesrapport
+- Antal patienter per kategori
+- Resursstatus
+
+## Kliniskt fall
+
+> **Fall A13.1:** Bussolycka med 20 skadade. Du är ortoped på plats.
+>
+> **Åtgärd:**
+> 1. Rapportera till sjukvårdsledare
+> 2. Triage av extremitetsskador
+> 3. Tourniquet/bäckenbälte på RÖD
+> 4. Delegera gipsning av GRÖNA till yngre kollega
+> 5. Assistera vid operationer enligt prioritet
+
+## Nyckelbudskap
+
+✓ Triage räddar flest liv vid begränsade resurser
+✓ "Gör mest gott för flest" - ej individuell optimering
+✓ Retriaging är kritiskt - tillstånd förändras
+✓ Kommunikation via kommandokedjan
+`,
+    14: `# Kvalitet och förbättring
+
+## Kvalitetsregister
+
+### SweTrau (Svenska Traumaregistret)
+- Nationellt register för svårt skadade
+- ISS ≥9 inkluderas
+- Data för kvalitetsförbättring
+- Benchmarking mellan sjukhus
+
+### Variabler som registreras
+- Demografi
+- Skademekanism
+- ISS, NISS
+- Vitalparametrar
+- Tidsintervall (skada → op)
+- Mortalitet, komplikationer
+
+### Svenska Höftprotesregistret / Frakturregister
+- Ortopedspecifika register
+- Implantatöverlevnad
+- Komplikationer
+
+## Mortality & Morbidity (M&M)
+
+### Syfte
+- Lärande från komplikationer
+- Systemförbättring
+- Ej skuldbeläggning
+
+### Struktur
+1. Fallpresentation
+2. Tidslinje
+3. Identifiering av avvikelser
+4. Rotorsaksanalys
+5. Förbättringsförslag
+6. Uppföljning av åtgärder
+
+### Rotorsaksanalys
+- Human factors (trötthet, stress)
+- Utrustning (saknas, fel)
+- Kommunikation
+- Organisation/system
+- Utbildning
+
+## Evidensbaserad praktik
+
+### Litteratursökning
+- PubMed, Cochrane
+- Fokusera på RCT och meta-analyser
+- Kritisk granskning
+
+### GRADE-systemet
+- Kvalitet på evidens: Hög/Måttlig/Låg/Mycket låg
+- Styrka på rekommendation: Stark/Svag
+
+### Implementering av ny kunskap
+- Lokala riktlinjer
+- Utbildning
+- Uppföljning av efterlevnad
+
+## Simulering och träning
+
+### Typer
+- Tabletop exercises
+- Procedurträning (kadaver, modeller)
+- Fullskalig simulering
+
+### Feedback
+- Strukturerad debriefing
+- Videoanalys
+- Checklistor
+
+## Kontinuerligt förbättringsarbete
+
+### PDSA-cykel
+1. **Plan** - Identifiera förbättringsområde
+2. **Do** - Testa förändring i liten skala
+3. **Study** - Analysera resultat
+4. **Act** - Implementera eller justera
+
+### Exempel på förbättringsprojekt
+- Tid till antibiotika vid öppen fraktur
+- Andel dokumenterade neurovaskulära status
+- Tid till fasciotomi vid kompartment
+
+## Nyckelbudskap
+
+✓ Registerdata möjliggör förbättring
+✓ M&M är lärande, ej bestraffning
+✓ PDSA-cykler för kontinuerlig förbättring
+✓ Simulering bygger kompetens utan patientrisk
+`,
+  };
+
+  return contents[chapterNumber] || `# Kapitel ${chapterNumber}\n\nInnehåll under utveckling...`;
+}
+
+// A-ORTIM Quiz Questions
+function getAdvancedQuizQuestions() {
+  return [
+    // Kapitel 1: Avancerad bilddiagnostik
+    {
+      code: 'A1.1',
+      chapterNumber: 1,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vilka är direkta tecken på kärlskada vid CT-angiografi?',
+      options: [
+        { text: 'Extravasering, pseudoaneurysm, AV-fistel, ocklusion, intimaskada', correct: true },
+        { text: 'Hematom, svullnad, fraktur', correct: false },
+        { text: 'Ökad kontrastuppladdning i mjukdelar', correct: false },
+        { text: 'Benförlust och periostreaktion', correct: false },
+      ],
+      explanation: 'Direkta tecken på kärlskada vid CT-angio inkluderar extravasering, pseudoaneurysm, AV-fistel, ocklusion och intimaskada.',
+      reference: 'A-ORTIM Kursbok, Kapitel 1',
+    },
+    {
+      code: 'A1.2',
+      chapterNumber: 1,
+      bloomLevel: 'APPLICATION',
+      question: 'Patient med misstänkt kärlskada men normalt ABI (0.95). Vad är nästa steg?',
+      options: [
+        { text: 'CT-angiografi vid fortsatt klinisk misstanke', correct: true },
+        { text: 'Ingen ytterligare utredning behövs', correct: false },
+        { text: 'Direkt till operation', correct: false },
+        { text: 'Upprepa ABI om 24 timmar', correct: false },
+      ],
+      explanation: 'Normalt ABI utesluter inte kärlskada helt. Vid klinisk misstanke bör CT-angiografi utföras.',
+      reference: 'A-ORTIM Kursbok, Kapitel 1',
+    },
+    // Kapitel 4: Vaskulär reparation
+    {
+      code: 'A4.1',
+      chapterNumber: 4,
+      bloomLevel: 'APPLICATION',
+      question: 'Du ska utföra vaskulär rekonstruktion efter 5 timmars ischemi. Vilken åtgärd bör göras profylaktiskt?',
+      options: [
+        { text: 'Fasciotomi av alla kompartment', correct: true },
+        { text: 'Antibiotika endast', correct: false },
+        { text: 'Ingen profylax behövs', correct: false },
+        { text: 'Kylning av extremiteten', correct: false },
+      ],
+      explanation: 'Vid ischemitid >4-6 timmar bör profylaktisk fasciotomi utföras för att förebygga kompartmentsyndrom vid reperfusion.',
+      reference: 'A-ORTIM Kursbok, Kapitel 4',
+    },
+    // Kapitel 5: Fasciotomi
+    {
+      code: 'A5.1',
+      chapterNumber: 5,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken teknik är standard för fasciotomi av underbenet?',
+      options: [
+        { text: 'Dubbelincision - lateral och medial', correct: true },
+        { text: 'Enkelincision anteriort', correct: false },
+        { text: 'Endast lateral incision', correct: false },
+        { text: 'Perkutan teknik', correct: false },
+      ],
+      explanation: 'Dubbelincisionsteknik med lateral och medial incision är standard för att nå alla fyra kompartment på underbenet.',
+      reference: 'A-ORTIM Kursbok, Kapitel 5',
+    },
+    // Kapitel 6: Extern fixation
+    {
+      code: 'A6.1',
+      chapterNumber: 6,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Var är den säkra zonen för pinplacering i proximala tibia?',
+      options: [
+        { text: 'Medialt och anteromedialt', correct: true },
+        { text: 'Lateralt', correct: false },
+        { text: 'Posteriort', correct: false },
+        { text: 'Anterolateralt', correct: false },
+      ],
+      explanation: 'Medial och anteromedial pinplacering i proximala tibia undviker risk för skada på n. peroneus.',
+      reference: 'A-ORTIM Kursbok, Kapitel 6',
+    },
+    // Kapitel 9: Mangled extremity
+    {
+      code: 'A9.1',
+      chapterNumber: 9,
+      bloomLevel: 'ANALYSIS',
+      question: 'Patient med MESS-score 8. Vilken är den korrekta tolkningen?',
+      options: [
+        { text: 'Hög sannolikhet för amputation, men MESS är vägledning - diskutera med patient', correct: true },
+        { text: 'Amputation är obligatorisk', correct: false },
+        { text: 'Limb salvage är alltid möjlig', correct: false },
+        { text: 'MESS-score är irrelevant för beslut', correct: false },
+      ],
+      explanation: 'MESS ≥7 indikerar hög sannolikhet för amputation men är en vägledning. Patientens önskemål och individuella faktorer måste beaktas.',
+      reference: 'A-ORTIM Kursbok, Kapitel 9',
+    },
+    // Kapitel 10: Bäckentrauma
+    {
+      code: 'A10.1',
+      chapterNumber: 10,
+      bloomLevel: 'APPLICATION',
+      question: 'Hemodynamiskt instabil patient med bäckentrauma och negativ FAST. Vad är nästa steg?',
+      options: [
+        { text: 'Preperitonal packing och/eller angioembolisering', correct: true },
+        { text: 'Laparotomi', correct: false },
+        { text: 'Avvakta och ge mer vätska', correct: false },
+        { text: 'Endast extern fixation', correct: false },
+      ],
+      explanation: 'Vid negativ FAST och instabilt bäcken är bäckenet trolig blödningskälla. Preperitonal packing (venös) eller angio (arteriell) är indicerat.',
+      reference: 'A-ORTIM Kursbok, Kapitel 10',
+    },
+    // Kapitel 12: Teamledning
+    {
+      code: 'A12.1',
+      chapterNumber: 12,
+      bloomLevel: 'APPLICATION',
+      question: 'Som traumaledare noterar du att teamet arbetar okoordinerat. Vad gör du?',
+      options: [
+        { text: 'Stoppa, återta ledarskapet, fördela roller tydligt och fortsätt strukturerat', correct: true },
+        { text: 'Ta över alla uppgifter själv', correct: false },
+        { text: 'Låt teamet fortsätta och korrigera efteråt', correct: false },
+        { text: 'Byt ut teammedlemmar', correct: false },
+      ],
+      explanation: 'Teamledaren ska vid oordning stoppa, tydliggöra roller och återuppta strukturerat arbete enligt ABCDE.',
+      reference: 'A-ORTIM Kursbok, Kapitel 12',
+    },
+    // Kapitel 13: Masskada
+    {
+      code: 'A13.1',
+      chapterNumber: 13,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Enligt START-triage, vilken patient klassas som RÖD (omedelbar)?',
+      options: [
+        { text: 'Patient som inte kan gå, andas >30/min eller kapillär återfyllnad >2 sek', correct: true },
+        { text: 'Patient som kan gå själv', correct: false },
+        { text: 'Patient som inte andas efter friläggning av luftväg', correct: false },
+        { text: 'Patient med isolerad armfraktur', correct: false },
+      ],
+      explanation: 'START-triage: RÖD = kan ej gå + AF >30 eller kapillär återfyllnad >2 sek eller följer ej uppmaningar.',
+      reference: 'A-ORTIM Kursbok, Kapitel 13',
+    },
+    // Kapitel 14: Kvalitet
+    {
+      code: 'A14.1',
+      chapterNumber: 14,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vad är syftet med M&M-konferenser?',
+      options: [
+        { text: 'Lärande från komplikationer och systemförbättring - ej skuldbeläggning', correct: true },
+        { text: 'Identifiera skyldiga för komplikationer', correct: false },
+        { text: 'Juridisk dokumentation', correct: false },
+        { text: 'Bedöma individuella läkares kompetens', correct: false },
+      ],
+      explanation: 'M&M-konferenser syftar till lärande och systemförbättring, inte skuldbeläggning av individer.',
+      reference: 'A-ORTIM Kursbok, Kapitel 14',
     },
   ];
 }
