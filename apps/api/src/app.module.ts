@@ -14,6 +14,9 @@ import { WebsocketModule } from './websocket/websocket.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { SentryModule } from './common/sentry/sentry.module';
+import { RedisModule } from './common/redis/redis.module';
+import { AuditModule } from './common/audit/audit.module';
+import { SecurityModule } from './common/security/security.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -37,6 +40,15 @@ import { AppController } from './app.controller';
 
     // Error tracking
     SentryModule,
+
+    // Caching
+    RedisModule,
+
+    // Audit logging
+    AuditModule,
+
+    // Security (rate limiting, account lockout)
+    SecurityModule,
 
     // Feature modules
     AuthModule,

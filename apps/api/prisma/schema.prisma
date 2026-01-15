@@ -399,6 +399,53 @@ model Notification {
 }
 
 // ============================================
+// AUDIT LOGGING
+// ============================================
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  ACCESS
+  EXPORT
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  userId      String?
+  action      AuditAction
+  entityType  String
+  entityId    String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  timestamp   DateTime    @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([timestamp])
+}
+
+// ============================================
+// LOGIN ATTEMPTS (for account lockout)
+// ============================================
+
+model LoginAttempt {
+  id           String   @id @default(cuid())
+  identifier   String   // personnummer or IP
+  success      Boolean
+  ipAddress    String?
+  userAgent    String?
+  attemptedAt  DateTime @default(now())
+
+  @@index([identifier])
+  @@index([attemptedAt])
+}
+
+// ============================================
 // LÖSENORDSÅTERSTÄLLNING
 // ============================================
 
