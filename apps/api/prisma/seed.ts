@@ -150,6 +150,18 @@ async function main() {
     { code: 'MESS', title: 'MESS Score', description: 'Mangled Extremity Severity Score för amputation vs limb salvage', svg: getMESSSVG() },
     { code: 'START-TRIAGE', title: 'START Triage', description: 'Simple Triage And Rapid Treatment vid masskada', svg: getSTARTTriageSVG() },
     { code: 'FASCIOTOMY', title: 'Fasciotomiguide', description: 'Incisioner och kompartment för underben', svg: getFasciotomySVG() },
+    // Evidence-based A-ORTIM algorithms
+    { code: 'VASCULAR-INJURY', title: 'Kärlskadealgoritm', description: 'Strukturerad utredning vid misstänkt kärlskada med hard/soft signs', svg: getVascularInjuryAlgorithmSVG() },
+    { code: 'DCO-ETC', title: 'DCO vs ETC', description: 'Beslutsstöd för Damage Control vs Early Total Care', svg: getDCOvsETCAlgorithmSVG() },
+    { code: 'OPEN-FX-ADV', title: 'Öppen fraktur avancerad', description: 'BOA/BAPRAS guidelines för öppna frakturer', svg: getOpenFractureAlgorithmSVG() },
+    { code: 'PELVIC-HEMORRHAGE', title: 'Bäckenblödning', description: 'Algoritm för hemodynamiskt instabil bäckenfraktur', svg: getPelvicHemorrhageAlgorithmSVG() },
+    // Quick Reference Cards - Snabbreferenskort för tidskritiska tillstånd
+    { code: 'QRC-TOURNIQUET', title: 'Tourniquet Snabbkort', description: 'Indikation, applicering och tidsgränser', svg: getQRCTourniquetSVG() },
+    { code: 'QRC-COMPARTMENT', title: 'Kompartment Snabbkort', description: '6 P och tryckmätning', svg: getQRCCompartmentSVG() },
+    { code: 'QRC-AMPUTATION', title: 'Traumatisk Amputation', description: 'Stump och amputat hantering', svg: getQRCAmputationSVG() },
+    { code: 'QRC-OPEN-FX', title: 'Öppen Fraktur Snabbkort', description: 'Klassifikation och initial åtgärd', svg: getQRCOpenFxSVG() },
+    { code: 'QRC-PELVIC', title: 'Bäckenblödning Snabbkort', description: 'Bäckenbälte och blödningskontroll', svg: getQRCPelvicSVG() },
+    { code: 'QRC-VASCULAR', title: 'Kärlskada Snabbkort', description: 'Hard signs, soft signs och ABI', svg: getQRCVascularSVG() },
   ];
 
   for (const algo of algorithms) {
@@ -344,6 +356,35 @@ async function main() {
   }
 
   console.log('✅ A-ORTIM quiz questions created');
+
+  // Create Pre-Course Assessment Questions (förkunskapstest)
+  const preCourseQuestions = getPreCourseAssessmentQuestions();
+  for (const q of preCourseQuestions) {
+    await prisma.quizQuestion.upsert({
+      where: { questionCode: q.code },
+      update: {},
+      create: {
+        chapterId: null, // Pre-course questions are not chapter-specific
+        questionCode: q.code,
+        bloomLevel: q.bloomLevel as BloomLevel,
+        questionText: q.question,
+        explanation: q.explanation,
+        reference: q.reference,
+        isActive: true,
+        isExamQuestion: false, // Not an exam question, assessment only
+        options: {
+          create: q.options.map((opt, idx) => ({
+            optionLabel: String.fromCharCode(65 + idx),
+            optionText: opt.text,
+            isCorrect: opt.correct,
+            sortOrder: idx + 1,
+          })),
+        },
+      },
+    });
+  }
+
+  console.log('✅ Pre-course assessment questions created');
 
   // Create Learning Objectives for A-ORTIM
   const advancedLearningObjectives = getAdvancedLearningObjectives();
@@ -1690,6 +1731,523 @@ function getQuizQuestions() {
       ],
       explanation: 'B-ORTIM certifikatet gäller i 4 år, varefter recertifiering krävs.',
       reference: 'B-ORTIM Kursbok, Kapitel 17',
+    },
+    // ============================================
+    // YTTERLIGARE FRÅGOR FÖR FULLSTÄNDIG TÄCKNING
+    // ============================================
+
+    // Kapitel 1: Extra frågor
+    {
+      code: '1.3',
+      chapterNumber: 1,
+      bloomLevel: 'APPLICATION',
+      question: 'En patient med tibiafraktur har kraftig smärta som inte lindras av morfin, samt smärta vid passiv tåextension. Vilken diagnos misstänker du?',
+      options: [
+        { text: 'Kompartmentsyndrom', correct: true },
+        { text: 'Djup ventrombos', correct: false },
+        { text: 'Nervskada', correct: false },
+        { text: 'Frakturkomplikation', correct: false },
+      ],
+      explanation: 'Smärta oproportionerlig till skadan och smärta vid passiv töjning är klassiska tecken på kompartmentsyndrom - ett tidskritiskt tillstånd.',
+      reference: 'B-ORTIM Kursbok, Kapitel 1',
+    },
+    {
+      code: '1.4',
+      chapterNumber: 1,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför är tidig identifiering av de fyra tidskritiska tillstånden så viktig?',
+      options: [
+        { text: 'Försenad behandling leder till irreversibel vävnadsskada eller död', correct: true },
+        { text: 'Det sparar sjukhusresurser', correct: false },
+        { text: 'Patienten får mindre ont', correct: false },
+        { text: 'Det förenklar dokumentationen', correct: false },
+      ],
+      explanation: 'De tidskritiska tillstånden (kärlskada, kompartmentsyndrom, öppen fraktur, instabilt bäcken) kräver snabb behandling för att undvika amputation, organsvikt eller död.',
+      reference: 'B-ORTIM Kursbok, Kapitel 1',
+    },
+    {
+      code: '1.5',
+      chapterNumber: 1,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken är den rekommenderade ischemitiden innan irreversibel muskelskada uppstår?',
+      options: [
+        { text: '6 timmar', correct: true },
+        { text: '2 timmar', correct: false },
+        { text: '12 timmar', correct: false },
+        { text: '24 timmar', correct: false },
+      ],
+      explanation: 'Efter 6 timmars ischemi börjar irreversibel muskelskada uppstå. Detta kallas "golden hour" för kärlskador.',
+      reference: 'B-ORTIM Kursbok, Kapitel 1; Feliciano DV J Trauma 2011',
+    },
+
+    // Kapitel 2: Extra frågor
+    {
+      code: '2.3',
+      chapterNumber: 2,
+      bloomLevel: 'APPLICATION',
+      question: 'Vid LIMB-undersökning av en patient med knäluxation, vilken struktur är viktigast att bedöma akut?',
+      options: [
+        { text: 'A. poplitea (kärlstatus)', correct: true },
+        { text: 'Meniskerna', correct: false },
+        { text: 'Patellasenan', correct: false },
+        { text: 'Quadricepsstyrka', correct: false },
+      ],
+      explanation: 'Knäluxation har hög risk för popliteakärlskada (upp till 40%). Kärlstatus måste bedömas omedelbart.',
+      reference: 'B-ORTIM Kursbok, Kapitel 2',
+    },
+    {
+      code: '2.4',
+      chapterNumber: 2,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad betyder "M" i LIMB-protokollet?',
+      options: [
+        { text: 'Movement (rörlighet) och Muscle (motorik/sensorik)', correct: true },
+        { text: 'Medication (medicinering)', correct: false },
+        { text: 'Monitoring (övervakning)', correct: false },
+        { text: 'Mechanism (skademekanism)', correct: false },
+      ],
+      explanation: 'M i LIMB står för rörlighet (aktiv/passiv), motorik och sensorik - viktigt för att bedöma nervfunktion och kompartmentstatus.',
+      reference: 'B-ORTIM Kursbok, Kapitel 2',
+    },
+    {
+      code: '2.5',
+      chapterNumber: 2,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför är det viktigt att dokumentera neurovaskulär status före och efter reponering?',
+      options: [
+        { text: 'För att upptäcka iatrogen skada och ha medikolegal dokumentation', correct: true },
+        { text: 'Endast för statistik', correct: false },
+        { text: 'Det krävs för försäkringsutbetalning', correct: false },
+        { text: 'Det är frivilligt', correct: false },
+      ],
+      explanation: 'Dokumentation före och efter manipulation är essentiell för att upptäcka behandlingsorsakad skada och för medikolegala skäl.',
+      reference: 'B-ORTIM Kursbok, Kapitel 2',
+    },
+
+    // Kapitel 3: Extra frågor
+    {
+      code: '3.3',
+      chapterNumber: 3,
+      bloomLevel: 'ANALYSIS',
+      question: 'Patient med bilateral femurfraktur och instabilt bäcken. Vilket tillstånd prioriteras?',
+      options: [
+        { text: 'Instabilt bäcken - större blödningsrisk', correct: true },
+        { text: 'Vänster femurfraktur', correct: false },
+        { text: 'Höger femurfraktur', correct: false },
+        { text: 'Alla behandlas samtidigt', correct: false },
+      ],
+      explanation: 'Instabilt bäcken har högre blödningspotential och prioriteras. Bäckenbälte appliceras omedelbart.',
+      reference: 'B-ORTIM Kursbok, Kapitel 3',
+    },
+    {
+      code: '3.4',
+      chapterNumber: 3,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vad innebär principen "life over limb"?',
+      options: [
+        { text: 'Livshotande tillstånd behandlas före extremitetshotande', correct: true },
+        { text: 'Amputation är alltid förstahandsval', correct: false },
+        { text: 'Extremiteter är viktigare än vitala organ', correct: false },
+        { text: 'Livskvalitet går före överlevnad', correct: false },
+      ],
+      explanation: 'Life over limb innebär att livshotande tillstånd (t.ex. bäckenblödning) alltid prioriteras före extremitetshotande (t.ex. kärlskada i arm).',
+      reference: 'B-ORTIM Kursbok, Kapitel 3; ATLS 10th ed',
+    },
+
+    // Kapitel 4: Extra frågor
+    {
+      code: '4.3',
+      chapterNumber: 4,
+      bloomLevel: 'APPLICATION',
+      question: 'En tourniquet har suttit i 3 timmar. Patienten är på väg till operation. Ska tourniquet lossas?',
+      options: [
+        { text: 'Nej, behåll tills kirurgisk blödningskontroll är möjlig', correct: true },
+        { text: 'Ja, lossa omedelbart', correct: false },
+        { text: 'Lossa i 5 minuter varje timme', correct: false },
+        { text: 'Byt till ny tourniquet', correct: false },
+      ],
+      explanation: 'Tourniquet ska inte lossas prehospitalt eller på akuten. Den behålls tills definitiv kirurgisk blödningskontroll kan uppnås.',
+      reference: 'B-ORTIM Kursbok, Kapitel 4; Kragh JF J Trauma 2008',
+    },
+    {
+      code: '4.4',
+      chapterNumber: 4,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Var ska en tourniquet placeras optimalt?',
+      options: [
+        { text: '5-7 cm proximalt om skadan, över ett ben (inte led)', correct: true },
+        { text: 'Direkt över såret', correct: false },
+        { text: 'Över leden närmast skadan', correct: false },
+        { text: 'Så högt upp som möjligt', correct: false },
+      ],
+      explanation: 'Tourniquet placeras 5-7 cm proximalt om blödningskällan, över ett ben (inte över led) för effektiv kompression av kärlen.',
+      reference: 'B-ORTIM Kursbok, Kapitel 4',
+    },
+    {
+      code: '4.5',
+      chapterNumber: 4,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vad är den viktigaste åtgärden efter tourniquet-applikation?',
+      options: [
+        { text: 'Dokumentera applikationstid tydligt', correct: true },
+        { text: 'Ge morfin', correct: false },
+        { text: 'Ta blodprover', correct: false },
+        { text: 'Röntga extremiteten', correct: false },
+      ],
+      explanation: 'Tid för tourniquet-applikation måste dokumenteras tydligt (helst på patientens panna: "TK" + tid) för att förhindra för lång ischemitid.',
+      reference: 'B-ORTIM Kursbok, Kapitel 4',
+    },
+
+    // Kapitel 5: Extra frågor
+    {
+      code: '5.3',
+      chapterNumber: 5,
+      bloomLevel: 'APPLICATION',
+      question: 'ABI mäts till 0.7 på skadad extremitet efter trauma. Vad är nästa steg?',
+      options: [
+        { text: 'CT-angiografi eller direkt kärlkirurgisk exploration', correct: true },
+        { text: 'Upprepa mätningen om 24 timmar', correct: false },
+        { text: 'Enbart observation', correct: false },
+        { text: 'MR-undersökning', correct: false },
+      ],
+      explanation: 'ABI <0.9 efter trauma indikerar sannolik kärlskada. CT-angio eller kirurgisk exploration krävs akut.',
+      reference: 'B-ORTIM Kursbok, Kapitel 5; EAST Guidelines 2012',
+    },
+    {
+      code: '5.4',
+      chapterNumber: 5,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilka är "hard signs" på kärlskada?',
+      options: [
+        { text: 'Pulserande blödning, expanderande hematom, avsaknad av distal puls', correct: true },
+        { text: 'Smärta och svullnad', correct: false },
+        { text: 'Blåmärke och ömhet', correct: false },
+        { text: 'Nedsatt rörlighet', correct: false },
+      ],
+      explanation: 'Hard signs inkluderar pulserande blödning, expanderande hematom, palpabel thrill, avsaknad av distal puls, och ischemitecken (6 P).',
+      reference: 'B-ORTIM Kursbok, Kapitel 5',
+    },
+    {
+      code: '5.5',
+      chapterNumber: 5,
+      bloomLevel: 'APPLICATION',
+      question: 'En patient har "hard signs" på kärlskada. Behövs CT-angio före operation?',
+      options: [
+        { text: 'Nej, direkt till operation', correct: true },
+        { text: 'Ja, alltid', correct: false },
+        { text: 'Endast om patienten är stabil', correct: false },
+        { text: 'CT-angio är kontraindicerat', correct: false },
+      ],
+      explanation: 'Vid hard signs på kärlskada går patienten direkt till operation. CT-angio fördröjer bara behandlingen i onödan.',
+      reference: 'B-ORTIM Kursbok, Kapitel 5; EAST Guidelines 2012',
+    },
+
+    // Kapitel 6: Extra frågor
+    {
+      code: '6.3',
+      chapterNumber: 6,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilka är de "6 P:na" vid kompartmentsyndrom?',
+      options: [
+        { text: 'Pain, Pressure, Paresthesia, Paralysis, Pallor, Pulselessness', correct: true },
+        { text: 'Pulse, Pallor, Perspiration, Paralysis, Pain, Paresis', correct: false },
+        { text: 'Position, Pressure, Pain, Pulse, Paralysis, Prognosis', correct: false },
+        { text: 'Palpation, Percussion, Pain, Pulse, Paresthesia, Paralysis', correct: false },
+      ],
+      explanation: 'De 6 P:na är klassiska tecken på kompartmentsyndrom. Pain (smärta) och Paresthesia (stickningar) är ofta tidigaste tecknen.',
+      reference: 'B-ORTIM Kursbok, Kapitel 6',
+    },
+    {
+      code: '6.4',
+      chapterNumber: 6,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vilket är det tidigaste och mest tillförlitliga tecknet på kompartmentsyndrom?',
+      options: [
+        { text: 'Smärta vid passiv töjning av muskler i kompartmentet', correct: true },
+        { text: 'Avsaknad av puls', correct: false },
+        { text: 'Blekhet', correct: false },
+        { text: 'Paralys', correct: false },
+      ],
+      explanation: 'Smärta vid passiv töjning är det tidigaste och mest tillförlitliga tecknet. Pulsförlust är ett sent tecken som indikerar avancerad ischemi.',
+      reference: 'B-ORTIM Kursbok, Kapitel 6',
+    },
+    {
+      code: '6.5',
+      chapterNumber: 6,
+      bloomLevel: 'APPLICATION',
+      question: 'Kompartmenttryck mäts till 35 mmHg och diastoliskt blodtryck är 70 mmHg. Delta-tryck är 35 mmHg. Behövs fasciotomi?',
+      options: [
+        { text: 'Ja, delta-tryck ≤30 mmHg indikerar fasciotomi', correct: true },
+        { text: 'Nej, normalvärde', correct: false },
+        { text: 'Avvakta och mät om', correct: false },
+        { text: 'Endast om patienten har symtom', correct: false },
+      ],
+      explanation: 'Delta-tryck = diastoliskt BT minus kompartmenttryck. Delta-tryck ≤30 mmHg indikerar fasciotomi (här: 70-35=35, men om det var 30 eller lägre krävs fasciotomi).',
+      reference: 'B-ORTIM Kursbok, Kapitel 6; McQueen MM JBJS 1996',
+    },
+
+    // Kapitel 7: Extra frågor
+    {
+      code: '7.3',
+      chapterNumber: 7,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad karakteriserar en Gustilo typ IIIB öppen fraktur?',
+      options: [
+        { text: 'Omfattande mjukdelsskada med perioststripping, kräver lambåtäckning', correct: true },
+        { text: 'Sår <1 cm', correct: false },
+        { text: 'Sår 1-10 cm utan periostskada', correct: false },
+        { text: 'Kärlskada som kräver reparation', correct: false },
+      ],
+      explanation: 'Gustilo IIIB har massiv mjukdelsskada, perioststripping och exponerat ben som kräver lambåtäckning för att läka.',
+      reference: 'B-ORTIM Kursbok, Kapitel 7; Gustilo RB JBJS 1984',
+    },
+    {
+      code: '7.4',
+      chapterNumber: 7,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför ska öppna frakturer fotograferas vid ankomst?',
+      options: [
+        { text: 'För att undvika upprepade förbandsbyten och infektionsrisk', correct: true },
+        { text: 'Endast för journaldokumentation', correct: false },
+        { text: 'För att visa patienten', correct: false },
+        { text: 'Det är inte nödvändigt', correct: false },
+      ],
+      explanation: 'Fotodokumentation vid ankomst minskar behovet av upprepade förbandsbyten, vilket reducerar kontaminering och infektionsrisk.',
+      reference: 'B-ORTIM Kursbok, Kapitel 7; BOA/BAPRAS 2020',
+    },
+    {
+      code: '7.5',
+      chapterNumber: 7,
+      bloomLevel: 'APPLICATION',
+      question: 'Öppen tibiafraktur typ IIIA. Vilken antibiotika och duration?',
+      options: [
+        { text: 'Cefuroxim + Gentamicin i 72 timmar', correct: true },
+        { text: 'Cefuroxim enbart i 24 timmar', correct: false },
+        { text: 'Penicillin i 1 vecka', correct: false },
+        { text: 'Ingen antibiotika behövs', correct: false },
+      ],
+      explanation: 'Gustilo III-frakturer kräver bredspektrumantibiotika (Cefuroxim + aminoglykosid) i 72 timmar enligt EAST-riktlinjer.',
+      reference: 'B-ORTIM Kursbok, Kapitel 7; EAST Guidelines 2011',
+    },
+
+    // Kapitel 8: Extra frågor
+    {
+      code: '8.3',
+      chapterNumber: 8,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken bäckenfrakturtyp har högst blödningsrisk?',
+      options: [
+        { text: 'Vertikal instabil (VS/APC-III)', correct: true },
+        { text: 'Lateral kompression typ I', correct: false },
+        { text: 'Isolerad ramus pubis-fraktur', correct: false },
+        { text: 'Acetabelfraktur', correct: false },
+      ],
+      explanation: 'Vertikalt instabila frakturer (VS) och APC typ III har störst volymökning och högst blödningsrisk.',
+      reference: 'B-ORTIM Kursbok, Kapitel 8; Young-Burgess klassifikation',
+    },
+    {
+      code: '8.4',
+      chapterNumber: 8,
+      bloomLevel: 'APPLICATION',
+      question: 'Bäckenbältet har applicerats men patienten är fortfarande hypotensiv. Nästa steg?',
+      options: [
+        { text: 'Aktivera massivt transfusionsprotokoll (MTP) och förbered för intervention', correct: true },
+        { text: 'Ta av bältet och applicera igen', correct: false },
+        { text: 'Vänta och se', correct: false },
+        { text: 'Ge mer kristalloid', correct: false },
+      ],
+      explanation: 'Om bäckenbälte inte stabiliserar patienten hemodynamiskt, aktivera MTP och förbered för preperitonal packing eller angioembolisering.',
+      reference: 'B-ORTIM Kursbok, Kapitel 8; ATLS 10th ed',
+    },
+    {
+      code: '8.5',
+      chapterNumber: 8,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför ska bäckenbältet placeras över trochanter major och inte över crista iliaca?',
+      options: [
+        { text: 'Trochanter-nivå ger optimal kompression av bäckenringen', correct: true },
+        { text: 'Det är enklare att applicera', correct: false },
+        { text: 'Det är mer bekvämt för patienten', correct: false },
+        { text: 'Det spelar ingen roll var det placeras', correct: false },
+      ],
+      explanation: 'Placering över trochanter major ger biomekaniskt optimal kompression av den posteriora bäckenringen för att reducera volym och blödning.',
+      reference: 'B-ORTIM Kursbok, Kapitel 8',
+    },
+
+    // Kapitel 9: Extra frågor
+    {
+      code: '9.3',
+      chapterNumber: 9,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Hur ska ett amputat förvaras korrekt för transport?',
+      options: [
+        { text: 'Fuktig kompress, plastpåse, kylväska med is (ej direkt kontakt)', correct: true },
+        { text: 'Direkt i is', correct: false },
+        { text: 'I rumstemperatur', correct: false },
+        { text: 'I koksaltlösning', correct: false },
+      ],
+      explanation: 'Amputat lindas i fuktig kompress, läggs i plastpåse, och placeras i kylväska med is utan direkt kontakt (undvik frostskada).',
+      reference: 'B-ORTIM Kursbok, Kapitel 9',
+    },
+    {
+      code: '9.4',
+      chapterNumber: 9,
+      bloomLevel: 'APPLICATION',
+      question: 'Tumamputat hos 35-åring. Ischemitid hittills 4 timmar. Är replantation möjlig?',
+      options: [
+        { text: 'Ja, tumme har hög prioritet och finger tolererar längre ischemi', correct: true },
+        { text: 'Nej, för lång ischemitid', correct: false },
+        { text: 'Endast om patienten är ung', correct: false },
+        { text: 'Replantation är aldrig indicerat', correct: false },
+      ],
+      explanation: 'Fingrar (utan muskel) tolererar längre ischemi (upp till 12h kall). Tumme har högsta prioritet för replantation pga funktion.',
+      reference: 'B-ORTIM Kursbok, Kapitel 9',
+    },
+    {
+      code: '9.5',
+      chapterNumber: 9,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vilka faktorer talar mot replantationsförsök?',
+      options: [
+        { text: 'Svår krossning, multilevel-skada, lång varm ischemitid', correct: true },
+        { text: 'Patientens ålder över 40', correct: false },
+        { text: 'Dominant hand', correct: false },
+        { text: 'Skada på pekfinger', correct: false },
+      ],
+      explanation: 'Relativa kontraindikationer inkluderar crush-skada, multilevel-amputationer, och förlängd varm ischemi. Ålder ensamt är ej kontraindikation.',
+      reference: 'B-ORTIM Kursbok, Kapitel 9',
+    },
+
+    // Kapitel 10: Extra frågor
+    {
+      code: '10.3',
+      chapterNumber: 10,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken Salter-Harris-typ har sämst prognos?',
+      options: [
+        { text: 'Typ V (kompressionsskada av tillväxtzonen)', correct: true },
+        { text: 'Typ I', correct: false },
+        { text: 'Typ II', correct: false },
+        { text: 'Typ III', correct: false },
+      ],
+      explanation: 'Salter-Harris V är en kompressionsskada av fysen som ofta ger tillväxtstörning. Den är svår att diagnostisera initialt.',
+      reference: 'B-ORTIM Kursbok, Kapitel 10; Salter-Harris klassifikation',
+    },
+    {
+      code: '10.4',
+      chapterNumber: 10,
+      bloomLevel: 'APPLICATION',
+      question: '7-årigt barn med suprakondylär humerusfraktur. Vilken komplikation måste uteslutas akut?',
+      options: [
+        { text: 'Skada på a. brachialis', correct: true },
+        { text: 'Infektion', correct: false },
+        { text: 'Pseudoartros', correct: false },
+        { text: 'Tillväxtstörning', correct: false },
+      ],
+      explanation: 'Suprakondylär humerusfraktur hos barn har hög risk för a. brachialis-skada och kompartmentsyndrom. Kontrollera puls och distal cirkulation!',
+      reference: 'B-ORTIM Kursbok, Kapitel 10',
+    },
+    {
+      code: '10.5',
+      chapterNumber: 10,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför är pediatriska frakturer annorlunda än vuxnas?',
+      options: [
+        { text: 'Tillväxtzonen (fysen) kan skadas och ge tillväxtstörningar', correct: true },
+        { text: 'Barns ben läker långsammare', correct: false },
+        { text: 'Barn får aldrig öppna frakturer', correct: false },
+        { text: 'Smärtupplevelsen är mindre hos barn', correct: false },
+      ],
+      explanation: 'Barn har öppna fyser som kan skadas. Fraktur genom fysen kan ge tillväxtstörning. Dessutom har barn större remodellering.',
+      reference: 'B-ORTIM Kursbok, Kapitel 10',
+    },
+
+    // Kapitel 11: Extra frågor
+    {
+      code: '11.3',
+      chapterNumber: 11,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken elektrolytrubbning är mest livshotande vid crush syndrome?',
+      options: [
+        { text: 'Hyperkalemi', correct: true },
+        { text: 'Hyponatremi', correct: false },
+        { text: 'Hypokalcemi', correct: false },
+        { text: 'Hypernatremi', correct: false },
+      ],
+      explanation: 'Hyperkalemi är den mest akut livshotande komplikationen vid crush syndrome och kan ge hjärtrytmrubbningar och hjärtstopp.',
+      reference: 'B-ORTIM Kursbok, Kapitel 11; Better OS Nephrol Dial Transplant 1990',
+    },
+    {
+      code: '11.4',
+      chapterNumber: 11,
+      bloomLevel: 'APPLICATION',
+      question: 'Patient har varit fastklämd i 4 timmar. Vad ska påbörjas INNAN friläggning?',
+      options: [
+        { text: 'IV vätska (NaCl) och kalciumklorid i beredskap', correct: true },
+        { text: 'Inget speciellt, frigör direkt', correct: false },
+        { text: 'Ge insulin', correct: false },
+        { text: 'Applicera tourniquet', correct: false },
+      ],
+      explanation: 'Före friläggning vid crush syndrome: påbörja aggressiv vätska (1L/h NaCl), ha kalcium och natriumbikarbonat i beredskap för hyperkalemi.',
+      reference: 'B-ORTIM Kursbok, Kapitel 11',
+    },
+    {
+      code: '11.5',
+      chapterNumber: 11,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför uppstår akut njursvikt vid crush syndrome?',
+      options: [
+        { text: 'Myoglobin från skadad muskel ockluderar njurtubuli', correct: true },
+        { text: 'Direkt njurskada från trauma', correct: false },
+        { text: 'Dehydrering enbart', correct: false },
+        { text: 'Infektion', correct: false },
+      ],
+      explanation: 'Myoglobin frisätts från krossad muskel och fälls ut i njurtubuli, vilket orsakar akut tubulär nekros och njursvikt.',
+      reference: 'B-ORTIM Kursbok, Kapitel 11',
+    },
+
+    // Kapitel 13: Extra frågor (DCO)
+    {
+      code: '13.3',
+      chapterNumber: 13,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad står DCO för?',
+      options: [
+        { text: 'Damage Control Orthopaedics', correct: true },
+        { text: 'Definitive Care Operation', correct: false },
+        { text: 'Delayed Compartment Opening', correct: false },
+        { text: 'Diagnostic Clinical Observation', correct: false },
+      ],
+      explanation: 'DCO = Damage Control Orthopaedics - principen att göra minimal stabilisering hos instabila patienter och vänta med definitiv kirurgi.',
+      reference: 'B-ORTIM Kursbok, Kapitel 13; Pape HC J Trauma 2007',
+    },
+    {
+      code: '13.4',
+      chapterNumber: 13,
+      bloomLevel: 'APPLICATION',
+      question: 'Multitraumapatient med femurfraktur, pH 7.2, temp 34.5°C, laktat 6. Vilken strategi?',
+      options: [
+        { text: 'DCO med extern fixation, sedan IVA för optimering', correct: true },
+        { text: 'Direkt definitiv märgspikning', correct: false },
+        { text: 'Konservativ behandling utan operation', correct: false },
+        { text: 'Vänta tills pH normaliseras spontant', correct: false },
+      ],
+      explanation: 'Patienten uppfyller DCO-kriterier (pH <7.25, temp <35°C, laktat >4). Extern fixation nu, definitiv kirurgi efter fysiologisk stabilisering.',
+      reference: 'B-ORTIM Kursbok, Kapitel 13; Pape HC J Orthop Trauma 2007',
+    },
+    {
+      code: '13.5',
+      chapterNumber: 13,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vad är "second hit" fenomenet?',
+      options: [
+        { text: 'Stor kirurgi hos redan stressad patient förvärrar inflammatoriskt svar', correct: true },
+        { text: 'En andra traumatisk skada', correct: false },
+        { text: 'Upprepade operationer är alltid bättre', correct: false },
+        { text: 'Patienten får en ny fraktur', correct: false },
+      ],
+      explanation: 'Second hit = ytterligare kirurgiskt trauma hos fysiologiskt komprometterad patient förvärrar SIRS och kan leda till ARDS/MODS.',
+      reference: 'B-ORTIM Kursbok, Kapitel 13; Pape HC J Trauma 2007',
     },
   ];
 }
@@ -3610,6 +4168,625 @@ function getAdvancedQuizQuestions() {
       explanation: 'PDSA-cykeln: Plan (planera), Do (genomför), Study (analysera), Act (implementera eller justera).',
       reference: 'A-ORTIM Kursbok, Kapitel 14',
     },
+    // ============================================
+    // YTTERLIGARE FRÅGOR FÖR A-ORTIM
+    // ============================================
+
+    // Kapitel 1: Extra frågor (Bilddiagnostik)
+    {
+      code: 'A1.3',
+      chapterNumber: 1,
+      bloomLevel: 'APPLICATION',
+      question: 'CT-angio visar kontrastextravasering vid knäleden efter trauma. Nästa steg?',
+      options: [
+        { text: 'Akut kärlkirurgisk exploration', correct: true },
+        { text: 'Upprepa CT om 6 timmar', correct: false },
+        { text: 'MR för bättre visualisering', correct: false },
+        { text: 'Konservativ behandling', correct: false },
+      ],
+      explanation: 'Kontrastextravasering innebär aktiv blödning och kräver omedelbar kirurgisk intervention.',
+      reference: 'A-ORTIM Kursbok, Kapitel 1; EAST Guidelines 2012',
+    },
+    {
+      code: 'A1.4',
+      chapterNumber: 1,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken CT-angio-fynd tyder på intimaskada?',
+      options: [
+        { text: 'Intimal flap med lumeninskränkning', correct: true },
+        { text: 'Frakturfragment', correct: false },
+        { text: 'Mjukdelssvullnad', correct: false },
+        { text: 'Normal kärlkontur', correct: false },
+      ],
+      explanation: 'Intimaskada ses som intimal flap, dissektionsplane eller lumeninskränkning på CT-angio.',
+      reference: 'A-ORTIM Kursbok, Kapitel 1; SVS Practice Guidelines 2020',
+    },
+    {
+      code: 'A1.5',
+      chapterNumber: 1,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vad är sensitiviteten för CT-angio vid extremitetskärlskada?',
+      options: [
+        { text: 'Cirka 96% sensitivitet, 99% specificitet', correct: true },
+        { text: 'Cirka 50% sensitivitet', correct: false },
+        { text: 'Endast 75% sensitivitet', correct: false },
+        { text: 'CT-angio är opålitlig', correct: false },
+      ],
+      explanation: 'CT-angio har mycket hög diagnostisk träffsäkerhet (sensitivitet 96%, specificitet 99%) enligt SVS 2020.',
+      reference: 'A-ORTIM Kursbok, Kapitel 1; SVS Practice Guidelines 2020',
+    },
+
+    // Kapitel 2: Extra frågor (Neurovaskulär)
+    {
+      code: 'A2.3',
+      chapterNumber: 2,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken nerv innerverar m. tibialis anterior och stortåns dorsalflexion?',
+      options: [
+        { text: 'N. peroneus profundus', correct: true },
+        { text: 'N. peroneus superficialis', correct: false },
+        { text: 'N. tibialis', correct: false },
+        { text: 'N. suralis', correct: false },
+      ],
+      explanation: 'N. peroneus profundus innerverar fotens dorsalflexorer (m. tibialis anterior, m. extensor hallucis longus).',
+      reference: 'A-ORTIM Kursbok, Kapitel 2',
+    },
+    {
+      code: 'A2.4',
+      chapterNumber: 2,
+      bloomLevel: 'APPLICATION',
+      question: 'Patient med knäluxation har palpabel puls men ABI 0.85. Vad gör du?',
+      options: [
+        { text: 'CT-angio - palpabel puls utesluter ej intimaskada', correct: true },
+        { text: 'Avsluta utredningen, pulsen är normal', correct: false },
+        { text: 'Endast uppföljning om 1 vecka', correct: false },
+        { text: 'MR-undersökning', correct: false },
+      ],
+      explanation: 'ABI <0.9 indikerar kärlskada även vid palpabel puls. Intimaskador kan ge normala pulsar initialt men progrediera.',
+      reference: 'A-ORTIM Kursbok, Kapitel 2; EAST Guidelines',
+    },
+    {
+      code: 'A2.5',
+      chapterNumber: 2,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken struktur testar du vid bedömning av n. tibialis-funktion?',
+      options: [
+        { text: 'Plantarflexion och sensorik i fotsulan', correct: true },
+        { text: 'Dorsalflexion av foten', correct: false },
+        { text: 'Knäflexion', correct: false },
+        { text: 'Höftabduktion', correct: false },
+      ],
+      explanation: 'N. tibialis innerverar plantarflexorerna och ger sensorik i fotsulan - kritiskt för gångfunktion.',
+      reference: 'A-ORTIM Kursbok, Kapitel 2',
+    },
+
+    // Kapitel 3: Extra frågor (Intraoperativ)
+    {
+      code: 'A3.3',
+      chapterNumber: 3,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad är normalt kompartmenttryck i vila?',
+      options: [
+        { text: '0-8 mmHg', correct: true },
+        { text: '20-30 mmHg', correct: false },
+        { text: '40-50 mmHg', correct: false },
+        { text: '60-70 mmHg', correct: false },
+      ],
+      explanation: 'Normalt kompartmenttryck är 0-8 mmHg. Tryck >30 mmHg eller delta-tryck <30 mmHg indikerar fasciotomi.',
+      reference: 'A-ORTIM Kursbok, Kapitel 3; McQueen MM JBJS 1996',
+    },
+    {
+      code: 'A3.4',
+      chapterNumber: 3,
+      bloomLevel: 'APPLICATION',
+      question: 'Under operation för öppen fraktur är du osäker på muskelns viabilitet. Vad gör du?',
+      options: [
+        { text: 'Bevara tveksam vävnad, planera obligatorisk second-look 48h', correct: true },
+        { text: 'Ta bort all tveksam vävnad direkt', correct: false },
+        { text: 'Stäng såret och avvakta', correct: false },
+        { text: 'Skicka vävnad på fryssnitt', correct: false },
+      ],
+      explanation: 'Vid tveksam viabilitet: bevara vävnaden och planera second-look efter 48h. Bättre att debridera vid andra tillfället.',
+      reference: 'A-ORTIM Kursbok, Kapitel 3; BOA/BAPRAS 2020',
+    },
+    {
+      code: 'A3.5',
+      chapterNumber: 3,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vilken fluorescensmetod kan användas för att bedöma vävnadsperfusion?',
+      options: [
+        { text: 'Indocyaningrönt (ICG) angiografi', correct: true },
+        { text: 'Röntgen med kontrast', correct: false },
+        { text: 'MR-spektroskopi', correct: false },
+        { text: 'Ultraljud', correct: false },
+      ],
+      explanation: 'ICG-angiografi är en modern metod för real-time bedömning av vävnadsperfusion intraoperativt.',
+      reference: 'A-ORTIM Kursbok, Kapitel 3',
+    },
+
+    // Kapitel 4: Extra frågor (Vaskulär reparation)
+    {
+      code: 'A4.3',
+      chapterNumber: 4,
+      bloomLevel: 'APPLICATION',
+      question: 'Patient med popliteakärlskada och ischemitid 8 timmar. Vilken sekvens är korrekt?',
+      options: [
+        { text: 'Shunt → skelettfixation → definitiv kärlrepair → fasciotomi', correct: true },
+        { text: 'Skelettfixation → kärlrepair → fasciotomi', correct: false },
+        { text: 'Enbart fasciotomi', correct: false },
+        { text: 'Amputation direkt', correct: false },
+      ],
+      explanation: 'Vid lång ischemitid: temporär shunt först för snabb reperfusion, sedan skelettfixation, kärlrepair och profylaktisk fasciotomi.',
+      reference: 'A-ORTIM Kursbok, Kapitel 4; Feliciano DV J Trauma 2011',
+    },
+    {
+      code: 'A4.4',
+      chapterNumber: 4,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken är maximal längd för primär end-to-end kärlsutur?',
+      options: [
+        { text: 'Cirka 2 cm defekt', correct: true },
+        { text: 'Upp till 10 cm', correct: false },
+        { text: 'Endast 5 mm', correct: false },
+        { text: 'Längden spelar ingen roll', correct: false },
+      ],
+      explanation: 'End-to-end anastomos är möjlig vid defekt <2 cm. Större defekter kräver graft eller interpositionsven.',
+      reference: 'A-ORTIM Kursbok, Kapitel 4',
+    },
+    {
+      code: 'A4.5',
+      chapterNumber: 4,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför är autolog ven bättre än syntetiskt graft i kontaminerad miljö?',
+      options: [
+        { text: 'Lägre infektionsrisk och bättre läkning', correct: true },
+        { text: 'Billigare', correct: false },
+        { text: 'Enklare att sy', correct: false },
+        { text: 'Syntetiskt graft finns inte tillgängligt', correct: false },
+      ],
+      explanation: 'Autolog ven har betydligt lägre infektionsrisk i kontaminerad miljö (öppen fraktur) jämfört med PTFE.',
+      reference: 'A-ORTIM Kursbok, Kapitel 4',
+    },
+
+    // Kapitel 5: Extra frågor (Fasciotomi)
+    {
+      code: 'A5.3',
+      chapterNumber: 5,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Hur många kompartment har underbenet?',
+      options: [
+        { text: '4 stycken', correct: true },
+        { text: '2 stycken', correct: false },
+        { text: '3 stycken', correct: false },
+        { text: '6 stycken', correct: false },
+      ],
+      explanation: 'Underbenet har 4 kompartment: anteriort, lateralt, ytligt posteriort, djupt posteriort.',
+      reference: 'A-ORTIM Kursbok, Kapitel 5',
+    },
+    {
+      code: 'A5.4',
+      chapterNumber: 5,
+      bloomLevel: 'APPLICATION',
+      question: 'Du utför fasciotomi men patienten har kvarstående högt tryck i djupa posteriora. Vad har gått fel?',
+      options: [
+        { text: 'Soleus-fascian har ej öppnats genom medial incision', correct: true },
+        { text: 'Lateral incision är för kort', correct: false },
+        { text: 'Det är normalt', correct: false },
+        { text: 'Fler incisioner behövs', correct: false },
+      ],
+      explanation: 'Djupa posteriora kompartmentet når endast genom incision genom soleus-fascian via medial approach.',
+      reference: 'A-ORTIM Kursbok, Kapitel 5',
+    },
+    {
+      code: 'A5.5',
+      chapterNumber: 5,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Hur länge efter kärlskada med reperfusion bör profylaktisk fasciotomi övervägas?',
+      options: [
+        { text: 'Vid ischemitid >4-6 timmar', correct: true },
+        { text: 'Endast vid symtom', correct: false },
+        { text: 'Aldrig profylaktiskt', correct: false },
+        { text: 'Alltid oavsett tid', correct: false },
+      ],
+      explanation: 'Profylaktisk fasciotomi rekommenderas vid ischemitid >4-6 timmar pga risk för reperfusionsskada.',
+      reference: 'A-ORTIM Kursbok, Kapitel 5; Frykberg et al. J Vasc Surg 2002',
+    },
+
+    // Kapitel 6: Extra frågor (Extern fixation)
+    {
+      code: 'A6.3',
+      chapterNumber: 6,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilka är indikationerna för extern fixation vid akut trauma?',
+      options: [
+        { text: 'Instabil patient, öppen fraktur IIIB/C, kärlskada som kräver repair', correct: true },
+        { text: 'Endast slutna frakturer', correct: false },
+        { text: 'Alla tibiafrakturer', correct: false },
+        { text: 'Extern fixation är aldrig indicerat akut', correct: false },
+      ],
+      explanation: 'Extern fixation används vid DCO (instabil patient), svåra öppna frakturer, och frakturer med kärlskada.',
+      reference: 'A-ORTIM Kursbok, Kapitel 6',
+    },
+    {
+      code: 'A6.4',
+      chapterNumber: 6,
+      bloomLevel: 'APPLICATION',
+      question: 'Var ska pinnar INTE placeras vid extern fixation av tibia?',
+      options: [
+        { text: 'Genom framtida operationsområde eller i infekterad vävnad', correct: true },
+        { text: 'Proximalt om frakturen', correct: false },
+        { text: 'Distalt om frakturen', correct: false },
+        { text: 'I metafysen', correct: false },
+      ],
+      explanation: 'Pinnar ska undvika framtida operationssnitt och infekterad vävnad. Pin-site infektioner kan äventyra definitiv fixation.',
+      reference: 'A-ORTIM Kursbok, Kapitel 6',
+    },
+    {
+      code: 'A6.5',
+      chapterNumber: 6,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vad är "safe corridor" vid tibial pin-placering?',
+      options: [
+        { text: 'Anteromediala ytan där inga neurovaskulära strukturer finns', correct: true },
+        { text: 'Posteriora sidan', correct: false },
+        { text: 'Laterala sidan', correct: false },
+        { text: 'Alla sidor är lika säkra', correct: false },
+      ],
+      explanation: 'Anteromediala tibiaytan är subkutan och saknar viktiga strukturer - den säkraste korridoren för pin-placering.',
+      reference: 'A-ORTIM Kursbok, Kapitel 6',
+    },
+
+    // Kapitel 7: Extra frågor (Mjukdelstäckning)
+    {
+      code: 'A7.3',
+      chapterNumber: 7,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad innebär "fix and flap" konceptet tidsmässigt?',
+      options: [
+        { text: 'Definitiv fixation + mjukdelstäckning inom 72-96 timmar', correct: true },
+        { text: 'Fixation och lambå inom 24 timmar', correct: false },
+        { text: 'Lambå efter 2 veckor', correct: false },
+        { text: 'Tid spelar ingen roll', correct: false },
+      ],
+      explanation: 'Fix and flap innebär tidig definitiv fixation kombinerat med lambåtäckning inom 72-96h för att minimera infektion.',
+      reference: 'A-ORTIM Kursbok, Kapitel 7; Gopal 2000',
+    },
+    {
+      code: 'A7.4',
+      chapterNumber: 7,
+      bloomLevel: 'APPLICATION',
+      question: 'Exponerad tibia utan periost. Vilket täckningsalternativ?',
+      options: [
+        { text: 'Lambå (lokal eller fri) krävs', correct: true },
+        { text: 'Delhudstransplantat (SSG)', correct: false },
+        { text: 'Sekundärläkning', correct: false },
+        { text: 'VAC-terapi enbart', correct: false },
+      ],
+      explanation: 'Ben utan periost tar inte hudtransplantat. Lambå med egen kärlförsörjning krävs för att täcka exponerat ben.',
+      reference: 'A-ORTIM Kursbok, Kapitel 7',
+    },
+    {
+      code: 'A7.5',
+      chapterNumber: 7,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vad är fördelen med tidig mjukdelstäckning vid öppen fraktur?',
+      options: [
+        { text: 'Reducerad infektionsrisk från 29% till 6%', correct: true },
+        { text: 'Bättre kosmetiskt resultat', correct: false },
+        { text: 'Kortare operationstid', correct: false },
+        { text: 'Ingen dokumenterad fördel', correct: false },
+      ],
+      explanation: 'Gopal 2000 visade dramatisk reduktion av infektionsrisk med tidig täckning (<72h: 6% vs fördröjd: 29%).',
+      reference: 'A-ORTIM Kursbok, Kapitel 7; Gopal 2000',
+    },
+
+    // Kapitel 8: Extra frågor (Multitrauma)
+    {
+      code: 'A8.3',
+      chapterNumber: 8,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilka är komponenterna i "the lethal triad"?',
+      options: [
+        { text: 'Hypotermi, acidos, koagulopati', correct: true },
+        { text: 'Hypotension, hypoxi, hypotermi', correct: false },
+        { text: 'Tachykardi, hypotension, oliguri', correct: false },
+        { text: 'Acidos, hyponatremi, hyperkalemi', correct: false },
+      ],
+      explanation: 'The lethal triad (dödstriaden) består av hypotermi, acidos och koagulopati - indikerar dålig prognos.',
+      reference: 'A-ORTIM Kursbok, Kapitel 8',
+    },
+    {
+      code: 'A8.4',
+      chapterNumber: 8,
+      bloomLevel: 'APPLICATION',
+      question: 'ISS 35, bilateral femurfraktur, BT 90, laktat 5. ETC eller DCO?',
+      options: [
+        { text: 'DCO - patienten är borderline/instabil', correct: true },
+        { text: 'ETC - kan göra definitiv fixation direkt', correct: false },
+        { text: 'Konservativ behandling', correct: false },
+        { text: 'Avvakta och se', correct: false },
+      ],
+      explanation: 'Borderline-patient (ISS 20-40, bilateral femur, hypotension, förhöjt laktat) = DCO.',
+      reference: 'A-ORTIM Kursbok, Kapitel 8; Pape HC J Trauma 2007',
+    },
+    {
+      code: 'A8.5',
+      chapterNumber: 8,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vad innebär ETC (Early Total Care)?',
+      options: [
+        { text: 'Definitiv fixation inom 24h hos stabil patient', correct: true },
+        { text: 'Endast gipsbehandling', correct: false },
+        { text: 'Extern fixation i alla fall', correct: false },
+        { text: 'Fördröjd kirurgi efter 2 veckor', correct: false },
+      ],
+      explanation: 'ETC innebär tidig definitiv fixation (inom 24-36h) hos hemodynamiskt stabil patient utan fysiologisk kompromittering.',
+      reference: 'A-ORTIM Kursbok, Kapitel 8; Vallier HA JBJS 2013',
+    },
+
+    // Kapitel 9: Extra frågor (Mangled extremity)
+    {
+      code: 'A9.3',
+      chapterNumber: 9,
+      bloomLevel: 'APPLICATION',
+      question: 'MESS-score 8 hos 55-årig patient. Tibialis posterior-funktion bevarad. Beslut?',
+      options: [
+        { text: 'Diskutera med patient - limb salvage kan övervägas trots hög MESS', correct: true },
+        { text: 'Amputation obligatoriskt vid MESS ≥7', correct: false },
+        { text: 'Ignorera MESS-score', correct: false },
+        { text: 'Avvakta 48h', correct: false },
+      ],
+      explanation: 'MESS är vägledande, ej absolut. Bevarad n. tibialis posterior-funktion och patientens önskemål väger tungt.',
+      reference: 'A-ORTIM Kursbok, Kapitel 9; Johansen K J Trauma 1990',
+    },
+    {
+      code: 'A9.4',
+      chapterNumber: 9,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför är n. tibialis posterior-funktion avgörande vid limb salvage beslut?',
+      options: [
+        { text: 'Sensorik i fotsulan är essentiell för gångfunktion', correct: true },
+        { text: 'Det är den starkaste muskeln', correct: false },
+        { text: 'Den läker snabbast', correct: false },
+        { text: 'Ingen särskild betydelse', correct: false },
+      ],
+      explanation: 'Utan sensorik i fotsulan (n. tibialis) utvecklar patienten trycksår och har svårt att gå - funktionellt resultat blir dåligt.',
+      reference: 'A-ORTIM Kursbok, Kapitel 9',
+    },
+    {
+      code: 'A9.5',
+      chapterNumber: 9,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilka faktorer ingår i MESS-beräkningen?',
+      options: [
+        { text: 'Skelett/mjukdelsskada, ischemi, chock, ålder', correct: true },
+        { text: 'Endast ischemitid', correct: false },
+        { text: 'Frakturtyp och kön', correct: false },
+        { text: 'Blodtryck och puls', correct: false },
+      ],
+      explanation: 'MESS inkluderar: skelett/mjukdelsskada (1-4p), ischemi (1-6p, dubblas vid >6h), chock (0-2p), ålder (0-2p).',
+      reference: 'A-ORTIM Kursbok, Kapitel 9; Johansen K J Trauma 1990',
+    },
+
+    // Kapitel 10: Extra frågor (Bäckentrauma)
+    {
+      code: 'A10.3',
+      chapterNumber: 10,
+      bloomLevel: 'APPLICATION',
+      question: 'Instabil bäckenfraktur, icke-responder på resuscitering. CT visar arteriell kontrastextravasering. Nästa steg?',
+      options: [
+        { text: 'Preperitonal packing följt av angioembolisering om fortsatt instabil', correct: true },
+        { text: 'Endast bäckenbälte', correct: false },
+        { text: 'Definitiv fixation direkt', correct: false },
+        { text: 'Avvakta och ge mer vätska', correct: false },
+      ],
+      explanation: 'Non-responder med arteriell blödning: PPP kontrollerar venös blödning (80%), sedan angio för arteriell (15%).',
+      reference: 'A-ORTIM Kursbok, Kapitel 10; WSES Guidelines 2017',
+    },
+    {
+      code: 'A10.4',
+      chapterNumber: 10,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad är REBOA och när används det?',
+      options: [
+        { text: 'Resuscitative Endovascular Balloon Occlusion of Aorta - temporär bridge vid massiv blödning', correct: true },
+        { text: 'Radiologisk undersökning', correct: false },
+        { text: 'Rehabiliteringsmetod', correct: false },
+        { text: 'Antibiotika', correct: false },
+      ],
+      explanation: 'REBOA är en temporär åtgärd med aortaocklusion via ballongkateter för att köpa tid vid massiv blödning.',
+      reference: 'A-ORTIM Kursbok, Kapitel 10; Brenner 2018',
+    },
+    {
+      code: 'A10.5',
+      chapterNumber: 10,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vilken zon placeras REBOA vid bäckenblödning?',
+      options: [
+        { text: 'Zon III (infrarenal aorta)', correct: true },
+        { text: 'Zon I (supraceliak)', correct: false },
+        { text: 'Zon II (pararenal)', correct: false },
+        { text: 'Bröstaorta', correct: false },
+      ],
+      explanation: 'Zon III-placering (infrarenalt) är lämplig för bäckenblödning. Zon I används vid intraabdominell blödning.',
+      reference: 'A-ORTIM Kursbok, Kapitel 10',
+    },
+
+    // Kapitel 11: Extra frågor (Pediatrisk)
+    {
+      code: 'A11.3',
+      chapterNumber: 11,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilket är normalt systoliskt blodtryck hos ett 6-årigt barn?',
+      options: [
+        { text: 'Cirka 90-110 mmHg', correct: true },
+        { text: '60-70 mmHg', correct: false },
+        { text: '120-140 mmHg', correct: false },
+        { text: '70-80 mmHg', correct: false },
+      ],
+      explanation: 'Normalt systoliskt BT hos 6-12 år är 90-110 mmHg. Barn kompenserar med tachykardi innan BT faller.',
+      reference: 'A-ORTIM Kursbok, Kapitel 11; ATLS 10th ed',
+    },
+    {
+      code: 'A11.4',
+      chapterNumber: 11,
+      bloomLevel: 'APPLICATION',
+      question: 'Vätskevolym för initial bolus till barn i chock?',
+      options: [
+        { text: '20 ml/kg Ringer, upprepa x2 vid behov', correct: true },
+        { text: '1 liter direkt', correct: false },
+        { text: '5 ml/kg', correct: false },
+        { text: '50 ml/kg', correct: false },
+      ],
+      explanation: 'Barn: 20 ml/kg bolus, kan upprepas 2 gånger. Om fortsatt instabil: blodtransfusion.',
+      reference: 'A-ORTIM Kursbok, Kapitel 11; ATLS 10th ed',
+    },
+    {
+      code: 'A11.5',
+      chapterNumber: 11,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför är barn känsligare för hypotermi vid trauma?',
+      options: [
+        { text: 'Större kroppsyta i förhållande till vikt = snabbare värmeförlust', correct: true },
+        { text: 'Barn fryser lätt pga rädsla', correct: false },
+        { text: 'Barn har tunnare hud', correct: false },
+        { text: 'Ingen skillnad mot vuxna', correct: false },
+      ],
+      explanation: 'Barn har högre yta/volym-kvot och förlorar värme snabbare. Aktiv uppvärmning är kritiskt.',
+      reference: 'A-ORTIM Kursbok, Kapitel 11',
+    },
+
+    // Kapitel 12: Extra frågor (Teamledning)
+    {
+      code: 'A12.3',
+      chapterNumber: 12,
+      bloomLevel: 'APPLICATION',
+      question: 'Som traumaledare märker du att teamet verkar okoordinerat. Vad gör du?',
+      options: [
+        { text: 'Stoppa, återta kontrollen, fördela roller tydligt, fortsätt strukturerat', correct: true },
+        { text: 'Ropa högre', correct: false },
+        { text: 'Lämna rummet', correct: false },
+        { text: 'Börja själv utföra åtgärderna', correct: false },
+      ],
+      explanation: 'Traumaledaren ska återta kontrollen, tydliggöra roller och använda closed-loop kommunikation.',
+      reference: 'A-ORTIM Kursbok, Kapitel 12',
+    },
+    {
+      code: 'A12.4',
+      chapterNumber: 12,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken position ska traumaledaren ha under mottagandet?',
+      options: [
+        { text: 'Vid fotändan för överblick, delegerar men utför ej själv', correct: true },
+        { text: 'Vid huvudändan för att intubera', correct: false },
+        { text: 'Utanför rummet', correct: false },
+        { text: 'Position spelar ingen roll', correct: false },
+      ],
+      explanation: 'Traumaledaren ska ha överblick (vid fotändan), leda teamet och delegera - inte själv utföra åtgärder.',
+      reference: 'A-ORTIM Kursbok, Kapitel 12',
+    },
+    {
+      code: 'A12.5',
+      chapterNumber: 12,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vad är syftet med hot debrief efter traumamottagning?',
+      options: [
+        { text: 'Direkt feedback, emotionell ventilering, snabb identifiering av förbättringsområden', correct: true },
+        { text: 'Att fördela skuld', correct: false },
+        { text: 'Administrativ dokumentation', correct: false },
+        { text: 'Det är inte nödvändigt', correct: false },
+      ],
+      explanation: 'Hot debrief (5 min direkt efter) ger snabb feedback, stödjer teamet emotionellt och identifierar akuta problem.',
+      reference: 'A-ORTIM Kursbok, Kapitel 12',
+    },
+
+    // Kapitel 13: Extra frågor (Masskada)
+    {
+      code: 'A13.3',
+      chapterNumber: 13,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad definierar en masskadesituation?',
+      options: [
+        { text: 'Antalet skadade överstiger tillgängliga resurser med normala rutiner', correct: true },
+        { text: 'Fler än 10 skadade', correct: false },
+        { text: 'Fler än 50 skadade', correct: false },
+        { text: 'Alla olyckor med mer än 5 personer', correct: false },
+      ],
+      explanation: 'Masskada = resursbrist. Definitionen beror på tillgängliga resurser, inte ett fast antal.',
+      reference: 'A-ORTIM Kursbok, Kapitel 13',
+    },
+    {
+      code: 'A13.4',
+      chapterNumber: 13,
+      bloomLevel: 'APPLICATION',
+      question: 'Vid START-triage: patienten går ej, andas, AF 35, kapillär återfyllnad 1 sekund. Kategori?',
+      options: [
+        { text: 'RÖD - AF >30/min', correct: true },
+        { text: 'GUL', correct: false },
+        { text: 'GRÖN', correct: false },
+        { text: 'SVART', correct: false },
+      ],
+      explanation: 'AF >30/min = RÖD oavsett övriga parametrar. Patienten behöver omedelbar hjälp.',
+      reference: 'A-ORTIM Kursbok, Kapitel 13',
+    },
+    {
+      code: 'A13.5',
+      chapterNumber: 13,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför påbörjas ej HLR vid masskada för patienter klassade som SVART?',
+      options: [
+        { text: 'Resurserna prioriteras till räddningsbara patienter', correct: true },
+        { text: 'HLR fungerar aldrig', correct: false },
+        { text: 'Det är olagligt', correct: false },
+        { text: 'Personalens säkerhet', correct: false },
+      ],
+      explanation: 'Vid resursbrist prioriteras insatser till patienter som kan räddas. HLR kräver många resurser med låg chans till överlevnad.',
+      reference: 'A-ORTIM Kursbok, Kapitel 13',
+    },
+
+    // Kapitel 14: Extra frågor (Kvalitet)
+    {
+      code: 'A14.3',
+      chapterNumber: 14,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilka är huvudkomponenterna i en M&M-konferens?',
+      options: [
+        { text: 'Fallpresentation, analys av avvikelser, identifiering av systemfel, förbättringsåtgärder', correct: true },
+        { text: 'Endast fallpresentation', correct: false },
+        { text: 'Att hitta syndabockar', correct: false },
+        { text: 'Statistisk rapportering', correct: false },
+      ],
+      explanation: 'M&M fokuserar på systemförbättring, ej skuld. Strukturerad genomgång identifierar system- och processfel.',
+      reference: 'A-ORTIM Kursbok, Kapitel 14',
+    },
+    {
+      code: 'A14.4',
+      chapterNumber: 14,
+      bloomLevel: 'APPLICATION',
+      question: 'Traumaregistret visar ökad tid till fasciotomi. Hur adresseras detta?',
+      options: [
+        { text: 'PDSA-cykel: identifiera orsak, testa intervention, utvärdera, implementera', correct: true },
+        { text: 'Ignorera data', correct: false },
+        { text: 'Byta ut personalen', correct: false },
+        { text: 'Sluta mäta', correct: false },
+      ],
+      explanation: 'Kvalitetsförbättring använder PDSA-cykel för att systematiskt testa och implementera förbättringar.',
+      reference: 'A-ORTIM Kursbok, Kapitel 14',
+    },
+    {
+      code: 'A14.5',
+      chapterNumber: 14,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför är traumaregister viktiga?',
+      options: [
+        { text: 'Möjliggör benchmarking, identifierar förbättringsområden, följer utfall över tid', correct: true },
+        { text: 'Endast för forskning', correct: false },
+        { text: 'Lagkrav utan kliniskt värde', correct: false },
+        { text: 'Administrativ börda', correct: false },
+      ],
+      explanation: 'Traumaregister ger data för kvalitetsförbättring, jämförelser mellan centra och utfallsuppföljning.',
+      reference: 'A-ORTIM Kursbok, Kapitel 14',
+    },
   ];
 }
 
@@ -4632,6 +5809,765 @@ function getPelvicHemorrhageAlgorithmSVG(): string {
   <text x="715" y="710" class="text" fill="white" style="font-size:9px">bridge to surgery</text>
   <text x="715" y="725" class="ref" style="fill:#bbb">Brenner 2018</text>
 
+</svg>`;
+}
+
+// ============================================
+// PRE-COURSE ASSESSMENT - FÖRKUNSKAPSTEST
+// ============================================
+
+function getPreCourseAssessmentQuestions() {
+  return [
+    // ATLS och traumaprinciper
+    {
+      code: 'PRE-1',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken är den korrekta ordningen för ABCDE-principen vid traumaomhändertagande?',
+      options: [
+        { text: 'Airway, Breathing, Circulation, Disability, Exposure', correct: true },
+        { text: 'Assessment, Bleeding, Circulation, Diagnosis, Evaluation', correct: false },
+        { text: 'Airway, Blood pressure, Consciousness, Disability, Examination', correct: false },
+        { text: 'Alertness, Breathing, Cardiac, Diagnosis, Emergency', correct: false },
+      ],
+      explanation: 'ABCDE är den standardiserade prioriteringsordningen vid akut traumaomhändertagande enligt ATLS.',
+      reference: 'ATLS 10th Edition, American College of Surgeons',
+    },
+    {
+      code: 'PRE-2',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken blodvolym har en normalviktig vuxen person (70 kg)?',
+      options: [
+        { text: 'Cirka 3 liter', correct: false },
+        { text: 'Cirka 5 liter', correct: true },
+        { text: 'Cirka 7 liter', correct: false },
+        { text: 'Cirka 10 liter', correct: false },
+      ],
+      explanation: 'Blodvolymen är cirka 70 ml/kg, vilket ger ungefär 5 liter hos en 70 kg person.',
+      reference: 'ATLS 10th Edition, Chapter 3: Shock',
+    },
+    {
+      code: 'PRE-3',
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vid vilken blodförlust börjar typiskt blodtrycket sjunka hos en tidigare frisk vuxen?',
+      options: [
+        { text: '10-15% (500-750 ml)', correct: false },
+        { text: '15-30% (750-1500 ml)', correct: false },
+        { text: '30-40% (1500-2000 ml)', correct: true },
+        { text: 'Först vid >50% (>2500 ml)', correct: false },
+      ],
+      explanation: 'Blodtrycksfall är ett sent tecken på blödningschock (klass III). Tidiga tecken inkluderar takykardi och ändrad medvetandegrad.',
+      reference: 'ATLS 10th Edition, Shock Classification',
+    },
+    {
+      code: 'PRE-4',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilket av följande är det tidigaste tecknet på hypovolemisk chock?',
+      options: [
+        { text: 'Hypotension', correct: false },
+        { text: 'Takykardi', correct: true },
+        { text: 'Anuri', correct: false },
+        { text: 'Medvetslöshet', correct: false },
+      ],
+      explanation: 'Takykardi är oftast det första kliniska tecknet på blödning. Blodtrycksfall är ett sent tecken.',
+      reference: 'ATLS 10th Edition, Chapter 3',
+    },
+
+    // Anatomi
+    {
+      code: 'PRE-5',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken artär löper bakom knäleden och är särskilt utsatt vid knäledsluxation?',
+      options: [
+        { text: 'Arteria femoralis', correct: false },
+        { text: 'Arteria poplitea', correct: true },
+        { text: 'Arteria tibialis anterior', correct: false },
+        { text: 'Arteria dorsalis pedis', correct: false },
+      ],
+      explanation: 'A. poplitea löper genom fossa poplitea och är fixerad proximalt och distalt, vilket gör den vulnerabel vid knäledsluxation.',
+      reference: 'Gray\'s Anatomy, Lower Limb Vasculature',
+    },
+    {
+      code: 'PRE-6',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Hur många muskelkompartment finns det i underbenet?',
+      options: [
+        { text: '2', correct: false },
+        { text: '3', correct: false },
+        { text: '4', correct: true },
+        { text: '5', correct: false },
+      ],
+      explanation: 'Underbenet har 4 kompartment: anteriort, lateralt, ytligt posteriort och djupt posteriort.',
+      reference: 'Gray\'s Anatomy, Compartments of the Leg',
+    },
+    {
+      code: 'PRE-7',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken nerv innerverar främre underbenets muskler och ger sensation mellan stortån och andra tån?',
+      options: [
+        { text: 'Nervus tibialis', correct: false },
+        { text: 'Nervus peroneus profundus (fibularis profundus)', correct: true },
+        { text: 'Nervus suralis', correct: false },
+        { text: 'Nervus saphenus', correct: false },
+      ],
+      explanation: 'N. peroneus profundus innerverar främre kompartmentet och ger sensorik i första interdigitalrummet (mellan dig I och II).',
+      reference: 'Netter Atlas of Human Anatomy',
+    },
+
+    // Frakturkunskap
+    {
+      code: 'PRE-8',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad innebär en öppen fraktur?',
+      options: [
+        { text: 'Fraktur som syns på röntgen', correct: false },
+        { text: 'Fraktur med kommunikation mellan frakturhematom och yttre miljön', correct: true },
+        { text: 'Fraktur med mer än 2 fragment', correct: false },
+        { text: 'Fraktur som går genom hela benet', correct: false },
+      ],
+      explanation: 'En öppen fraktur definieras av kommunikation mellan frakturhematomet och den yttre miljön, oavsett sårets storlek.',
+      reference: 'Gustilo RB et al. JBJS 1984',
+    },
+    {
+      code: 'PRE-9',
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför är tibiafrakturer mer benägna att bli öppna än femurfrakturer?',
+      options: [
+        { text: 'Tibia är ett svagare ben', correct: false },
+        { text: 'Tibia har mindre mjukdelstäckning anteriort', correct: true },
+        { text: 'Tibia har sämre blodförsörjning', correct: false },
+        { text: 'Femur har tjockare periost', correct: false },
+      ],
+      explanation: 'Tibias anteriora yta är subkutan utan muskulär täckning, vilket gör den mer utsatt för öppna frakturer.',
+      reference: 'Rockwood & Green\'s Fractures in Adults',
+    },
+    {
+      code: 'PRE-10',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken klassifikation används för öppna frakturer?',
+      options: [
+        { text: 'AO-klassifikationen', correct: false },
+        { text: 'Gustilo-Anderson klassifikationen', correct: true },
+        { text: 'Garden-klassifikationen', correct: false },
+        { text: 'Neer-klassifikationen', correct: false },
+      ],
+      explanation: 'Gustilo-Anderson är standardklassifikationen för öppna frakturer med grad I-IIIC baserat på sårvidd och mjukdelsskada.',
+      reference: 'Gustilo RB et al. JBJS 1984',
+    },
+
+    // Fysiologi
+    {
+      code: 'PRE-11',
+      bloomLevel: 'COMPREHENSION',
+      question: 'Varför är det viktigt att undvika hypotermi vid trauma?',
+      options: [
+        { text: 'Patienten fryser', correct: false },
+        { text: 'Hypotermi försämrar koagulationen och ökar blödningsrisken', correct: true },
+        { text: 'Hypotermi ger bradykardi', correct: false },
+        { text: 'Hypotermi påverkar röntgenbilder', correct: false },
+      ],
+      explanation: 'Hypotermi (<35°C) är del av "trauma-triaden" (hypotermi, acidos, koagulopati) och försämrar trombocytfunktion och koagulationsfaktorer.',
+      reference: 'ATLS 10th Edition; Jurkovich GJ J Trauma 1987',
+    },
+    {
+      code: 'PRE-12',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad är normalvärdet för ankel-brachialindex (ABI)?',
+      options: [
+        { text: '0.5-0.7', correct: false },
+        { text: '0.7-0.9', correct: false },
+        { text: '0.9-1.3', correct: true },
+        { text: '1.5-2.0', correct: false },
+      ],
+      explanation: 'Normalt ABI är 0.9-1.3. ABI <0.9 indikerar nedsatt arteriell perfusion och kräver vidare utredning vid trauma.',
+      reference: 'EAST Guidelines 2012; Johansen K J Trauma 1991',
+    },
+
+    // Sårläkning och infektion
+    {
+      code: 'PRE-13',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken bakterie är den vanligaste orsaken till infektion vid öppna frakturer?',
+      options: [
+        { text: 'Escherichia coli', correct: false },
+        { text: 'Staphylococcus aureus', correct: true },
+        { text: 'Pseudomonas aeruginosa', correct: false },
+        { text: 'Clostridium perfringens', correct: false },
+      ],
+      explanation: 'S. aureus är den vanligaste patogenen vid ortopediska infektioner, inklusive öppna frakturer.',
+      reference: 'BOA/BAPRAS Open Fracture Guidelines 2020',
+    },
+    {
+      code: 'PRE-14',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Inom vilken tid bör antibiotika ges vid öppen fraktur?',
+      options: [
+        { text: 'Inom 6 timmar', correct: false },
+        { text: 'Inom 3 timmar', correct: false },
+        { text: 'Inom 1 timme', correct: true },
+        { text: 'Inom 30 minuter', correct: false },
+      ],
+      explanation: 'Antibiotika ska ges så snart som möjligt, helst inom 1 timme, för att minska infektionsrisken vid öppna frakturer.',
+      reference: 'BOA/BAPRAS 2020; Patzakis MJ JBJS 1974',
+    },
+
+    // Akut handläggning
+    {
+      code: 'PRE-15',
+      bloomLevel: 'APPLICATION',
+      question: 'En patient kommer in med kraftig blödning från en extremitetsskada. Direkttryck räcker inte. Vad är nästa åtgärd?',
+      options: [
+        { text: 'Applicera tourniquet', correct: true },
+        { text: 'Ge tranexamsyra IV', correct: false },
+        { text: 'Höj extremiteten', correct: false },
+        { text: 'Applicera hemostatiskt förband', correct: false },
+      ],
+      explanation: 'Vid livshotande extremitetsblödning där direkttryck inte räcker är tourniquet nästa steg enligt TCCC/ATLS.',
+      reference: 'TCCC Guidelines 2023; ATLS 10th Edition',
+    },
+    {
+      code: 'PRE-16',
+      bloomLevel: 'APPLICATION',
+      question: 'Hur kontrollerar du distal cirkulation vid en extremitetsskada?',
+      options: [
+        { text: 'Enbart genom att känna temperaturen', correct: false },
+        { text: 'Enbart genom kapillär återfyllnad', correct: false },
+        { text: 'Puls, kapillär återfyllnad, färg, temperatur och sensation', correct: true },
+        { text: 'Enbart genom att fråga om domningar', correct: false },
+      ],
+      explanation: 'Neurovaskulär status inkluderar bedömning av puls, kapillär återfyllnad, hudfärg, temperatur och sensorisk/motorisk funktion.',
+      reference: 'ATLS 10th Edition, Musculoskeletal Trauma',
+    },
+
+    // Immobilisering
+    {
+      code: 'PRE-17',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Varför ska en fraktur immobiliseras?',
+      options: [
+        { text: 'Enbart för patientens komfort', correct: false },
+        { text: 'För att minska smärta, blödning och risk för ytterligare skada', correct: true },
+        { text: 'Enbart för transport', correct: false },
+        { text: 'För att underlätta röntgen', correct: false },
+      ],
+      explanation: 'Immobilisering minskar smärta, begränsar blödning, förhindrar ytterligare mjukdels- och kärlskada, och underlättar transport.',
+      reference: 'ATLS 10th Edition',
+    },
+    {
+      code: 'PRE-18',
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vilka leder ska inkluderas vid immobilisering av en fraktur?',
+      options: [
+        { text: 'Endast leden närmast frakturen', correct: false },
+        { text: 'Leden ovanför och nedan om frakturen', correct: true },
+        { text: 'Alla leder på extremiteten', correct: false },
+        { text: 'Inga leder, endast frakturstället', correct: false },
+      ],
+      explanation: 'Grundprincipen är att immobilisera leden ovanför och nedan om frakturen för att förhindra rörelse i frakturstället.',
+      reference: 'ATLS 10th Edition; Prehospital Trauma Life Support',
+    },
+
+    // Bilddiagnostik
+    {
+      code: 'PRE-19',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken röntgenundersökning är förstahandsval vid akut extremitetstrauma?',
+      options: [
+        { text: 'CT', correct: false },
+        { text: 'MR', correct: false },
+        { text: 'Slätröntgen i minst två projektioner', correct: true },
+        { text: 'Ultraljud', correct: false },
+      ],
+      explanation: 'Slätröntgen i två projektioner (vanligen frontal och lateral) är förstahandsundersökning vid misstänkt fraktur.',
+      reference: 'ACR Appropriateness Criteria',
+    },
+    {
+      code: 'PRE-20',
+      bloomLevel: 'COMPREHENSION',
+      question: 'När är CT-angiografi indicerad vid extremitetstrauma?',
+      options: [
+        { text: 'Vid alla frakturer', correct: false },
+        { text: 'Vid misstänkt kärlskada (hard/soft signs)', correct: true },
+        { text: 'Enbart vid öppna frakturer', correct: false },
+        { text: 'Enbart prehospitalt', correct: false },
+      ],
+      explanation: 'CTA är indicerad vid klinisk misstanke om kärlskada, särskilt vid soft signs. Hard signs leder ofta direkt till operation.',
+      reference: 'EAST Guidelines 2012',
+    },
+
+    // Grundläggande farmakologi
+    {
+      code: 'PRE-21',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken analgetikagrupp bör användas med försiktighet vid akut trauma?',
+      options: [
+        { text: 'Paracetamol', correct: false },
+        { text: 'Opioider', correct: false },
+        { text: 'NSAID', correct: true },
+        { text: 'Lokalanestetika', correct: false },
+      ],
+      explanation: 'NSAID påverkar trombocytfunktion och njurfunktion, vilket kan vara problematiskt vid hypovolemi och blödning.',
+      reference: 'ATLS 10th Edition; WHO Pain Guidelines',
+    },
+    {
+      code: 'PRE-22',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken är mekanismen för tranexamsyra vid trauma?',
+      options: [
+        { text: 'Ökar trombocytproduktion', correct: false },
+        { text: 'Hämmar fibrinolys', correct: true },
+        { text: 'Aktiverar koagulationskaskaden', correct: false },
+        { text: 'Ökar fibrinogensyntes', correct: false },
+      ],
+      explanation: 'Tranexamsyra är en antifibrinolytisk substans som hämmar plasminogen-till-plasmin-konvertering.',
+      reference: 'CRASH-2 Trial, Lancet 2010',
+    },
+
+    // Patientbedömning
+    {
+      code: 'PRE-23',
+      bloomLevel: 'APPLICATION',
+      question: 'En traumapatient är vid medvetande men svarar inte på frågor. Enligt GCS, vilken verbal poäng får patienten?',
+      options: [
+        { text: '1 - Inget svar', correct: true },
+        { text: '2 - Obegripliga ljud', correct: false },
+        { text: '3 - Osammanhängande ord', correct: false },
+        { text: '4 - Förvirrad', correct: false },
+      ],
+      explanation: 'GCS verbal: 1=inget svar, 2=obegripliga ljud, 3=osammanhängande ord, 4=förvirrad, 5=orienterad.',
+      reference: 'Teasdale G, Lancet 1974; ATLS 10th Edition',
+    },
+    {
+      code: 'PRE-24',
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad står ISS för inom traumavård?',
+      options: [
+        { text: 'Initial Severity Score', correct: false },
+        { text: 'Injury Severity Score', correct: true },
+        { text: 'International Shock Scale', correct: false },
+        { text: 'Integrated Survival Score', correct: false },
+      ],
+      explanation: 'ISS (Injury Severity Score) är ett anatomiskt poängsystem för att gradera traumats svårighetsgrad. ISS >15 = major trauma.',
+      reference: 'Baker SP et al. J Trauma 1974',
+    },
+    {
+      code: 'PRE-25',
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vilken patientgrupp har ofta atypiska reaktioner på hypovolemi?',
+      options: [
+        { text: 'Unga vuxna', correct: false },
+        { text: 'Äldre patienter och patienter på betablockerare', correct: true },
+        { text: 'Barn under 5 år', correct: false },
+        { text: 'Gravida i första trimestern', correct: false },
+      ],
+      explanation: 'Äldre kan ha förändrat fysiologiskt svar och betablockerare förhindrar kompensatorisk takykardi vid blödning.',
+      reference: 'ATLS 10th Edition, Special Populations',
+    },
+  ];
+}
+
+// ============================================
+// QUICK REFERENCE CARDS - SNABBREFERENSKORT
+// ============================================
+
+function getQRCTourniquetSVG(): string {
+  return `<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 18px sans-serif; fill: #fff; }
+    .section { font: bold 12px sans-serif; fill: #2c3e50; }
+    .text { font: 11px sans-serif; fill: #333; }
+    .critical { font: bold 11px sans-serif; fill: #c0392b; }
+    .time { font: bold 14px sans-serif; fill: #e74c3c; }
+    .ref { font: italic 9px sans-serif; fill: #7f8c8d; }
+  </style>
+
+  <!-- Header -->
+  <rect width="400" height="50" fill="#c0392b"/>
+  <text x="200" y="32" text-anchor="middle" class="title">🩸 TOURNIQUET SNABBKORT</text>
+
+  <!-- Indikationer -->
+  <rect x="10" y="60" width="380" height="70" fill="#ffeaa7" rx="5"/>
+  <text x="20" y="80" class="section">INDIKATIONER</text>
+  <text x="20" y="97" class="text">✓ Livshotande blödning från extremitet</text>
+  <text x="20" y="112" class="text">✓ Direkt tryck otillräckligt eller ej möjligt</text>
+  <text x="20" y="127" class="critical">✓ Massiv blödning: >250 ml/min = död inom 3 min</text>
+
+  <!-- Applicering -->
+  <rect x="10" y="140" width="380" height="110" fill="#dfe6e9" rx="5"/>
+  <text x="20" y="160" class="section">KORREKT APPLICERING</text>
+  <text x="20" y="180" class="text">1. Placera 5-7 cm proximalt om blödningskällan</text>
+  <text x="20" y="195" class="text">2. Dra åt tills blödningen HELT upphör</text>
+  <text x="20" y="210" class="text">3. Palpera - ingen distal puls ska kännas</text>
+  <text x="20" y="225" class="text">4. Dokumentera tid - skriv på hud eller tejp</text>
+  <text x="20" y="240" class="critical">⚠ Används EJ på led, skriv "T" på patientens panna</text>
+
+  <!-- Tidsgränser -->
+  <rect x="10" y="260" width="380" height="100" fill="#fab1a0" rx="5"/>
+  <text x="20" y="280" class="section">TIDSGRÄNSER</text>
+  <rect x="20" y="290" width="170" height="60" fill="#fff" rx="3"/>
+  <text x="105" y="310" text-anchor="middle" class="time">&lt;2 timmar</text>
+  <text x="105" y="330" text-anchor="middle" class="text">Säkert - minimal</text>
+  <text x="105" y="345" text-anchor="middle" class="text">vävnadsskada</text>
+
+  <rect x="200" y="290" width="180" height="60" fill="#fff" rx="3"/>
+  <text x="290" y="310" text-anchor="middle" class="time">2-6 timmar</text>
+  <text x="290" y="330" text-anchor="middle" class="text">Acceptabelt vid</text>
+  <text x="290" y="345" text-anchor="middle" class="text">livshotande blödning</text>
+
+  <!-- Lossa aldrig -->
+  <rect x="10" y="370" width="380" height="60" fill="#2c3e50" rx="5"/>
+  <text x="200" y="395" text-anchor="middle" class="title">⛔ LOSSA ALDRIG PREHOSPITALT</text>
+  <text x="200" y="415" text-anchor="middle" style="font:11px sans-serif;fill:#fff">Behåll tills kirurgisk blödningskontroll är möjlig</text>
+
+  <!-- Referenser -->
+  <text x="200" y="450" text-anchor="middle" class="ref">Kragh JF et al. J Trauma 2008;64:S38-50</text>
+  <text x="200" y="465" text-anchor="middle" class="ref">TCCC Guidelines 2023, ATLS 10th ed</text>
+  <text x="200" y="480" text-anchor="middle" class="ref">B-ORTIM Kursbok Kapitel 4</text>
+</svg>`;
+}
+
+function getQRCCompartmentSVG(): string {
+  return `<svg viewBox="0 0 400 550" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 18px sans-serif; fill: #fff; }
+    .section { font: bold 12px sans-serif; fill: #2c3e50; }
+    .text { font: 11px sans-serif; fill: #333; }
+    .critical { font: bold 11px sans-serif; fill: #c0392b; }
+    .warning { font: bold 12px sans-serif; fill: #e67e22; }
+    .green { fill: #27ae60; }
+    .red { fill: #e74c3c; }
+    .ref { font: italic 9px sans-serif; fill: #7f8c8d; }
+  </style>
+
+  <!-- Header -->
+  <rect width="400" height="50" fill="#8e44ad"/>
+  <text x="200" y="32" text-anchor="middle" class="title">⚡ KOMPARTMENTSYNDROM</text>
+
+  <!-- 6 P -->
+  <rect x="10" y="60" width="380" height="130" fill="#d5dbdb" rx="5"/>
+  <text x="20" y="80" class="section">DE 6 P:na - KLINISKA TECKEN</text>
+
+  <text x="30" y="100" class="text">1. <tspan font-weight="bold">Pain</tspan> - Smärta vid passiv töjning (tidigt tecken)</text>
+  <text x="30" y="118" class="text">2. <tspan font-weight="bold">Pressure</tspan> - Spänd, palpationsöm loge</text>
+  <text x="30" y="136" class="text">3. <tspan font-weight="bold">Paresthesia</tspan> - Domningar, stickningar</text>
+  <text x="30" y="154" class="text">4. <tspan font-weight="bold">Paralysis</tspan> - Svaghet (sent tecken)</text>
+  <text x="30" y="172" class="text">5. <tspan font-weight="bold">Pallor</tspan> - Blekhet (osäkert tecken)</text>
+  <text x="30" y="190" class="critical">6. <tspan font-weight="bold">Pulselessness</tspan> - Pulslöshet = för sent!</text>
+
+  <!-- Tryckmätning -->
+  <rect x="10" y="200" width="380" height="100" fill="#ffeaa7" rx="5"/>
+  <text x="20" y="220" class="section">TRYCKMÄTNING (Delta-P)</text>
+  <text x="30" y="240" class="text">Delta-P = Diastoliskt BT - Kompartmenttryck</text>
+
+  <rect x="30" y="255" width="160" height="35" fill="#27ae60" rx="3"/>
+  <text x="110" y="278" text-anchor="middle" style="font:bold 12px sans-serif;fill:#fff">ΔP &gt;30 mmHg = OK</text>
+
+  <rect x="200" y="255" width="180" height="35" fill="#e74c3c" rx="3"/>
+  <text x="290" y="278" text-anchor="middle" style="font:bold 12px sans-serif;fill:#fff">ΔP ≤30 mmHg = FASCIOTOMI</text>
+
+  <!-- Högriskpatienter -->
+  <rect x="10" y="310" width="380" height="80" fill="#fab1a0" rx="5"/>
+  <text x="20" y="330" class="section">HÖGRISKPATIENTER</text>
+  <text x="30" y="350" class="text">• Tibiafraktur (särskilt proximal)</text>
+  <text x="200" y="350" class="text">• Crushing injury</text>
+  <text x="30" y="368" class="text">• Underarmsrevask.</text>
+  <text x="200" y="368" class="text">• Medvetslös patient</text>
+  <text x="30" y="386" class="critical">⚠ Diagnos svår hos sederade/medvetslösa - mät!</text>
+
+  <!-- Tidsfönster -->
+  <rect x="10" y="400" width="380" height="70" fill="#2c3e50" rx="5"/>
+  <text x="200" y="425" text-anchor="middle" class="title">⏱ TIDSFÖNSTER: 6-8 TIMMAR</text>
+  <text x="200" y="450" text-anchor="middle" style="font:11px sans-serif;fill:#fff">Efter 6-8h: irreversibel muskelskada → Volkmann-kontraktur</text>
+  <text x="200" y="465" text-anchor="middle" style="font:11px sans-serif;fill:#ffd700">Fasciotomi inom 6h: 94% återhämtning vs 6h: &lt;20%</text>
+
+  <!-- Referenser -->
+  <text x="200" y="500" text-anchor="middle" class="ref">McQueen MM, et al. JBJS Br 2000;82:200-203</text>
+  <text x="200" y="515" text-anchor="middle" class="ref">Whitesides TE. Clin Orthop 1975;113:43-51</text>
+  <text x="200" y="530" text-anchor="middle" class="ref">B-ORTIM Kursbok Kapitel 6</text>
+</svg>`;
+}
+
+function getQRCAmputationSVG(): string {
+  return `<svg viewBox="0 0 400 550" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 18px sans-serif; fill: #fff; }
+    .section { font: bold 12px sans-serif; fill: #2c3e50; }
+    .text { font: 11px sans-serif; fill: #333; }
+    .critical { font: bold 11px sans-serif; fill: #c0392b; }
+    .time { font: bold 14px sans-serif; fill: #e74c3c; }
+    .green { fill: #27ae60; }
+    .ref { font: italic 9px sans-serif; fill: #7f8c8d; }
+  </style>
+
+  <!-- Header -->
+  <rect width="400" height="50" fill="#e74c3c"/>
+  <text x="200" y="32" text-anchor="middle" class="title">✂️ TRAUMATISK AMPUTATION</text>
+
+  <!-- Stumpvård -->
+  <rect x="10" y="60" width="185" height="140" fill="#dfe6e9" rx="5"/>
+  <text x="20" y="80" class="section">STUMPVÅRD</text>
+  <text x="20" y="100" class="text">1. Blödningskontroll</text>
+  <text x="25" y="115" class="text">   - Tourniquet vid massiv</text>
+  <text x="25" y="130" class="text">   - Direkt tryck vid lindrig</text>
+  <text x="20" y="150" class="text">2. Sterilt förband</text>
+  <text x="20" y="170" class="text">3. Polstra, immobilisera</text>
+  <text x="20" y="190" class="critical">⚠ Ligera EJ artärer blint</text>
+
+  <!-- Amputatvård -->
+  <rect x="205" y="60" width="185" height="140" fill="#d5f5e3" rx="5"/>
+  <text x="215" y="80" class="section">AMPUTATVÅRD</text>
+  <text x="215" y="100" class="text">1. Sköljning NaCl/Ringer</text>
+  <text x="215" y="118" class="text">2. Fuktig kompress runt</text>
+  <text x="215" y="136" class="text">3. I plastpåse</text>
+  <text x="215" y="154" class="text">4. I större påse med is</text>
+  <text x="215" y="175" class="critical">⚠ Aldrig direkt på is!</text>
+  <text x="215" y="190" class="critical">⚠ Aldrig i vatten!</text>
+
+  <!-- Ischemitider -->
+  <rect x="10" y="210" width="380" height="120" fill="#ffeaa7" rx="5"/>
+  <text x="20" y="230" class="section">ISCHEMITIDER FÖR REPLANTATION</text>
+
+  <rect x="20" y="245" width="175" height="75" fill="#fff" rx="3"/>
+  <text x="107" y="265" text-anchor="middle" class="section">VARM ISCHEMI</text>
+  <text x="107" y="285" text-anchor="middle" class="text">Finger: 12 timmar</text>
+  <text x="107" y="300" text-anchor="middle" class="text">Hand/arm: 6 timmar</text>
+  <text x="107" y="315" text-anchor="middle" class="critical">Större muskelmassa=kortare</text>
+
+  <rect x="205" y="245" width="175" height="75" fill="#fff" rx="3"/>
+  <text x="292" y="265" text-anchor="middle" class="section">KALL ISCHEMI</text>
+  <text x="292" y="285" text-anchor="middle" class="text">Finger: 24 timmar</text>
+  <text x="292" y="300" text-anchor="middle" class="text">Hand/arm: 12 timmar</text>
+  <text x="292" y="315" text-anchor="middle" class="green" style="font-weight:bold">Kyla förlänger tid!</text>
+
+  <!-- Replantationsindikationer -->
+  <rect x="10" y="340" width="380" height="100" fill="#dfe6e9" rx="5"/>
+  <text x="20" y="360" class="section">REPLANTATIONSINDIKATIONER</text>
+  <text x="30" y="380" class="text">• Tumme (viktigast)</text>
+  <text x="200" y="380" class="text">• Barn (alla nivåer)</text>
+  <text x="30" y="398" class="text">• Multipla fingrar</text>
+  <text x="200" y="398" class="text">• Handflata/handled</text>
+  <text x="30" y="416" class="text">• Sharp/guillotine-amputation</text>
+  <text x="30" y="434" class="critical">⚠ Kontakta replantationscentrum tidigt!</text>
+
+  <!-- Kontakt -->
+  <rect x="10" y="450" width="380" height="40" fill="#2c3e50" rx="5"/>
+  <text x="200" y="475" text-anchor="middle" class="title">📞 RING HANDKIRURG TIDIGT</text>
+
+  <!-- Referenser -->
+  <text x="200" y="510" text-anchor="middle" class="ref">Soucacos PN, et al. Microsurgery 2001;21:240-248</text>
+  <text x="200" y="525" text-anchor="middle" class="ref">Morrison WA. Hand Clin 2007;23:1-13</text>
+  <text x="200" y="540" text-anchor="middle" class="ref">B-ORTIM Kursbok Kapitel 9</text>
+</svg>`;
+}
+
+function getQRCOpenFxSVG(): string {
+  return `<svg viewBox="0 0 400 580" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 18px sans-serif; fill: #fff; }
+    .section { font: bold 12px sans-serif; fill: #2c3e50; }
+    .text { font: 11px sans-serif; fill: #333; }
+    .critical { font: bold 11px sans-serif; fill: #c0392b; }
+    .time { font: bold 14px sans-serif; fill: #e74c3c; }
+    .grade { font: bold 11px sans-serif; }
+    .ref { font: italic 9px sans-serif; fill: #7f8c8d; }
+  </style>
+
+  <!-- Header -->
+  <rect width="400" height="50" fill="#d35400"/>
+  <text x="200" y="32" text-anchor="middle" class="title">🦴 ÖPPEN FRAKTUR SNABBKORT</text>
+
+  <!-- Gustilo-Anderson -->
+  <rect x="10" y="60" width="380" height="150" fill="#ffeaa7" rx="5"/>
+  <text x="20" y="80" class="section">GUSTILO-ANDERSON KLASSIFIKATION</text>
+
+  <rect x="20" y="90" width="110" height="55" fill="#27ae60" rx="3"/>
+  <text x="75" y="108" text-anchor="middle" class="grade" style="fill:#fff">Grad I</text>
+  <text x="75" y="123" text-anchor="middle" class="text" style="fill:#fff">&lt;1 cm sår</text>
+  <text x="75" y="138" text-anchor="middle" class="text" style="fill:#fff">Ren, minimal</text>
+
+  <rect x="140" y="90" width="110" height="55" fill="#f39c12" rx="3"/>
+  <text x="195" y="108" text-anchor="middle" class="grade" style="fill:#fff">Grad II</text>
+  <text x="195" y="123" text-anchor="middle" class="text" style="fill:#fff">1-10 cm sår</text>
+  <text x="195" y="138" text-anchor="middle" class="text" style="fill:#fff">Moderat kontam.</text>
+
+  <rect x="260" y="90" width="120" height="55" fill="#c0392b" rx="3"/>
+  <text x="320" y="108" text-anchor="middle" class="grade" style="fill:#fff">Grad III</text>
+  <text x="320" y="123" text-anchor="middle" class="text" style="fill:#fff">&gt;10 cm/crushing</text>
+  <text x="320" y="138" text-anchor="middle" class="text" style="fill:#fff">Omfattande skada</text>
+
+  <text x="30" y="165" class="text"><tspan font-weight="bold">IIIA:</tspan> Mjukdel täcker ben</text>
+  <text x="30" y="180" class="text"><tspan font-weight="bold">IIIB:</tspan> Periost-stripping, kräver lapp</text>
+  <text x="30" y="195" class="critical"><tspan font-weight="bold">IIIC:</tspan> Kärlskada som kräver repair</text>
+
+  <!-- Initial åtgärd -->
+  <rect x="10" y="220" width="380" height="120" fill="#dfe6e9" rx="5"/>
+  <text x="20" y="240" class="section">INITIAL ÅTGÄRD (AKUTMOTTAGNINGEN)</text>
+  <text x="30" y="260" class="text">1. Foto av såret innan förband</text>
+  <text x="30" y="278" class="text">2. Spola med NaCl - avlägsna grov kontamination</text>
+  <text x="30" y="296" class="text">3. Sterilt förband - öppna INTE upprepat</text>
+  <text x="30" y="314" class="text">4. Tetanusprofylax - kontrollera status</text>
+  <text x="30" y="332" class="critical">5. Antibiotika IV inom 1 timme!</text>
+
+  <!-- Antibiotika -->
+  <rect x="10" y="350" width="380" height="100" fill="#d5f5e3" rx="5"/>
+  <text x="20" y="370" class="section">ANTIBIOTIKA (BOA/BAPRAS 2020)</text>
+  <text x="30" y="390" class="text"><tspan font-weight="bold">Grad I-II:</tspan> Kloxacillin 2g x 3 IV</text>
+  <text x="30" y="410" class="text"><tspan font-weight="bold">Grad III:</tspan> Kloxacillin 2g x 3 + Gentamicin 5mg/kg x 1</text>
+  <text x="30" y="430" class="text"><tspan font-weight="bold">Jordkontamination:</tspan> Lägg till Penicillin G</text>
+  <text x="30" y="445" class="critical">Pc-allergi: Klindamycin 600mg x 3</text>
+
+  <!-- Tidsgränser -->
+  <rect x="10" y="460" width="380" height="60" fill="#2c3e50" rx="5"/>
+  <text x="200" y="485" text-anchor="middle" class="title">⏱ DEBRIDERING INOM 12-24H</text>
+  <text x="200" y="505" text-anchor="middle" style="font:11px sans-serif;fill:#fff">Grad IIIB/C: inom 12h | Grad I-II: inom 24h</text>
+
+  <!-- Referenser -->
+  <text x="200" y="540" text-anchor="middle" class="ref">BOA/BAPRAS Standards for Open Fractures 2020</text>
+  <text x="200" y="555" text-anchor="middle" class="ref">Gustilo RB, et al. JBJS Am 1984;66:427-430</text>
+  <text x="200" y="570" text-anchor="middle" class="ref">B-ORTIM Kursbok Kapitel 7</text>
+</svg>`;
+}
+
+function getQRCPelvicSVG(): string {
+  return `<svg viewBox="0 0 400 550" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 18px sans-serif; fill: #fff; }
+    .section { font: bold 12px sans-serif; fill: #2c3e50; }
+    .text { font: 11px sans-serif; fill: #333; }
+    .critical { font: bold 11px sans-serif; fill: #c0392b; }
+    .time { font: bold 14px sans-serif; fill: #e74c3c; }
+    .step { font: bold 14px sans-serif; fill: #fff; }
+    .ref { font: italic 9px sans-serif; fill: #7f8c8d; }
+  </style>
+
+  <!-- Header -->
+  <rect width="400" height="50" fill="#9b59b6"/>
+  <text x="200" y="32" text-anchor="middle" class="title">🦴 BÄCKENBLÖDNING SNABBKORT</text>
+
+  <!-- Blödningskällor -->
+  <rect x="10" y="60" width="380" height="80" fill="#ffeaa7" rx="5"/>
+  <text x="20" y="80" class="section">BLÖDNINGSKÄLLOR (prioritet)</text>
+  <text x="30" y="100" class="text"><tspan font-weight="bold">80%</tspan> Venös plexus + frakturytor</text>
+  <text x="30" y="118" class="text"><tspan font-weight="bold">15%</tspan> Arteriell (a. iliaca int. grenar)</text>
+  <text x="30" y="136" class="critical"><tspan font-weight="bold">5%</tspan> Stora kärl (a/v iliaca communis) → operation direkt</text>
+
+  <!-- Steg för steg -->
+  <rect x="10" y="150" width="380" height="200" fill="#dfe6e9" rx="5"/>
+  <text x="20" y="170" class="section">STEG-FÖR-STEG HANDLÄGGNING</text>
+
+  <circle cx="30" cy="195" r="12" fill="#27ae60"/>
+  <text x="30" y="200" text-anchor="middle" class="step">1</text>
+  <text x="50" y="200" class="text"><tspan font-weight="bold">BÄCKENBÄLTE</tspan> - Applicera på olycksplatsen/akuten</text>
+
+  <circle cx="30" cy="230" r="12" fill="#f39c12"/>
+  <text x="30" y="235" text-anchor="middle" class="step">2</text>
+  <text x="50" y="235" class="text"><tspan font-weight="bold">BLODPRODUKTER</tspan> - Massiv transfusionsprotokoll</text>
+
+  <circle cx="30" cy="265" r="12" fill="#e74c3c"/>
+  <text x="30" y="270" text-anchor="middle" class="step">3</text>
+  <text x="50" y="270" class="text"><tspan font-weight="bold">CT</tspan> - Om hemodynamisk stabilitet, annars direkt OP</text>
+
+  <circle cx="30" cy="300" r="12" fill="#8e44ad"/>
+  <text x="30" y="305" text-anchor="middle" class="step">4</text>
+  <text x="50" y="305" class="text"><tspan font-weight="bold">ANGIOEMBOLISERING</tspan> - Vid arteriell blush på CT</text>
+
+  <circle cx="30" cy="335" r="12" fill="#2c3e50"/>
+  <text x="30" y="340" text-anchor="middle" class="step">5</text>
+  <text x="50" y="340" class="text"><tspan font-weight="bold">PREPERITONEAL PACKING</tspan> - Vid refraktär blödning</text>
+
+  <!-- Bäckenbälte placering -->
+  <rect x="10" y="360" width="185" height="90" fill="#d5f5e3" rx="5"/>
+  <text x="20" y="380" class="section">BÄCKENBÄLTE</text>
+  <text x="20" y="400" class="text">• Placera över trochanter</text>
+  <text x="20" y="418" class="text">• Spänn med knäna ihop</text>
+  <text x="20" y="436" class="text">• Medialiserar SI-leder</text>
+  <text x="20" y="448" class="critical">Max 24h</text>
+
+  <!-- Kontraindikationer -->
+  <rect x="205" y="360" width="185" height="90" fill="#fab1a0" rx="5"/>
+  <text x="215" y="380" class="section">KONTRA PPP</text>
+  <text x="215" y="400" class="text">• Öppen bäckenfraktur</text>
+  <text x="215" y="418" class="text">• Urologisk skada</text>
+  <text x="215" y="436" class="text">• Tarmskada</text>
+  <text x="215" y="448" class="critical">→ Angioembolisering</text>
+
+  <!-- Tidsgräns -->
+  <rect x="10" y="460" width="380" height="40" fill="#2c3e50" rx="5"/>
+  <text x="200" y="487" text-anchor="middle" class="title">⏱ &lt;30 MIN TILL BLÖDNINGSKONTROLL</text>
+
+  <!-- Referenser -->
+  <text x="200" y="520" text-anchor="middle" class="ref">WSES Guidelines Pelvic Trauma 2017</text>
+  <text x="200" y="535" text-anchor="middle" class="ref">ATLS 10th edition, Croce MA J Trauma 2007</text>
+  <text x="200" y="550" text-anchor="middle" class="ref">B-ORTIM Kursbok Kapitel 8</text>
+</svg>`;
+}
+
+function getQRCVascularSVG(): string {
+  return `<svg viewBox="0 0 400 580" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 18px sans-serif; fill: #fff; }
+    .section { font: bold 12px sans-serif; fill: #2c3e50; }
+    .text { font: 11px sans-serif; fill: #333; }
+    .critical { font: bold 11px sans-serif; fill: #c0392b; }
+    .hard { font: bold 11px sans-serif; fill: #fff; }
+    .soft { font: 11px sans-serif; fill: #fff; }
+    .ref { font: italic 9px sans-serif; fill: #7f8c8d; }
+  </style>
+
+  <!-- Header -->
+  <rect width="400" height="50" fill="#3498db"/>
+  <text x="200" y="32" text-anchor="middle" class="title">🩸 KÄRLSKADA SNABBKORT</text>
+
+  <!-- Hard signs -->
+  <rect x="10" y="60" width="185" height="150" fill="#c0392b" rx="5"/>
+  <text x="100" y="82" text-anchor="middle" class="title" style="font-size:14px">HARD SIGNS</text>
+  <text x="20" y="105" class="hard">✓ Aktiv pulsatil blödning</text>
+  <text x="20" y="125" class="hard">✓ Expanderande hematom</text>
+  <text x="20" y="145" class="hard">✓ Avsaknad distal puls</text>
+  <text x="20" y="165" class="hard">✓ Ischemi (6 P)</text>
+  <text x="20" y="185" class="hard">✓ Bruit/thrill</text>
+  <rect x="20" y="193" width="165" height="12" fill="#fff" rx="2"/>
+  <text x="100" y="203" text-anchor="middle" class="critical" style="font-size:10px">→ DIREKT OPERATION</text>
+
+  <!-- Soft signs -->
+  <rect x="205" y="60" width="185" height="150" fill="#f39c12" rx="5"/>
+  <text x="297" y="82" text-anchor="middle" class="title" style="font-size:14px">SOFT SIGNS</text>
+  <text x="215" y="105" class="soft">• Kärlnära penetrerande skada</text>
+  <text x="215" y="125" class="soft">• Litet, icke-pulserande hematom</text>
+  <text x="215" y="145" class="soft">• Neurologiskt bortfall</text>
+  <text x="215" y="165" class="soft">• Anatomisk närhet till kärl</text>
+  <text x="215" y="185" class="soft">• Misstanke pga mekanism</text>
+  <rect x="215" y="193" width="165" height="12" fill="#fff" rx="2"/>
+  <text x="297" y="203" text-anchor="middle" style="font:bold 10px sans-serif;fill:#f39c12">→ UTRED MED ABI/CTA</text>
+
+  <!-- ABI -->
+  <rect x="10" y="220" width="380" height="100" fill="#dfe6e9" rx="5"/>
+  <text x="20" y="240" class="section">ANKLE-BRACHIAL INDEX (ABI)</text>
+  <text x="30" y="260" class="text">ABI = Ankeltryck / Armtryck (doppler)</text>
+
+  <rect x="30" y="275" width="160" height="35" fill="#27ae60" rx="3"/>
+  <text x="110" y="298" text-anchor="middle" style="font:bold 12px sans-serif;fill:#fff">ABI ≥0.9 = Normal</text>
+
+  <rect x="200" y="275" width="180" height="35" fill="#e74c3c" rx="3"/>
+  <text x="290" y="298" text-anchor="middle" style="font:bold 12px sans-serif;fill:#fff">ABI &lt;0.9 = CTA</text>
+
+  <!-- Högriskskador -->
+  <rect x="10" y="330" width="380" height="100" fill="#ffeaa7" rx="5"/>
+  <text x="20" y="350" class="section">HÖGRISKSKADOR - Utred med CTA</text>
+  <text x="30" y="370" class="text">• Knäledsluxation (40-50% popliteaskada)</text>
+  <text x="30" y="388" class="text">• Posterior höftluxation</text>
+  <text x="30" y="406" class="text">• Suprakondylär humerusfraktur (barn)</text>
+  <text x="30" y="424" class="critical">⚠ Även efter spontan reposition!</text>
+
+  <!-- Ischemitid -->
+  <rect x="10" y="440" width="380" height="80" fill="#2c3e50" rx="5"/>
+  <text x="200" y="465" text-anchor="middle" class="title">⏱ VARM ISCHEMITID</text>
+  <text x="200" y="490" text-anchor="middle" style="font:12px sans-serif;fill:#fff">&lt;6 timmar: Limb salvage möjlig</text>
+  <text x="200" y="510" text-anchor="middle" style="font:12px sans-serif;fill:#ffd700">&gt;6 timmar: Amputation ökar dramatiskt</text>
+
+  <!-- Referenser -->
+  <text x="200" y="540" text-anchor="middle" class="ref">EAST Guidelines Vascular Injury 2012</text>
+  <text x="200" y="555" text-anchor="middle" class="ref">Mills WJ et al. J Bone Joint Surg Am 2004</text>
+  <text x="200" y="570" text-anchor="middle" class="ref">B-ORTIM Kursbok Kapitel 5</text>
 </svg>`;
 }
 
