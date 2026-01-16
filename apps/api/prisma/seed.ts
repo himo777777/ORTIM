@@ -4171,6 +4171,470 @@ function getFasciotomySVG(): string {
 </svg>`;
 }
 
+// Vascular Injury Management Algorithm
+// References: EAST Guidelines 2012, Feliciano DV et al. J Trauma 2011, Rich NM Vascular Trauma 2nd ed
+function getVascularInjuryAlgorithmSVG(): string {
+  return `<svg viewBox="0 0 900 700" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 20px sans-serif; fill: #1a5276; }
+    .header { font: bold 13px sans-serif; fill: white; }
+    .text { font: 11px sans-serif; fill: #333; }
+    .ref { font: italic 9px sans-serif; fill: #666; }
+    .decision { font: bold 11px sans-serif; fill: #333; }
+  </style>
+
+  <text x="450" y="25" text-anchor="middle" class="title">Vaskulär Skada - Handläggningsalgoritm</text>
+  <text x="450" y="42" text-anchor="middle" class="ref">Ref: EAST Guidelines 2012, Feliciano DV J Trauma 2011, SVS Practice Guidelines 2020</text>
+
+  <!-- Start: Misstänkt kärlskada -->
+  <rect x="350" y="55" width="200" height="40" fill="#3498db" rx="8"/>
+  <text x="450" y="80" text-anchor="middle" class="header">Misstänkt kärlskada?</text>
+
+  <!-- Hard signs -->
+  <line x1="450" y1="95" x2="450" y2="115" stroke="#333" stroke-width="2"/>
+  <rect x="250" y="115" width="180" height="80" fill="#e74c3c" rx="8"/>
+  <text x="340" y="138" text-anchor="middle" class="header">HARD SIGNS</text>
+  <text x="260" y="155" class="text" fill="white">• Pulserande blödning</text>
+  <text x="260" y="170" class="text" fill="white">• Expanderande hematom</text>
+  <text x="260" y="185" class="text" fill="white">• Palpabel thrill/blåsljud</text>
+
+  <rect x="470" y="115" width="180" height="80" fill="#f39c12" rx="8"/>
+  <text x="560" y="138" text-anchor="middle" class="header">SOFT SIGNS</text>
+  <text x="480" y="155" class="text" fill="white">• Icke-expanderande hematom</text>
+  <text x="480" y="170" class="text" fill="white">• Nervskada intill kärl</text>
+  <text x="480" y="185" class="text" fill="white">• Oförklarlig hypotension</text>
+
+  <!-- Hard signs path -->
+  <line x1="340" y1="195" x2="340" y2="220" stroke="#333" stroke-width="2"/>
+  <rect x="250" y="220" width="180" height="35" fill="#c0392b" rx="8"/>
+  <text x="340" y="243" text-anchor="middle" class="header">DIREKT TILL OP</text>
+
+  <!-- Soft signs path -->
+  <line x1="560" y1="195" x2="560" y2="220" stroke="#333" stroke-width="2"/>
+  <rect x="470" y="220" width="180" height="35" fill="#3498db" rx="8"/>
+  <text x="560" y="243" text-anchor="middle" class="header">ABI + CT-ANGIO</text>
+
+  <!-- ABI decision -->
+  <line x1="560" y1="255" x2="560" y2="285" stroke="#333" stroke-width="2"/>
+  <rect x="470" y="285" width="180" height="35" fill="#9b59b6" rx="8"/>
+  <text x="560" y="308" text-anchor="middle" class="header">ABI &lt; 0.9?</text>
+
+  <line x1="470" y1="302" x2="400" y2="302" stroke="#333" stroke-width="2"/>
+  <line x1="400" y1="302" x2="400" y2="340" stroke="#333" stroke-width="2"/>
+  <text x="430" y="295" class="decision">JA</text>
+  <rect x="310" y="340" width="180" height="35" fill="#e74c3c" rx="8"/>
+  <text x="400" y="363" text-anchor="middle" class="header">Kärlkirurgisk exploration</text>
+
+  <line x1="650" y1="302" x2="700" y2="302" stroke="#333" stroke-width="2"/>
+  <line x1="700" y1="302" x2="700" y2="340" stroke="#333" stroke-width="2"/>
+  <text x="670" y="295" class="decision">NEJ</text>
+  <rect x="610" y="340" width="180" height="35" fill="#27ae60" rx="8"/>
+  <text x="700" y="363" text-anchor="middle" class="header">Observation 24h + ABI</text>
+
+  <!-- Surgical options -->
+  <line x1="340" y1="255" x2="340" y2="400" stroke="#333" stroke-width="2"/>
+  <line x1="400" y1="375" x2="400" y2="400" stroke="#333" stroke-width="2"/>
+  <line x1="340" y1="400" x2="560" y2="400" stroke="#333" stroke-width="2"/>
+
+  <rect x="300" y="410" width="400" height="40" fill="#1a5276" rx="8"/>
+  <text x="500" y="435" text-anchor="middle" class="header">OPERATIV STRATEGI</text>
+
+  <!-- Shunt vs repair -->
+  <line x1="400" y1="450" x2="400" y2="470" stroke="#333" stroke-width="2"/>
+  <line x1="600" y1="450" x2="600" y2="470" stroke="#333" stroke-width="2"/>
+
+  <rect x="50" y="470" width="220" height="100" fill="#e74c3c" rx="8"/>
+  <text x="160" y="495" text-anchor="middle" class="header">TILLFÄLLIG SHUNT</text>
+  <text x="60" y="515" class="text" fill="white">Indikationer:</text>
+  <text x="60" y="530" class="text" fill="white">• Instabil patient (DCO)</text>
+  <text x="60" y="545" class="text" fill="white">• Ischemitid &gt;6h</text>
+  <text x="60" y="560" class="text" fill="white">• Behov av skelettfixation först</text>
+
+  <rect x="290" y="470" width="220" height="100" fill="#27ae60" rx="8"/>
+  <text x="400" y="495" text-anchor="middle" class="header">PRIMÄR REPAIR</text>
+  <text x="300" y="515" class="text" fill="white">• Lateral sutur (&lt;50% circumferens)</text>
+  <text x="300" y="530" class="text" fill="white">• End-to-end (&lt;2cm defekt)</text>
+  <text x="300" y="545" class="text" fill="white">• Autolog vengraft (förstaval)</text>
+  <text x="300" y="560" class="text" fill="white">• PTFE om ingen ven tillgänglig</text>
+
+  <rect x="530" y="470" width="220" height="100" fill="#3498db" rx="8"/>
+  <text x="640" y="495" text-anchor="middle" class="header">ENDOVASKULÄRT</text>
+  <text x="540" y="515" class="text" fill="white">Indikationer:</text>
+  <text x="540" y="530" class="text" fill="white">• Pseudoaneurysm</text>
+  <text x="540" y="545" class="text" fill="white">• AV-fistel</text>
+  <text x="540" y="560" class="text" fill="white">• Svåråtkomlig lokalisation</text>
+
+  <!-- Fasciotomy reminder -->
+  <rect x="150" y="590" width="600" height="50" fill="#9b59b6" rx="8"/>
+  <text x="450" y="615" text-anchor="middle" class="header">⚠ ALLTID ÖVERVÄG FASCIOTOMI vid ischemitid &gt;4-6h eller reperfusion</text>
+  <text x="450" y="632" text-anchor="middle" class="text" fill="white">Ref: Defined Frykberg et al. J Vasc Surg 2002 - Reperfusionsskada kräver profylaktisk fasciotomi</text>
+
+  <!-- References -->
+  <text x="450" y="665" text-anchor="middle" class="ref">EAST: Stable hematoma without hard signs - observe with serial ABI (Level II)</text>
+  <text x="450" y="680" text-anchor="middle" class="ref">SVS 2020: CTA sensitivity 96%, specificity 99% for extremity vascular injury</text>
+</svg>`;
+}
+
+// DCO vs ETC Decision Algorithm
+// References: Pape HC et al. J Trauma 2007, Vallier HA et al. JBJS 2013, OTA Guidelines
+function getDCOvsETCAlgorithmSVG(): string {
+  return `<svg viewBox="0 0 900 750" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 20px sans-serif; fill: #1a5276; }
+    .header { font: bold 13px sans-serif; fill: white; }
+    .text { font: 11px sans-serif; fill: #333; }
+    .ref { font: italic 9px sans-serif; fill: #666; }
+    .value { font: bold 12px sans-serif; fill: white; }
+  </style>
+
+  <text x="450" y="25" text-anchor="middle" class="title">DCO vs ETC - Beslutsalgoritm vid Multitrauma</text>
+  <text x="450" y="42" text-anchor="middle" class="ref">Ref: Pape HC J Trauma 2007, Vallier HA JBJS 2013, Roberts CS Injury 2005</text>
+
+  <!-- Patient categories -->
+  <rect x="50" y="60" width="200" height="120" fill="#27ae60" rx="8"/>
+  <text x="150" y="85" text-anchor="middle" class="header">STABIL</text>
+  <text x="60" y="105" class="text" fill="white">• Hemodynamiskt stabil</text>
+  <text x="60" y="120" class="text" fill="white">• Ingen koagulopati</text>
+  <text x="60" y="135" class="text" fill="white">• Ingen hypotermi</text>
+  <text x="60" y="150" class="text" fill="white">• Ingen acidos</text>
+  <text x="60" y="168" class="value">→ ETC möjlig</text>
+
+  <rect x="270" y="60" width="200" height="120" fill="#f39c12" rx="8"/>
+  <text x="370" y="85" text-anchor="middle" class="header">BORDERLINE</text>
+  <text x="280" y="105" class="text" fill="white">• ISS 20-40</text>
+  <text x="280" y="120" class="text" fill="white">• Initial hypotension</text>
+  <text x="280" y="135" class="text" fill="white">• Bilaterala femur-fx</text>
+  <text x="280" y="150" class="text" fill="white">• Thoraxtrauma (AIS≥2)</text>
+  <text x="280" y="168" class="value">→ Individuell bedömning</text>
+
+  <rect x="490" y="60" width="200" height="120" fill="#e74c3c" rx="8"/>
+  <text x="590" y="85" text-anchor="middle" class="header">INSTABIL</text>
+  <text x="500" y="105" class="text" fill="white">• Chock (SBT &lt;90)</text>
+  <text x="500" y="120" class="text" fill="white">• Pågående blödning</text>
+  <text x="500" y="135" class="text" fill="white">• Massiv transfusion</text>
+  <text x="500" y="150" class="text" fill="white">• Koagulopati</text>
+  <text x="500" y="168" class="value">→ DCO obligatoriskt</text>
+
+  <rect x="710" y="60" width="170" height="120" fill="#7f8c8d" rx="8"/>
+  <text x="795" y="85" text-anchor="middle" class="header">IN EXTREMIS</text>
+  <text x="720" y="105" class="text" fill="white">• pH &lt;7.1</text>
+  <text x="720" y="120" class="text" fill="white">• Temp &lt;32°C</text>
+  <text x="720" y="135" class="text" fill="white">• Laktat &gt;10</text>
+  <text x="720" y="150" class="text" fill="white">• Massiv blödning</text>
+  <text x="720" y="168" class="value">→ Endast livräddande</text>
+
+  <!-- Physiological parameters -->
+  <rect x="100" y="200" width="700" height="130" fill="#1a5276" rx="8"/>
+  <text x="450" y="225" text-anchor="middle" class="header">FYSIOLOGISKA PARAMETRAR FÖR DCO-BESLUT</text>
+
+  <text x="130" y="255" class="text" fill="white">Parameter</text>
+  <text x="350" y="255" class="text" fill="white">Gränsvärde för DCO</text>
+  <text x="600" y="255" class="text" fill="white">Evidensnivå</text>
+
+  <line x1="120" y1="265" x2="780" y2="265" stroke="white" stroke-width="1"/>
+
+  <text x="130" y="285" class="text" fill="white">pH</text>
+  <text x="350" y="285" class="value">&lt; 7.25</text>
+  <text x="600" y="285" class="text" fill="white">Pape 2007 (Level III)</text>
+
+  <text x="130" y="305" class="text" fill="white">Temperatur</text>
+  <text x="350" y="305" class="value">&lt; 35°C</text>
+  <text x="600" y="305" class="text" fill="white">Jurkovich 1987 (Level II)</text>
+
+  <text x="130" y="325" class="text" fill="white">Laktat</text>
+  <text x="350" y="325" class="value">&gt; 4 mmol/L</text>
+  <text x="600" y="325" class="text" fill="white">Vallier 2013 (Level II)</text>
+
+  <!-- Flowchart for borderline -->
+  <text x="450" y="360" text-anchor="middle" class="title" style="font-size:16px">Borderline-patient: Beslutsflöde</text>
+
+  <rect x="350" y="375" width="200" height="35" fill="#3498db" rx="8"/>
+  <text x="450" y="398" text-anchor="middle" class="header">Initial stabilisering 30-60 min</text>
+
+  <line x1="450" y1="410" x2="450" y2="440" stroke="#333" stroke-width="2"/>
+
+  <rect x="350" y="440" width="200" height="35" fill="#9b59b6" rx="8"/>
+  <text x="450" y="463" text-anchor="middle" class="header">Responerar på resuscitering?</text>
+
+  <line x1="350" y1="457" x2="250" y2="457" stroke="#333" stroke-width="2"/>
+  <line x1="250" y1="457" x2="250" y2="500" stroke="#333" stroke-width="2"/>
+  <text x="290" y="450" class="text">NEJ</text>
+
+  <line x1="550" y1="457" x2="650" y2="457" stroke="#333" stroke-width="2"/>
+  <line x1="650" y1="457" x2="650" y2="500" stroke="#333" stroke-width="2"/>
+  <text x="590" y="450" class="text">JA</text>
+
+  <rect x="150" y="500" width="200" height="80" fill="#e74c3c" rx="8"/>
+  <text x="250" y="525" text-anchor="middle" class="header">DCO</text>
+  <text x="160" y="545" class="text" fill="white">• Extern fixation</text>
+  <text x="160" y="560" class="text" fill="white">• Blödningskontroll</text>
+  <text x="160" y="575" class="text" fill="white">• IVA för optimering</text>
+
+  <rect x="550" y="500" width="200" height="80" fill="#27ae60" rx="8"/>
+  <text x="650" y="525" text-anchor="middle" class="header">ETC möjlig</text>
+  <text x="560" y="545" class="text" fill="white">• Definitiv fixation</text>
+  <text x="560" y="560" class="text" fill="white">• Inom 24-36h</text>
+  <text x="560" y="575" class="text" fill="white">• Monitorera kontinuerligt</text>
+
+  <!-- Second hit concept -->
+  <rect x="100" y="600" width="700" height="70" fill="#c0392b" rx="8"/>
+  <text x="450" y="625" text-anchor="middle" class="header">⚠ "SECOND HIT" FENOMENET</text>
+  <text x="120" y="645" class="text" fill="white">Stor definitiv kirurgi hos fysiologiskt komprometterad patient → förvärrad inflammation → ARDS, MODS, död</text>
+  <text x="450" y="662" text-anchor="middle" class="ref" style="fill: white">Pape HC: "Damage control orthopedics" reduces second hit by staged surgery (J Trauma 2007)</text>
+
+  <!-- Evidence box -->
+  <rect x="100" y="685" width="700" height="45" fill="#34495e" rx="8"/>
+  <text x="450" y="705" text-anchor="middle" class="text" fill="white">EVIDENS: DCO reducerar ARDS (3% vs 21%, p&lt;0.01) och mortalitet hos borderline-patienter</text>
+  <text x="450" y="722" text-anchor="middle" class="ref" style="fill: #bbb">Pape HC et al. J Orthop Trauma 2007;21:S1-S162, Vallier HA et al. JBJS 2013;95:294-302</text>
+</svg>`;
+}
+
+// Open Fracture Management Algorithm
+// References: BOA/BAPRAS Standards 2020, Gustilo-Anderson Classification, EAST Guidelines
+function getOpenFractureAlgorithmSVG(): string {
+  return `<svg viewBox="0 0 900 800" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 20px sans-serif; fill: #1a5276; }
+    .header { font: bold 13px sans-serif; fill: white; }
+    .text { font: 11px sans-serif; fill: #333; }
+    .ref { font: italic 9px sans-serif; fill: #666; }
+    .time { font: bold 14px sans-serif; fill: #e74c3c; }
+  </style>
+
+  <text x="450" y="25" text-anchor="middle" class="title">Öppen Fraktur - Handläggningsalgoritm</text>
+  <text x="450" y="42" text-anchor="middle" class="ref">Ref: BOA/BAPRAS Standards 2020, EAST Guidelines 2011, Gustilo RB JBJS 1976/1984</text>
+
+  <!-- Gustilo Classification -->
+  <rect x="50" y="60" width="800" height="120" fill="#1a5276" rx="8"/>
+  <text x="450" y="85" text-anchor="middle" class="header">GUSTILO-ANDERSON KLASSIFIKATION</text>
+
+  <rect x="70" y="95" width="150" height="75" fill="#27ae60" rx="5"/>
+  <text x="145" y="115" text-anchor="middle" class="header">TYP I</text>
+  <text x="80" y="132" class="text" fill="white">• Sår &lt;1 cm</text>
+  <text x="80" y="147" class="text" fill="white">• Låg energi</text>
+  <text x="80" y="162" class="text" fill="white">• Minimal kontaminering</text>
+
+  <rect x="235" y="95" width="150" height="75" fill="#f39c12" rx="5"/>
+  <text x="310" y="115" text-anchor="middle" class="header">TYP II</text>
+  <text x="245" y="132" class="text" fill="white">• Sår 1-10 cm</text>
+  <text x="245" y="147" class="text" fill="white">• Måttlig mjukdelsskada</text>
+  <text x="245" y="162" class="text" fill="white">• Adekvat täckning</text>
+
+  <rect x="400" y="95" width="150" height="75" fill="#e67e22" rx="5"/>
+  <text x="475" y="115" text-anchor="middle" class="header">TYP IIIA</text>
+  <text x="410" y="132" class="text" fill="white">• Sår &gt;10 cm</text>
+  <text x="410" y="147" class="text" fill="white">• Hög energi</text>
+  <text x="410" y="162" class="text" fill="white">• Täckning möjlig</text>
+
+  <rect x="565" y="95" width="130" height="75" fill="#e74c3c" rx="5"/>
+  <text x="630" y="115" text-anchor="middle" class="header">TYP IIIB</text>
+  <text x="575" y="132" class="text" fill="white">• Perioststripping</text>
+  <text x="575" y="147" class="text" fill="white">• Exponerat ben</text>
+  <text x="575" y="162" class="text" fill="white">• Kräver lambå</text>
+
+  <rect x="710" y="95" width="125" height="75" fill="#8e44ad" rx="5"/>
+  <text x="772" y="115" text-anchor="middle" class="header">TYP IIIC</text>
+  <text x="720" y="132" class="text" fill="white">• Kärlskada som</text>
+  <text x="720" y="147" class="text" fill="white">  kräver repair</text>
+  <text x="720" y="162" class="text" fill="white">• Ischemisk extremitet</text>
+
+  <!-- Timeline -->
+  <text x="450" y="205" text-anchor="middle" class="title" style="font-size:16px">Tidskritiska åtgärder (BOA/BAPRAS 2020)</text>
+
+  <rect x="50" y="220" width="180" height="90" fill="#3498db" rx="8"/>
+  <text x="140" y="245" text-anchor="middle" class="header">AKUTMOTTAGNING</text>
+  <text x="140" y="265" text-anchor="middle" class="time">&lt;1 timme</text>
+  <text x="60" y="285" class="text" fill="white">• Fotodokumentation</text>
+  <text x="60" y="300" class="text" fill="white">• Saline-fuktigt förband</text>
+
+  <line x1="230" y1="265" x2="270" y2="265" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="270" y="220" width="180" height="90" fill="#9b59b6" rx="8"/>
+  <text x="360" y="245" text-anchor="middle" class="header">ANTIBIOTIKA</text>
+  <text x="360" y="265" text-anchor="middle" class="time">&lt;1 timme</text>
+  <text x="280" y="285" class="text" fill="white">• I-II: Cefuroxim 1.5g</text>
+  <text x="280" y="300" class="text" fill="white">• III: +Gentamicin 5mg/kg</text>
+
+  <line x1="450" y1="265" x2="490" y2="265" stroke="#333" stroke-width="2"/>
+
+  <rect x="490" y="220" width="180" height="90" fill="#e74c3c" rx="8"/>
+  <text x="580" y="245" text-anchor="middle" class="header">DEBRIDERING</text>
+  <text x="580" y="265" text-anchor="middle" class="time">&lt;12 timmar*</text>
+  <text x="500" y="285" class="text" fill="white">• Tvättning 6-9L NaCl</text>
+  <text x="500" y="300" class="text" fill="white">• Excision av nekros</text>
+
+  <line x1="670" y1="265" x2="710" y2="265" stroke="#333" stroke-width="2"/>
+
+  <rect x="710" y="220" width="160" height="90" fill="#27ae60" rx="8"/>
+  <text x="790" y="245" text-anchor="middle" class="header">STABILISERING</text>
+  <text x="790" y="265" text-anchor="middle" class="time">&lt;24 timmar</text>
+  <text x="720" y="285" class="text" fill="white">• Ex-fix eller definitiv</text>
+  <text x="720" y="300" class="text" fill="white">• Baserat på patient</text>
+
+  <text x="450" y="330" text-anchor="middle" class="ref">*BOA/BAPRAS 2020: "No evidence supports 6-hour rule" - fokus på kvalitet före hastighet</text>
+
+  <!-- Antibiotic protocol -->
+  <rect x="50" y="350" width="400" height="160" fill="#2c3e50" rx="8"/>
+  <text x="250" y="375" text-anchor="middle" class="header">ANTIBIOTIKAPROTOKOLL (EAST 2011)</text>
+
+  <text x="70" y="400" class="text" fill="white">Typ I-II:</text>
+  <text x="150" y="400" class="text" fill="#27ae60">Cefuroxim 1.5g x 3 i 24h</text>
+
+  <text x="70" y="420" class="text" fill="white">Typ III:</text>
+  <text x="150" y="420" class="text" fill="#f39c12">Cefuroxim + Gentamicin i 72h</text>
+
+  <text x="70" y="440" class="text" fill="white">Jordkontaminering:</text>
+  <text x="180" y="440" class="text" fill="#e74c3c">Tillägg av Bensyl-PC (Clostridium)</text>
+
+  <text x="70" y="460" class="text" fill="white">Vattenexponering:</text>
+  <text x="180" y="460" class="text" fill="#e74c3c">Tillägg av Ciprofloxacin (Aeromonas)</text>
+
+  <text x="250" y="495" text-anchor="middle" class="ref" style="fill:#bbb">Evidens: Antibiotika &lt;3h reducerar infektion (Patzakis 1974, Level II)</text>
+
+  <!-- Soft tissue coverage -->
+  <rect x="470" y="350" width="400" height="160" fill="#16a085" rx="8"/>
+  <text x="670" y="375" text-anchor="middle" class="header">MJUKDELSTÄCKNING - "FIX AND FLAP"</text>
+
+  <text x="490" y="400" class="text" fill="white">Mål: Definitiv täckning inom 72-96h</text>
+
+  <text x="490" y="425" class="text" fill="white">IIIA: Primärstängning/SSG ofta möjlig</text>
+  <text x="490" y="445" class="text" fill="white">IIIB: Lokal/fri lambå krävs</text>
+  <text x="490" y="465" class="text" fill="white">IIIC: Vaskulär repair före täckning</text>
+
+  <text x="670" y="495" text-anchor="middle" class="ref" style="fill:#fff">Gopal 2000: Täckning &lt;72h → 6% infektionsrisk vs 29% vid fördröjning</text>
+
+  <!-- Second look -->
+  <rect x="50" y="530" width="820" height="80" fill="#8e44ad" rx="8"/>
+  <text x="460" y="555" text-anchor="middle" class="header">SECOND LOOK - 48-72 TIMMAR</text>
+  <text x="70" y="580" class="text" fill="white">Obligatoriskt vid: Typ IIIB/C, tveksam viabilitet, massiv kontaminering, fasciotomi</text>
+  <text x="70" y="600" class="text" fill="white">Syfte: Ny debridering, bedöm täckningsmöjlighet, verifiera kärlcirkulation vid shunt</text>
+
+  <!-- Key outcomes -->
+  <rect x="50" y="630" width="400" height="90" fill="#c0392b" rx="8"/>
+  <text x="250" y="655" text-anchor="middle" class="header">KOMPLIKATIONSRISK</text>
+  <text x="70" y="680" class="text" fill="white">Typ I: Infektion 0-2%</text>
+  <text x="70" y="695" class="text" fill="white">Typ II: Infektion 2-5%</text>
+  <text x="70" y="710" class="text" fill="white">Typ III: Infektion 10-50%</text>
+
+  <rect x="470" y="630" width="400" height="90" fill="#27ae60" rx="8"/>
+  <text x="670" y="655" text-anchor="middle" class="header">NYCKELFAKTORER</text>
+  <text x="490" y="680" class="text" fill="white">✓ Tidig antibiotika (&lt;1h)</text>
+  <text x="490" y="695" class="text" fill="white">✓ Adekvat debridering</text>
+  <text x="490" y="710" class="text" fill="white">✓ Tidig mjukdelstäckning (&lt;72h)</text>
+
+  <!-- References footer -->
+  <text x="450" y="745" text-anchor="middle" class="ref">BOA/BAPRAS: British Orthopaedic Association and British Association of Plastic Surgeons Standards for Trauma 2020</text>
+  <text x="450" y="760" text-anchor="middle" class="ref">EAST: Eastern Association for the Surgery of Trauma Guidelines - Open Fractures 2011</text>
+</svg>`;
+}
+
+// Pelvic Hemorrhage Management Algorithm
+// References: ATLS 10th ed, WSES Guidelines 2017, Coccolini F World J Emerg Surg 2017
+function getPelvicHemorrhageAlgorithmSVG(): string {
+  return `<svg viewBox="0 0 900 750" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 20px sans-serif; fill: #1a5276; }
+    .header { font: bold 13px sans-serif; fill: white; }
+    .text { font: 11px sans-serif; fill: #333; }
+    .ref { font: italic 9px sans-serif; fill: #666; }
+    .percent { font: bold 14px sans-serif; fill: white; }
+  </style>
+
+  <text x="450" y="25" text-anchor="middle" class="title">Bäckenblödning - Handläggningsalgoritm</text>
+  <text x="450" y="42" text-anchor="middle" class="ref">Ref: ATLS 10th ed 2018, WSES Guidelines 2017, Coccolini F World J Emerg Surg 2017</text>
+
+  <!-- Bleeding sources -->
+  <rect x="50" y="60" width="800" height="90" fill="#1a5276" rx="8"/>
+  <text x="450" y="85" text-anchor="middle" class="header">BLÖDNINGSKÄLLOR VID BÄCKENTRAUMA</text>
+
+  <rect x="70" y="95" width="200" height="45" fill="#9b59b6" rx="5"/>
+  <text x="170" y="115" text-anchor="middle" class="header">VENÖS PLEXUS</text>
+  <text x="170" y="132" text-anchor="middle" class="percent">80%</text>
+
+  <rect x="290" y="95" width="200" height="45" fill="#e74c3c" rx="5"/>
+  <text x="390" y="115" text-anchor="middle" class="header">ARTERIELL</text>
+  <text x="390" y="132" text-anchor="middle" class="percent">15%</text>
+
+  <rect x="510" y="95" width="200" height="45" fill="#f39c12" rx="5"/>
+  <text x="610" y="115" text-anchor="middle" class="header">FRAKTURYTA</text>
+  <text x="610" y="132" text-anchor="middle" class="percent">5%</text>
+
+  <!-- Initial management -->
+  <rect x="300" y="170" width="300" height="40" fill="#3498db" rx="8"/>
+  <text x="450" y="195" text-anchor="middle" class="header">Instabil bäckenfraktur + Hemodynamisk instabilitet</text>
+
+  <line x1="450" y1="210" x2="450" y2="240" stroke="#333" stroke-width="2"/>
+
+  <rect x="300" y="240" width="300" height="40" fill="#27ae60" rx="8"/>
+  <text x="450" y="265" text-anchor="middle" class="header">1. BÄCKENBÄLTE (omedelbart)</text>
+
+  <line x1="450" y1="280" x2="450" y2="310" stroke="#333" stroke-width="2"/>
+
+  <rect x="300" y="310" width="300" height="40" fill="#9b59b6" rx="8"/>
+  <text x="450" y="335" text-anchor="middle" class="header">2. TXA 1g IV + MTP-aktivering</text>
+
+  <line x1="450" y1="350" x2="450" y2="380" stroke="#333" stroke-width="2"/>
+
+  <rect x="300" y="380" width="300" height="40" fill="#e67e22" rx="8"/>
+  <text x="450" y="405" text-anchor="middle" class="header">3. FAST / CT vid stabil patient</text>
+
+  <!-- Decision point -->
+  <line x1="450" y1="420" x2="450" y2="450" stroke="#333" stroke-width="2"/>
+  <rect x="350" y="450" width="200" height="35" fill="#1a5276" rx="8"/>
+  <text x="450" y="473" text-anchor="middle" class="header">Responerar på resuscitering?</text>
+
+  <!-- Non-responder path -->
+  <line x1="350" y1="467" x2="200" y2="467" stroke="#333" stroke-width="2"/>
+  <line x1="200" y1="467" x2="200" y2="510" stroke="#333" stroke-width="2"/>
+  <text x="265" y="460" class="text">NEJ - Non-responder</text>
+
+  <rect x="50" y="510" width="300" height="130" fill="#e74c3c" rx="8"/>
+  <text x="200" y="535" text-anchor="middle" class="header">KIRURGISK BLÖDNINGSKONTROLL</text>
+  <text x="70" y="560" class="text" fill="white">1. Preperitonal packing (PPP)</text>
+  <text x="80" y="575" class="text" fill="white">• Effektivt mot venös blödning (80%)</text>
+  <text x="80" y="590" class="text" fill="white">• Kan utföras snabbt på akutrummet</text>
+  <text x="70" y="610" class="text" fill="white">2. Extern fixation</text>
+  <text x="70" y="630" class="text" fill="white">3. Överväg REBOA (Zon III)</text>
+
+  <!-- Responder path -->
+  <line x1="550" y1="467" x2="700" y2="467" stroke="#333" stroke-width="2"/>
+  <line x1="700" y1="467" x2="700" y2="510" stroke="#333" stroke-width="2"/>
+  <text x="610" y="460" class="text">JA - Transient responder</text>
+
+  <rect x="550" y="510" width="300" height="130" fill="#f39c12" rx="8"/>
+  <text x="700" y="535" text-anchor="middle" class="header">ANGIOEMBOLISERING</text>
+  <text x="570" y="560" class="text" fill="white">Indikationer:</text>
+  <text x="570" y="575" class="text" fill="white">• Arteriell kontrastextravasering på CT</text>
+  <text x="570" y="590" class="text" fill="white">• Fortsatt transfusionsbehov</text>
+  <text x="570" y="605" class="text" fill="white">• Stabil nog för angio-suite</text>
+  <text x="570" y="625" class="text" fill="white">Framgång: 85-100% (WSES 2017)</text>
+
+  <!-- Combined approach -->
+  <line x1="200" y1="640" x2="200" y2="670" stroke="#333" stroke-width="2"/>
+  <line x1="700" y1="640" x2="700" y2="670" stroke="#333" stroke-width="2"/>
+  <line x1="200" y1="670" x2="700" y2="670" stroke="#333" stroke-width="2"/>
+  <line x1="450" y1="670" x2="450" y2="690" stroke="#333" stroke-width="2"/>
+
+  <rect x="250" y="690" width="400" height="50" fill="#8e44ad" rx="8"/>
+  <text x="450" y="712" text-anchor="middle" class="header">KOMBINERAD APPROACH vid refraktär blödning</text>
+  <text x="450" y="730" text-anchor="middle" class="text" fill="white">PPP + Angioembolisering = "Damage Control Resuscitation"</text>
+
+  <!-- Key evidence boxes -->
+  <rect x="50" y="655" width="145" height="80" fill="#2c3e50" rx="5"/>
+  <text x="122" y="675" text-anchor="middle" class="header" style="font-size:10px">BÄCKENBÄLTE</text>
+  <text x="60" y="695" class="text" fill="white" style="font-size:9px">Reducerar volym</text>
+  <text x="60" y="710" class="text" fill="white" style="font-size:9px">upp till 10-20%</text>
+  <text x="60" y="725" class="ref" style="fill:#bbb">Croce 2007</text>
+
+  <rect x="705" y="655" width="145" height="80" fill="#2c3e50" rx="5"/>
+  <text x="777" y="675" text-anchor="middle" class="header" style="font-size:10px">REBOA</text>
+  <text x="715" y="695" class="text" fill="white" style="font-size:9px">Zon III - temporär</text>
+  <text x="715" y="710" class="text" fill="white" style="font-size:9px">bridge to surgery</text>
+  <text x="715" y="725" class="ref" style="fill:#bbb">Brenner 2018</text>
+
+</svg>`;
+}
+
 main()
   .catch((e) => {
     console.error('Seed error:', e);
