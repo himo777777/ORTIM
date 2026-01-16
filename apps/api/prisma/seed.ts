@@ -199,6 +199,32 @@ async function main() {
 
   console.log('✅ Quiz questions created');
 
+  // Create B-ORTIM OSCE Stations (as reference data in chapter 17)
+  const osceStations = getOSCEStations();
+  console.log('✅ OSCE stations data prepared');
+
+  // Create Learning Objectives for B-ORTIM
+  const learningObjectives = getLearningObjectives();
+  for (const obj of learningObjectives) {
+    const chapter = createdChapters.find(c => c.chapterNumber === obj.chapterNumber);
+    if (chapter) {
+      await prisma.learningObjective.upsert({
+        where: { id: `lo-${obj.code}` },
+        update: {},
+        create: {
+          id: `lo-${obj.code}`,
+          chapterId: chapter.id,
+          code: obj.code,
+          type: obj.type,
+          description: obj.description,
+          sortOrder: obj.sortOrder,
+        },
+      });
+    }
+  }
+
+  console.log('✅ Learning objectives created');
+
   // ============================================
   // A-ORTIM (Advanced) Course
   // ============================================
@@ -318,6 +344,28 @@ async function main() {
   }
 
   console.log('✅ A-ORTIM quiz questions created');
+
+  // Create Learning Objectives for A-ORTIM
+  const advancedLearningObjectives = getAdvancedLearningObjectives();
+  for (const obj of advancedLearningObjectives) {
+    const chapter = createdAdvancedChapters.find(c => c.chapterNumber === obj.chapterNumber);
+    if (chapter) {
+      await prisma.learningObjective.upsert({
+        where: { id: `alo-${obj.code}` },
+        update: {},
+        create: {
+          id: `alo-${obj.code}`,
+          chapterId: chapter.id,
+          code: obj.code,
+          type: obj.type,
+          description: obj.description,
+          sortOrder: obj.sortOrder,
+        },
+      });
+    }
+  }
+
+  console.log('✅ A-ORTIM learning objectives created');
 
   // Create A-ORTIM cohort
   const advancedCohort = await prisma.cohort.upsert({
@@ -1639,6 +1687,267 @@ function getQuizQuestions() {
       explanation: 'B-ORTIM certifikatet gäller i 4 år, varefter recertifiering krävs.',
       reference: 'B-ORTIM Kursbok, Kapitel 17',
     },
+  ];
+}
+
+// OSCE Stations for B-ORTIM
+function getOSCEStations() {
+  return [
+    {
+      stationNumber: 1,
+      stationName: 'Tourniquet-applikation',
+      duration: 5,
+      passingScore: 80,
+      checklist: [
+        { item: 'Identifierar indikation för tourniquet', points: 10, critical: true },
+        { item: 'Väljer korrekt placering (5-7 cm proximalt)', points: 15, critical: true },
+        { item: 'Applicerar över bar hud eller tunt tyg', points: 10, critical: false },
+        { item: 'Drar åt tills blödning upphör', points: 15, critical: true },
+        { item: 'Verifierar att distal puls försvinner', points: 10, critical: false },
+        { item: 'Säkrar tourniquet', points: 10, critical: false },
+        { item: 'Dokumenterar tid för applikation', points: 15, critical: true },
+        { item: 'Markerar "TK" + tid på patientens panna', points: 10, critical: false },
+        { item: 'Kommunicerar korrekt med team', points: 5, critical: false },
+      ],
+    },
+    {
+      stationNumber: 2,
+      stationName: 'ABI-mätning',
+      duration: 8,
+      passingScore: 75,
+      checklist: [
+        { item: 'Förklarar proceduren för patienten', points: 5, critical: false },
+        { item: 'Placerar patienten i ryggläge', points: 5, critical: false },
+        { item: 'Applicerar blodtrycksmanschett korrekt på arm', points: 10, critical: false },
+        { item: 'Mäter systoliskt tryck i a. brachialis med doppler', points: 15, critical: true },
+        { item: 'Applicerar manschett korrekt på underben', points: 10, critical: false },
+        { item: 'Mäter tryck i a. dorsalis pedis', points: 15, critical: true },
+        { item: 'Mäter tryck i a. tibialis posterior', points: 15, critical: true },
+        { item: 'Beräknar ABI korrekt (ankel/arm)', points: 15, critical: true },
+        { item: 'Tolkar resultatet korrekt (<0.9 = misstänkt kärlskada)', points: 10, critical: true },
+      ],
+    },
+    {
+      stationNumber: 3,
+      stationName: 'Bäckenbälte',
+      duration: 4,
+      passingScore: 80,
+      checklist: [
+        { item: 'Identifierar instabilt bäcken som indikation', points: 10, critical: true },
+        { item: 'Väljer rätt storlek på bälte', points: 5, critical: false },
+        { item: 'Placerar bältet i korrekt höjd (över trochanter)', points: 20, critical: true },
+        { item: 'Centrerar bältet posteriort', points: 10, critical: false },
+        { item: 'Drar åt med adekvat kraft', points: 15, critical: true },
+        { item: 'Låser bältet korrekt', points: 10, critical: false },
+        { item: 'Undviker överkompression vid LC-skada', points: 15, critical: true },
+        { item: 'Dokumenterar tid för applikation', points: 10, critical: false },
+        { item: 'Reviderar inte bältet i onödan', points: 5, critical: false },
+      ],
+    },
+    {
+      stationNumber: 4,
+      stationName: 'Passiv töjningstest',
+      duration: 5,
+      passingScore: 75,
+      checklist: [
+        { item: 'Förklarar testet för patienten', points: 5, critical: false },
+        { item: 'Identifierar relevant kompartment att testa', points: 15, critical: true },
+        { item: 'Utför passiv dorsalflexion av tår/fot korrekt', points: 20, critical: true },
+        { item: 'Observerar smärtreaktion', points: 15, critical: true },
+        { item: 'Palperar kompartmentets spänning', points: 15, critical: true },
+        { item: 'Jämför med frisk sida', points: 10, critical: false },
+        { item: 'Tolkar fynd korrekt (smärta = pos test)', points: 15, critical: true },
+        { item: 'Kommunicerar fynd till team', points: 5, critical: false },
+      ],
+    },
+    {
+      stationNumber: 5,
+      stationName: 'LIMB-bedömning',
+      duration: 8,
+      passingScore: 75,
+      checklist: [
+        { item: 'Följer LIMB-strukturen systematiskt', points: 10, critical: true },
+        { item: 'L: Inspekterar deformitet, svullnad, sår', points: 15, critical: true },
+        { item: 'I: Bedömer kapillär återfyllnad', points: 10, critical: true },
+        { item: 'I: Palperar perifera pulsar', points: 10, critical: true },
+        { item: 'I: Bedömer hudfärg och temperatur', points: 5, critical: false },
+        { item: 'M: Testar aktiv och passiv rörlighet', points: 10, critical: true },
+        { item: 'M: Utför passiv töjningstest', points: 10, critical: true },
+        { item: 'M: Bedömer sensorik och motorik', points: 10, critical: true },
+        { item: 'B: Bedömer stabilitet och krepitationer', points: 10, critical: true },
+        { item: 'Dokumenterar alla fynd', points: 10, critical: false },
+      ],
+    },
+    {
+      stationNumber: 6,
+      stationName: 'SBAR-kommunikation',
+      duration: 5,
+      passingScore: 80,
+      checklist: [
+        { item: 'Presenterar sig och roll', points: 5, critical: false },
+        { item: 'S: Beskriver situation tydligt', points: 20, critical: true },
+        { item: 'B: Ger relevant bakgrund', points: 20, critical: true },
+        { item: 'A: Presenterar bedömning/misstanke', points: 20, critical: true },
+        { item: 'R: Ger tydlig rekommendation', points: 20, critical: true },
+        { item: 'Använder closed-loop kommunikation', points: 10, critical: false },
+        { item: 'Bekräftar att mottagaren förstått', points: 5, critical: false },
+      ],
+    },
+  ];
+}
+
+// Learning Objectives for B-ORTIM
+function getLearningObjectives() {
+  return [
+    // Kapitel 1
+    { chapterNumber: 1, code: 'LO1.1', type: 'knowledge', description: 'Identifiera de fyra tidskritiska ortopediska tillstånden', sortOrder: 1 },
+    { chapterNumber: 1, code: 'LO1.2', type: 'comprehension', description: 'Förklara varför strukturerad handläggning minskar mortalitet och komplikationer', sortOrder: 2 },
+    { chapterNumber: 1, code: 'LO1.3', type: 'comprehension', description: 'Beskriva konsekvenserna av försenad behandling vid varje tillstånd', sortOrder: 3 },
+
+    // Kapitel 2
+    { chapterNumber: 2, code: 'LO2.1', type: 'knowledge', description: 'Beskriva LIMB-protokollets alla komponenter', sortOrder: 1 },
+    { chapterNumber: 2, code: 'LO2.2', type: 'skill', description: 'Utföra en systematisk LIMB-undersökning', sortOrder: 2 },
+    { chapterNumber: 2, code: 'LO2.3', type: 'application', description: 'Identifiera varningssignaler som kräver omedelbar åtgärd', sortOrder: 3 },
+
+    // Kapitel 3
+    { chapterNumber: 3, code: 'LO3.1', type: 'comprehension', description: 'Förklara prioriteringsprinciper vid multipla skador', sortOrder: 1 },
+    { chapterNumber: 3, code: 'LO3.2', type: 'application', description: 'Tillämpa tidsgränser för behandling av olika tillstånd', sortOrder: 2 },
+
+    // Kapitel 4
+    { chapterNumber: 4, code: 'LO4.1', type: 'skill', description: 'Demonstrera korrekt tourniquet-applikation', sortOrder: 1 },
+    { chapterNumber: 4, code: 'LO4.2', type: 'knowledge', description: 'Beskriva indikationer och kontraindikationer för tourniquet', sortOrder: 2 },
+    { chapterNumber: 4, code: 'LO4.3', type: 'comprehension', description: 'Förklara komplikationer vid långvarig tourniquet-användning', sortOrder: 3 },
+
+    // Kapitel 5
+    { chapterNumber: 5, code: 'LO5.1', type: 'skill', description: 'Utföra och tolka ABI-mätning', sortOrder: 1 },
+    { chapterNumber: 5, code: 'LO5.2', type: 'knowledge', description: 'Klassificera kärlskador enligt klinisk gradering', sortOrder: 2 },
+    { chapterNumber: 5, code: 'LO5.3', type: 'application', description: 'Besluta om vidare utredning baserat på ABI-värde', sortOrder: 3 },
+
+    // Kapitel 6
+    { chapterNumber: 6, code: 'LO6.1', type: 'knowledge', description: 'Beskriva de 6 P:na vid kompartmentsyndrom', sortOrder: 1 },
+    { chapterNumber: 6, code: 'LO6.2', type: 'skill', description: 'Utföra passiv töjningstest', sortOrder: 2 },
+    { chapterNumber: 6, code: 'LO6.3', type: 'application', description: 'Tolka delta-tryck och besluta om fasciotomi', sortOrder: 3 },
+
+    // Kapitel 7
+    { chapterNumber: 7, code: 'LO7.1', type: 'knowledge', description: 'Klassificera öppna frakturer enligt Gustilo-Anderson', sortOrder: 1 },
+    { chapterNumber: 7, code: 'LO7.2', type: 'application', description: 'Välja rätt antibiotikaprofylax baserat på frakturtyp', sortOrder: 2 },
+    { chapterNumber: 7, code: 'LO7.3', type: 'skill', description: 'Demonstrera korrekt initial sårhantering', sortOrder: 3 },
+
+    // Kapitel 8
+    { chapterNumber: 8, code: 'LO8.1', type: 'knowledge', description: 'Klassificera bäckenringskador enligt Young-Burgess', sortOrder: 1 },
+    { chapterNumber: 8, code: 'LO8.2', type: 'skill', description: 'Demonstrera korrekt bäckenbälte-applikation', sortOrder: 2 },
+    { chapterNumber: 8, code: 'LO8.3', type: 'application', description: 'Identifiera patienter med hög blödningsrisk', sortOrder: 3 },
+
+    // Kapitel 9
+    { chapterNumber: 9, code: 'LO9.1', type: 'knowledge', description: 'Beskriva indikationer för replantation', sortOrder: 1 },
+    { chapterNumber: 9, code: 'LO9.2', type: 'skill', description: 'Demonstrera korrekt hantering av amputat', sortOrder: 2 },
+
+    // Kapitel 10
+    { chapterNumber: 10, code: 'LO10.1', type: 'knowledge', description: 'Beskriva Salter-Harris klassifikationen', sortOrder: 1 },
+    { chapterNumber: 10, code: 'LO10.2', type: 'comprehension', description: 'Förklara anatomiska skillnader hos barn', sortOrder: 2 },
+
+    // Kapitel 11
+    { chapterNumber: 11, code: 'LO11.1', type: 'knowledge', description: 'Beskriva patofysiologin vid crush syndrome', sortOrder: 1 },
+    { chapterNumber: 11, code: 'LO11.2', type: 'application', description: 'Planera behandling före och efter friläggning', sortOrder: 2 },
+
+    // Kapitel 12
+    { chapterNumber: 12, code: 'LO12.1', type: 'comprehension', description: 'Beskriva särskilda överväganden vid trauma hos äldre', sortOrder: 1 },
+    { chapterNumber: 12, code: 'LO12.2', type: 'application', description: 'Anpassa handläggning för gravida traumapatienter', sortOrder: 2 },
+
+    // Kapitel 13
+    { chapterNumber: 13, code: 'LO13.1', type: 'knowledge', description: 'Beskriva DCO-kriterier och indikationer', sortOrder: 1 },
+    { chapterNumber: 13, code: 'LO13.2', type: 'application', description: 'Besluta om ETC vs DCO baserat på patientens fysiologi', sortOrder: 2 },
+
+    // Kapitel 14
+    { chapterNumber: 14, code: 'LO14.1', type: 'skill', description: 'Utföra MIST-rapport', sortOrder: 1 },
+    { chapterNumber: 14, code: 'LO14.2', type: 'knowledge', description: 'Beskriva principer för frakturimmobilisering', sortOrder: 2 },
+
+    // Kapitel 15
+    { chapterNumber: 15, code: 'LO15.1', type: 'knowledge', description: 'Identifiera dokumentationskrav vid extremitetstrauma', sortOrder: 1 },
+    { chapterNumber: 15, code: 'LO15.2', type: 'comprehension', description: 'Förklara nödrätten vid akuta tillstånd', sortOrder: 2 },
+
+    // Kapitel 16
+    { chapterNumber: 16, code: 'LO16.1', type: 'skill', description: 'Demonstrera SBAR-kommunikation', sortOrder: 1 },
+    { chapterNumber: 16, code: 'LO16.2', type: 'skill', description: 'Tillämpa closed-loop kommunikation', sortOrder: 2 },
+    { chapterNumber: 16, code: 'LO16.3', type: 'comprehension', description: 'Beskriva CRM-principer', sortOrder: 3 },
+
+    // Kapitel 17
+    { chapterNumber: 17, code: 'LO17.1', type: 'knowledge', description: 'Beskriva examinationsformatet för B-ORTIM', sortOrder: 1 },
+    { chapterNumber: 17, code: 'LO17.2', type: 'application', description: 'Förbereda sig för OSCE-stationer', sortOrder: 2 },
+  ];
+}
+
+// Learning Objectives for A-ORTIM
+function getAdvancedLearningObjectives() {
+  return [
+    // Kapitel 1: Avancerad bilddiagnostik
+    { chapterNumber: 1, code: 'ALO1.1', type: 'knowledge', description: 'Beskriva indikationer för CT-angiografi vid extremitetstrauma', sortOrder: 1 },
+    { chapterNumber: 1, code: 'ALO1.2', type: 'comprehension', description: 'Tolka direkta och indirekta tecken på kärlskada på CT-angio', sortOrder: 2 },
+    { chapterNumber: 1, code: 'ALO1.3', type: 'application', description: 'Välja rätt bilddiagnostisk modalitet för olika skadetyper', sortOrder: 3 },
+
+    // Kapitel 2: Neurovaskulär bedömning
+    { chapterNumber: 2, code: 'ALO2.1', type: 'skill', description: 'Utföra komplett neurovaskulär undersökning av extremitet', sortOrder: 1 },
+    { chapterNumber: 2, code: 'ALO2.2', type: 'knowledge', description: 'Identifiera nervskadesymptom för alla större extremitetsnerver', sortOrder: 2 },
+    { chapterNumber: 2, code: 'ALO2.3', type: 'application', description: 'Bedöma indikation för kirurgisk exploration baserat på undersökningsfynd', sortOrder: 3 },
+
+    // Kapitel 3: Intraoperativ bedömning
+    { chapterNumber: 3, code: 'ALO3.1', type: 'knowledge', description: 'Beskriva principer för intraoperativ angiografi och on-table bedömning', sortOrder: 1 },
+    { chapterNumber: 3, code: 'ALO3.2', type: 'skill', description: 'Demonstrera bedömning av vävnadsviabilitet intraoperativt', sortOrder: 2 },
+
+    // Kapitel 4: Vaskulär reparation
+    { chapterNumber: 4, code: 'ALO4.1', type: 'knowledge', description: 'Beskriva val av kärlgraft och reparationsmetod', sortOrder: 1 },
+    { chapterNumber: 4, code: 'ALO4.2', type: 'comprehension', description: 'Förklara indikationer för tillfällig kärlshunt', sortOrder: 2 },
+    { chapterNumber: 4, code: 'ALO4.3', type: 'skill', description: 'Demonstrera grundläggande kärlsuturteknik', sortOrder: 3 },
+
+    // Kapitel 5: Fasciotomitekniker
+    { chapterNumber: 5, code: 'ALO5.1', type: 'skill', description: 'Utföra dubbelincision fasciotomi av underbenet', sortOrder: 1 },
+    { chapterNumber: 5, code: 'ALO5.2', type: 'knowledge', description: 'Identifiera alla fyra underbenens kompartment', sortOrder: 2 },
+    { chapterNumber: 5, code: 'ALO5.3', type: 'application', description: 'Hantera postoperativ vård av fasciotomisår', sortOrder: 3 },
+
+    // Kapitel 6: Extern fixation avancerat
+    { chapterNumber: 6, code: 'ALO6.1', type: 'skill', description: 'Applicera uniplanar och multiplanar extern fixation', sortOrder: 1 },
+    { chapterNumber: 6, code: 'ALO6.2', type: 'comprehension', description: 'Förklara principer för säker pinplacering', sortOrder: 2 },
+    { chapterNumber: 6, code: 'ALO6.3', type: 'application', description: 'Planera konvertering från extern till intern fixation', sortOrder: 3 },
+
+    // Kapitel 7: Mjukdelstäckning
+    { chapterNumber: 7, code: 'ALO7.1', type: 'knowledge', description: 'Beskriva fix and flap-konceptet', sortOrder: 1 },
+    { chapterNumber: 7, code: 'ALO7.2', type: 'comprehension', description: 'Förklara indikationer för olika rekonstruktionsalternativ', sortOrder: 2 },
+    { chapterNumber: 7, code: 'ALO7.3', type: 'application', description: 'Välja rätt täckningsmetod baserat på defektens storlek och lokalisation', sortOrder: 3 },
+
+    // Kapitel 8: Multitrauma-koordinering
+    { chapterNumber: 8, code: 'ALO8.1', type: 'knowledge', description: 'Beskriva DCO-kriterier och indikationer', sortOrder: 1 },
+    { chapterNumber: 8, code: 'ALO8.2', type: 'application', description: 'Prioritera ortopediska skador vid multitrauma', sortOrder: 2 },
+    { chapterNumber: 8, code: 'ALO8.3', type: 'analysis', description: 'Besluta om ETC vs DCO baserat på fysiologiska parametrar', sortOrder: 3 },
+
+    // Kapitel 9: Mangled Extremity
+    { chapterNumber: 9, code: 'ALO9.1', type: 'skill', description: 'Beräkna och tolka MESS-score', sortOrder: 1 },
+    { chapterNumber: 9, code: 'ALO9.2', type: 'analysis', description: 'Väga för- och nackdelar med limb salvage vs amputation', sortOrder: 2 },
+    { chapterNumber: 9, code: 'ALO9.3', type: 'application', description: 'Kommunicera med patient och anhöriga vid svåra beslut', sortOrder: 3 },
+
+    // Kapitel 10: Bäckentrauma avancerat
+    { chapterNumber: 10, code: 'ALO10.1', type: 'knowledge', description: 'Beskriva blödningskällor vid bäckentrauma', sortOrder: 1 },
+    { chapterNumber: 10, code: 'ALO10.2', type: 'comprehension', description: 'Förklara indikationer för preperitonal packing', sortOrder: 2 },
+    { chapterNumber: 10, code: 'ALO10.3', type: 'application', description: 'Koordinera multidisciplinär handläggning vid instabilt bäcken', sortOrder: 3 },
+
+    // Kapitel 11: Pediatrisk polytrauma
+    { chapterNumber: 11, code: 'ALO11.1', type: 'knowledge', description: 'Beskriva fysiologiska skillnader hos barn vid trauma', sortOrder: 1 },
+    { chapterNumber: 11, code: 'ALO11.2', type: 'application', description: 'Anpassa vätske- och blodbehandling för barn', sortOrder: 2 },
+    { chapterNumber: 11, code: 'ALO11.3', type: 'comprehension', description: 'Identifiera tecken på icke-accidentellt trauma', sortOrder: 3 },
+
+    // Kapitel 12: Traumateamledning
+    { chapterNumber: 12, code: 'ALO12.1', type: 'skill', description: 'Demonstrera effektiv traumateamledning', sortOrder: 1 },
+    { chapterNumber: 12, code: 'ALO12.2', type: 'knowledge', description: 'Beskriva icke-tekniska färdigheter (NTS)', sortOrder: 2 },
+    { chapterNumber: 12, code: 'ALO12.3', type: 'application', description: 'Genomföra strukturerad debriefing', sortOrder: 3 },
+
+    // Kapitel 13: Masskadesituationer
+    { chapterNumber: 13, code: 'ALO13.1', type: 'skill', description: 'Utföra START-triage', sortOrder: 1 },
+    { chapterNumber: 13, code: 'ALO13.2', type: 'application', description: 'Anpassa ortopedisk handläggning vid resursbegränsning', sortOrder: 2 },
+    { chapterNumber: 13, code: 'ALO13.3', type: 'comprehension', description: 'Förklara principer för sjukhuskapacitet vid masskada', sortOrder: 3 },
+
+    // Kapitel 14: Kvalitet och förbättring
+    { chapterNumber: 14, code: 'ALO14.1', type: 'knowledge', description: 'Beskriva trauma-kvalitetsregister och indikatorer', sortOrder: 1 },
+    { chapterNumber: 14, code: 'ALO14.2', type: 'application', description: 'Genomföra M&M-konferens enligt strukturerad modell', sortOrder: 2 },
+    { chapterNumber: 14, code: 'ALO14.3', type: 'analysis', description: 'Identifiera förbättringsområden med PDSA-cykel', sortOrder: 3 },
   ];
 }
 
