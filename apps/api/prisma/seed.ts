@@ -139,12 +139,17 @@ async function main() {
 
   // Create algorithms
   const algorithms = [
+    // B-ORTIM algorithms
     { code: 'LIMB', title: 'LIMB-algoritmen', description: 'Systematisk bedömning av extremitetsskador', svg: getLIMBAlgorithmSVG() },
     { code: 'ABI-FLOW', title: 'ABI-flödesschema', description: 'Beslutsstöd för ankel-brachialindex', svg: getABIFlowSVG() },
     { code: 'COMPARTMENT', title: 'Kompartmentsyndrom', description: 'Diagnos och behandling av kompartmentsyndrom', svg: getCompartmentSVG() },
     { code: 'OPEN-FX', title: 'Öppna frakturer', description: 'Gustilo-Anderson klassifikation och handläggning', svg: getOpenFractureSVG() },
     { code: 'PELVIC', title: 'Bäckenringskador', description: 'Klassifikation och initial handläggning', svg: getPelvicSVG() },
     { code: 'DCO', title: 'DCO-beslutsträd', description: 'Damage Control Orthopaedics beslutsstöd', svg: getDCOSVG() },
+    // A-ORTIM algorithms
+    { code: 'MESS', title: 'MESS Score', description: 'Mangled Extremity Severity Score för amputation vs limb salvage', svg: getMESSSVG() },
+    { code: 'START-TRIAGE', title: 'START Triage', description: 'Simple Triage And Rapid Treatment vid masskada', svg: getSTARTTriageSVG() },
+    { code: 'FASCIOTOMY', title: 'Fasciotomiguide', description: 'Incisioner och kompartment för underben', svg: getFasciotomySVG() },
   ];
 
   for (const algo of algorithms) {
@@ -2911,6 +2916,271 @@ function getAdvancedQuizQuestions() {
       explanation: 'M&M-konferenser syftar till lärande och systemförbättring, inte skuldbeläggning av individer.',
       reference: 'A-ORTIM Kursbok, Kapitel 14',
     },
+    // Kapitel 2: Neurovaskulär bedömning
+    {
+      code: 'A2.1',
+      chapterNumber: 2,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken nerv skadas vanligast vid fibulahals-fraktur?',
+      options: [
+        { text: 'N. peroneus communis', correct: true },
+        { text: 'N. tibialis', correct: false },
+        { text: 'N. femoralis', correct: false },
+        { text: 'N. saphenus', correct: false },
+      ],
+      explanation: 'N. peroneus communis löper ytligt runt fibulahalsen och är mycket sårbar vid fraktur i detta område.',
+      reference: 'A-ORTIM Kursbok, Kapitel 2',
+    },
+    {
+      code: 'A2.2',
+      chapterNumber: 2,
+      bloomLevel: 'APPLICATION',
+      question: 'Patient efter MC-olycka kan ej lyfta armen eller böja armbågen. Sensorik bevarad ulnart men nedsatt radialt. Vilken skada misstänks?',
+      options: [
+        { text: 'Supraklavikulär plexusskada C5-C6 (Erb-Duchenne)', correct: true },
+        { text: 'Axillarisnervskada', correct: false },
+        { text: 'Karpaltunnelsyndrom', correct: false },
+        { text: 'Distal radialisskada', correct: false },
+      ],
+      explanation: 'Erb-Duchenne (C5-C6) ger bortfall av skulder-abduktion och armbågsflexion med sensoriskt bortfall i radialis-utbredning.',
+      reference: 'A-ORTIM Kursbok, Kapitel 2',
+    },
+    // Kapitel 3: Intraoperativ bedömning
+    {
+      code: 'A3.1',
+      chapterNumber: 3,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilka är "de 4 C:na" för bedömning av muskelviabilitet?',
+      options: [
+        { text: 'Color, Consistency, Contractility, Capacity to bleed', correct: true },
+        { text: 'Circulation, Capillary refill, Cyanosis, Cold', correct: false },
+        { text: 'Cut, Clean, Cover, Close', correct: false },
+        { text: 'Compression, Compartment, Contusion, Crush', correct: false },
+      ],
+      explanation: 'De 4 C:na för muskelviabilitet: Color (färg), Consistency (konsistens), Contractility (kontraktilitet), Capacity to bleed (blödningsförmåga).',
+      reference: 'A-ORTIM Kursbok, Kapitel 3',
+    },
+    {
+      code: 'A3.2',
+      chapterNumber: 3,
+      bloomLevel: 'APPLICATION',
+      question: 'Under operation ser du gråblek muskel som inte kontraherar vid stimulering. Vad gör du?',
+      options: [
+        { text: 'Debridera tills viabel vävnad nås, planera second-look om 48h', correct: true },
+        { text: 'Lämna muskeln och stäng såret', correct: false },
+        { text: 'Vänta och se om färgen förbättras', correct: false },
+        { text: 'Endast ta ytliga prover för odling', correct: false },
+      ],
+      explanation: 'Icke-viabel muskel (gråblek, ej kontraktil) ska debrideras. Second-look operation efter 48h är standard vid tveksamma fall.',
+      reference: 'A-ORTIM Kursbok, Kapitel 3',
+    },
+    // Kapitel 4: Vaskulär reparation - extra fråga
+    {
+      code: 'A4.2',
+      chapterNumber: 4,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilket graftmaterial är förstahandsval vid vaskulär rekonstruktion?',
+      options: [
+        { text: 'Autolog ven (v. saphena magna)', correct: true },
+        { text: 'PTFE (syntetiskt)', correct: false },
+        { text: 'Dacron', correct: false },
+        { text: 'Bovint perikard', correct: false },
+      ],
+      explanation: 'Autolog ven (särskilt v. saphena magna) är förstahandsval pga lägre infektions- och trombosrisk.',
+      reference: 'A-ORTIM Kursbok, Kapitel 4',
+    },
+    // Kapitel 5: Fasciotomi - extra fråga
+    {
+      code: 'A5.2',
+      chapterNumber: 5,
+      bloomLevel: 'APPLICATION',
+      question: 'Efter fasciotomi av underbenet, hur hanteras såren?',
+      options: [
+        { text: 'Lämnas öppna med fuktiga förband eller VAC, sekundär stängning efter 48-72h', correct: true },
+        { text: 'Primärstängs direkt', correct: false },
+        { text: 'Hudtransplantat samma dag', correct: false },
+        { text: 'Daglig debridering i 1 vecka', correct: false },
+      ],
+      explanation: 'Fasciotomisår ska aldrig primärstängas. De lämnas öppna och stängs sekundärt eller med hudtransplantat efter 48-72h.',
+      reference: 'A-ORTIM Kursbok, Kapitel 5',
+    },
+    // Kapitel 6: Extern fixation - extra fråga
+    {
+      code: 'A6.2',
+      chapterNumber: 6,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Hur lång tid efter extern fixation bör man konvertera till intern fixation för att minimera infektionsrisk?',
+      options: [
+        { text: 'Inom 2 veckor', correct: true },
+        { text: 'Inom 24 timmar', correct: false },
+        { text: 'Efter 4 veckor', correct: false },
+        { text: 'Tidpunkten spelar ingen roll', correct: false },
+      ],
+      explanation: 'Risken för djup infektion ökar efter 2 veckors extern fixation. Konvertering bör ske inom denna tid om möjligt.',
+      reference: 'A-ORTIM Kursbok, Kapitel 6',
+    },
+    // Kapitel 7: Mjukdelstäckning
+    {
+      code: 'A7.1',
+      chapterNumber: 7,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad innebär "fix and flap"-konceptet?',
+      options: [
+        { text: 'Definitiv skelettfixation + lambåtäckning inom 72-96 timmar', correct: true },
+        { text: 'Fixation följt av lambå efter 2 veckor', correct: false },
+        { text: 'Endast extern fixation utan mjukdelstäckning', correct: false },
+        { text: 'Fixation och flap i separata operationer med 1 veckas mellanrum', correct: false },
+      ],
+      explanation: '"Fix and flap" innebär definitiv skelettfixation + mjukdelstäckning inom 72-96h, vilket minskar infektionsrisk signifikant.',
+      reference: 'A-ORTIM Kursbok, Kapitel 7',
+    },
+    {
+      code: 'A7.2',
+      chapterNumber: 7,
+      bloomLevel: 'APPLICATION',
+      question: 'Öppen tibiafraktur med exponerat ben utan periost. Vilket täckningsalternativ krävs?',
+      options: [
+        { text: 'Lambå (lokal eller fri) - hudtransplantat tar ej på ben utan periost', correct: true },
+        { text: 'Delhudstransplantat (SSG)', correct: false },
+        { text: 'Sekundärläkning', correct: false },
+        { text: 'Primärslutning', correct: false },
+      ],
+      explanation: 'Exponerat ben utan periost kräver lambåtäckning - hudtransplantat tar endast på vaskulariserad bädd.',
+      reference: 'A-ORTIM Kursbok, Kapitel 7',
+    },
+    // Kapitel 8: Multitrauma
+    {
+      code: 'A8.1',
+      chapterNumber: 8,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vad innebär "DCO" (Damage Control Orthopaedics)?',
+      options: [
+        { text: 'Temporär stabilisering hos instabil patient, definitiv kirurgi efter fysiologisk stabilisering', correct: true },
+        { text: 'Definitiv operation direkt oavsett patientens tillstånd', correct: false },
+        { text: 'Konservativ behandling utan kirurgi', correct: false },
+        { text: 'Endast smärtlindring och observation', correct: false },
+      ],
+      explanation: 'DCO innebär att man gör minimal kirurgi (t.ex. extern fixation) hos instabil patient och väntar med definitiv behandling till efter fysiologisk stabilisering.',
+      reference: 'A-ORTIM Kursbok, Kapitel 8',
+    },
+    {
+      code: 'A8.2',
+      chapterNumber: 8,
+      bloomLevel: 'APPLICATION',
+      question: 'Multitraumapatient med öppen femurfraktur och instabil bäckenblödning. Vilken skada prioriteras först?',
+      options: [
+        { text: 'Bäckenblödningen - livshotande blödning går före extremitetshotande', correct: true },
+        { text: 'Femurfrakturen - öppna frakturer kräver omedelbar åtgärd', correct: false },
+        { text: 'Båda samtidigt', correct: false },
+        { text: 'Femurfrakturen för att minska smärta', correct: false },
+      ],
+      explanation: 'Livshotande tillstånd (C-problem) prioriteras alltid före extremitetshotande. Bäckenblödning kan vara livshotande.',
+      reference: 'A-ORTIM Kursbok, Kapitel 8',
+    },
+    // Kapitel 9: Mangled extremity - extra fråga
+    {
+      code: 'A9.2',
+      chapterNumber: 9,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken nervfunktion är mest avgörande för gångförmåga och talar MOT limb salvage om den är helt förlorad?',
+      options: [
+        { text: 'N. tibialis posterior', correct: true },
+        { text: 'N. peroneus profundus', correct: false },
+        { text: 'N. suralis', correct: false },
+        { text: 'N. saphenus', correct: false },
+      ],
+      explanation: 'N. tibialis posterior innerverar fotsulans sensation och plantarflexorerna. Total skada ger anestesi i fotsulan vilket kraftigt försämrar gångfunktion.',
+      reference: 'A-ORTIM Kursbok, Kapitel 9',
+    },
+    // Kapitel 10: Bäckentrauma - extra fråga
+    {
+      code: 'A10.2',
+      chapterNumber: 10,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilken är den vanligaste blödningskällan vid bäckentrauma?',
+      options: [
+        { text: 'Venös plexus (80%)', correct: true },
+        { text: 'Arteriell (a. iliaca interna grenar)', correct: false },
+        { text: 'Mjälte och lever', correct: false },
+        { text: 'Urinblåsa', correct: false },
+      ],
+      explanation: 'Venös blödning från bäckenplexus står för ca 80% av bäckenblödningar. Preperitonal packing är effektivt mot denna.',
+      reference: 'A-ORTIM Kursbok, Kapitel 10',
+    },
+    // Kapitel 11: Pediatrisk polytrauma
+    {
+      code: 'A11.1',
+      chapterNumber: 11,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilket vitalparametertecken är ett TIDIGT varningssignal på chock hos barn?',
+      options: [
+        { text: 'Takykardi', correct: true },
+        { text: 'Hypotension', correct: false },
+        { text: 'Bradykardi', correct: false },
+        { text: 'Hypertension', correct: false },
+      ],
+      explanation: 'Barn kompenserar blodförlust med takykardi länge innan blodtrycket faller. Hypotension är ett SENT tecken (>30% blodförlust).',
+      reference: 'A-ORTIM Kursbok, Kapitel 11',
+    },
+    {
+      code: 'A11.2',
+      chapterNumber: 11,
+      bloomLevel: 'APPLICATION',
+      question: 'Vid femurfraktur hos ett barn under 3 år utan adekvat trauma, vad bör övervägas?',
+      options: [
+        { text: 'Icke-accidentellt trauma (barnmisshandel) - anmälningsplikt', correct: true },
+        { text: 'Endast behandla frakturen', correct: false },
+        { text: 'Vänta på föräldrarnas förklaring', correct: false },
+        { text: 'Kontakta ortopedisk bakjour först', correct: false },
+      ],
+      explanation: 'Frakturer hos icke-mobila barn utan adekvat trauma ska väcka misstanke om NAI. Anmälan till socialtjänst är lagstadgad skyldighet.',
+      reference: 'A-ORTIM Kursbok, Kapitel 11',
+    },
+    // Kapitel 12: Teamledning - extra fråga
+    {
+      code: 'A12.2',
+      chapterNumber: 12,
+      bloomLevel: 'KNOWLEDGE',
+      question: 'Vilka är de fyra huvudkomponenterna i icke-tekniska färdigheter (NTS) för traumateam?',
+      options: [
+        { text: 'Situationsmedvetenhet, beslutsfattande, teamwork, uppgiftshantering', correct: true },
+        { text: 'Kirurgisk teknik, anatomi, fysiologi, farmakologi', correct: false },
+        { text: 'Kommunikation, dokumentation, transport, övervakning', correct: false },
+        { text: 'Triage, behandling, uppföljning, utvärdering', correct: false },
+      ],
+      explanation: 'NTS består av situationsmedvetenhet, beslutsfattande, teamwork och uppgiftshantering.',
+      reference: 'A-ORTIM Kursbok, Kapitel 12',
+    },
+    // Kapitel 13: Masskada - extra fråga
+    {
+      code: 'A13.2',
+      chapterNumber: 13,
+      bloomLevel: 'APPLICATION',
+      question: 'Vid START-triage: patient som inte andas efter att luftvägen frilagts. Vilken kategori?',
+      options: [
+        { text: 'SVART (avliden) - gå vidare till nästa patient', correct: true },
+        { text: 'RÖD - påbörja HLR', correct: false },
+        { text: 'GUL - övervaka', correct: false },
+        { text: 'GRÖN - kan vänta', correct: false },
+      ],
+      explanation: 'Vid masskada: om patienten ej andas efter friläggning av luftväg klassas den som SVART (avliden). HLR prioriteras ej vid begränsade resurser.',
+      reference: 'A-ORTIM Kursbok, Kapitel 13',
+    },
+    // Kapitel 14: Kvalitet - extra fråga
+    {
+      code: 'A14.2',
+      chapterNumber: 14,
+      bloomLevel: 'COMPREHENSION',
+      question: 'Vad står PDSA för i förbättringsarbete?',
+      options: [
+        { text: 'Plan, Do, Study, Act', correct: true },
+        { text: 'Problem, Diagnose, Solve, Analyze', correct: false },
+        { text: 'Prepare, Document, Share, Audit', correct: false },
+        { text: 'Primary, Definitive, Secondary, Adjunct', correct: false },
+      ],
+      explanation: 'PDSA-cykeln: Plan (planera), Do (genomför), Study (analysera), Act (implementera eller justera).',
+      reference: 'A-ORTIM Kursbok, Kapitel 14',
+    },
   ];
 }
 
@@ -3236,6 +3506,239 @@ function getDCOSVG(): string {
   <!-- Key message -->
   <rect x="50" y="420" width="700" height="50" fill="#1a5276" rx="8"/>
   <text x="400" y="450" text-anchor="middle" class="header">"Life over limb" - Patientens fysiologi styr behandlingsval</text>
+</svg>`;
+}
+
+// A-ORTIM Algorithms
+function getMESSSVG(): string {
+  return `<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 22px sans-serif; fill: #1a5276; }
+    .header { font: bold 14px sans-serif; fill: white; }
+    .text { font: 12px sans-serif; fill: #333; }
+    .score { font: bold 16px sans-serif; fill: #e74c3c; }
+  </style>
+
+  <text x="400" y="30" text-anchor="middle" class="title">MESS - Mangled Extremity Severity Score</text>
+
+  <!-- Skelett/mjukdelar -->
+  <rect x="30" y="60" width="180" height="130" fill="#3498db" rx="8"/>
+  <text x="120" y="85" text-anchor="middle" class="header">SKELETT/MJUKDELAR</text>
+  <text x="40" y="110" class="text" fill="white">Låg energi: 1p</text>
+  <text x="40" y="130" class="text" fill="white">Medel energi: 2p</text>
+  <text x="40" y="150" class="text" fill="white">Hög energi: 3p</text>
+  <text x="40" y="170" class="text" fill="white">Mycket hög (crush): 4p</text>
+
+  <!-- Ischemi -->
+  <rect x="220" y="60" width="180" height="130" fill="#e74c3c" rx="8"/>
+  <text x="310" y="85" text-anchor="middle" class="header">ISCHEMI*</text>
+  <text x="230" y="110" class="text" fill="white">Puls reducerad: 1p</text>
+  <text x="230" y="130" class="text" fill="white">Pulslös, parestetisk: 2p</text>
+  <text x="230" y="150" class="text" fill="white">Kall, paralytisk: 3p</text>
+  <text x="230" y="175" class="text" fill="white">*Dubblas om &gt;6h ischemi</text>
+
+  <!-- Chock -->
+  <rect x="410" y="60" width="180" height="130" fill="#f39c12" rx="8"/>
+  <text x="500" y="85" text-anchor="middle" class="header">CHOCK</text>
+  <text x="420" y="110" class="text" fill="white">BT &gt;90 konsistent: 0p</text>
+  <text x="420" y="130" class="text" fill="white">Transient hypotension: 1p</text>
+  <text x="420" y="150" class="text" fill="white">Persistent hypotension: 2p</text>
+
+  <!-- Ålder -->
+  <rect x="600" y="60" width="170" height="130" fill="#9b59b6" rx="8"/>
+  <text x="685" y="85" text-anchor="middle" class="header">ÅLDER</text>
+  <text x="610" y="110" class="text" fill="white">&lt;30 år: 0p</text>
+  <text x="610" y="130" class="text" fill="white">30-50 år: 1p</text>
+  <text x="610" y="150" class="text" fill="white">&gt;50 år: 2p</text>
+
+  <!-- Tolkning -->
+  <rect x="100" y="220" width="280" height="100" fill="#27ae60" rx="8"/>
+  <text x="240" y="250" text-anchor="middle" class="header">MESS &lt; 7</text>
+  <text x="110" y="280" class="text" fill="white">Limb salvage ofta möjlig</text>
+  <text x="110" y="300" class="text" fill="white">Överväg rekonstruktion</text>
+
+  <rect x="420" y="220" width="280" height="100" fill="#c0392b" rx="8"/>
+  <text x="560" y="250" text-anchor="middle" class="header">MESS ≥ 7</text>
+  <text x="430" y="280" class="text" fill="white">Hög sannolikhet för amputation</text>
+  <text x="430" y="300" class="text" fill="white">Diskutera med patient</text>
+
+  <!-- Viktigt meddelande -->
+  <rect x="100" y="350" width="600" height="80" fill="#1a5276" rx="8"/>
+  <text x="400" y="380" text-anchor="middle" class="header">VIKTIGT</text>
+  <text x="120" y="410" class="text" fill="white">MESS är VÄGLEDNING - ej absolut gräns. Patientens önskemål och N. tibialis posterior-funktion väger tungt.</text>
+</svg>`;
+}
+
+function getSTARTTriageSVG(): string {
+  return `<svg viewBox="0 0 800 650" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 20px sans-serif; fill: #1a5276; }
+    .header { font: bold 14px sans-serif; fill: white; }
+    .text { font: 12px sans-serif; }
+    .decision { font: bold 12px sans-serif; fill: #333; }
+  </style>
+
+  <text x="400" y="25" text-anchor="middle" class="title">START Triage - Simple Triage And Rapid Treatment</text>
+
+  <!-- Steg 1: Kan gå? -->
+  <rect x="300" y="45" width="200" height="40" fill="#3498db" rx="8"/>
+  <text x="400" y="72" text-anchor="middle" class="header">Kan patienten GÅ?</text>
+
+  <line x1="400" y1="85" x2="400" y2="105" stroke="#333" stroke-width="2"/>
+  <line x1="500" y1="65" x2="600" y2="65" stroke="#333" stroke-width="2"/>
+  <text x="540" y="58" class="decision">JA</text>
+
+  <!-- GRÖN -->
+  <rect x="600" y="45" width="120" height="40" fill="#27ae60" rx="8"/>
+  <text x="660" y="72" text-anchor="middle" class="header">GRÖN</text>
+
+  <!-- Steg 2: Andas? -->
+  <text x="350" y="100" class="decision">NEJ</text>
+  <rect x="300" y="105" width="200" height="40" fill="#3498db" rx="8"/>
+  <text x="400" y="132" text-anchor="middle" class="header">Andas patienten?</text>
+
+  <line x1="300" y1="125" x2="200" y2="125" stroke="#333" stroke-width="2"/>
+  <line x1="200" y1="125" x2="200" y2="160" stroke="#333" stroke-width="2"/>
+  <text x="240" y="120" class="decision">NEJ</text>
+
+  <!-- Frigör luftväg -->
+  <rect x="120" y="160" width="160" height="50" fill="#f39c12" rx="8"/>
+  <text x="200" y="182" text-anchor="middle" class="header">Frigör luftväg</text>
+  <text x="200" y="200" text-anchor="middle" class="text" fill="white">Andas nu?</text>
+
+  <line x1="120" y1="185" x2="50" y2="185" stroke="#333" stroke-width="2"/>
+  <text x="75" y="178" class="decision">NEJ</text>
+
+  <!-- SVART -->
+  <rect x="0" y="165" width="50" height="40" fill="#333" rx="8"/>
+  <text x="25" y="190" text-anchor="middle" class="header">SVART</text>
+
+  <!-- Steg 3: AF -->
+  <line x1="400" y1="145" x2="400" y2="170" stroke="#333" stroke-width="2"/>
+  <text x="450" y="160" class="decision">JA</text>
+  <rect x="300" y="170" width="200" height="40" fill="#3498db" rx="8"/>
+  <text x="400" y="197" text-anchor="middle" class="header">Andningsfrekvens?</text>
+
+  <line x1="500" y1="190" x2="600" y2="190" stroke="#333" stroke-width="2"/>
+  <text x="540" y="183" class="decision">&gt;30/min</text>
+
+  <!-- RÖD 1 -->
+  <rect x="600" y="170" width="120" height="40" fill="#e74c3c" rx="8"/>
+  <text x="660" y="197" text-anchor="middle" class="header">RÖD</text>
+
+  <!-- Steg 4: Kapillär återfyllnad -->
+  <line x1="400" y1="210" x2="400" y2="240" stroke="#333" stroke-width="2"/>
+  <text x="450" y="228" class="decision">&lt;30/min</text>
+  <rect x="300" y="240" width="200" height="40" fill="#3498db" rx="8"/>
+  <text x="400" y="267" text-anchor="middle" class="header">Kapillär återfyllnad?</text>
+
+  <line x1="500" y1="260" x2="600" y2="260" stroke="#333" stroke-width="2"/>
+  <text x="540" y="253" class="decision">&gt;2 sek</text>
+
+  <!-- RÖD 2 -->
+  <rect x="600" y="240" width="120" height="40" fill="#e74c3c" rx="8"/>
+  <text x="660" y="267" text-anchor="middle" class="header">RÖD</text>
+
+  <!-- Steg 5: Följer uppmaningar -->
+  <line x1="400" y1="280" x2="400" y2="310" stroke="#333" stroke-width="2"/>
+  <text x="450" y="298" class="decision">&lt;2 sek</text>
+  <rect x="300" y="310" width="200" height="40" fill="#3498db" rx="8"/>
+  <text x="400" y="337" text-anchor="middle" class="header">Följer uppmaningar?</text>
+
+  <line x1="300" y1="330" x2="200" y2="330" stroke="#333" stroke-width="2"/>
+  <text x="240" y="323" class="decision">NEJ</text>
+
+  <!-- RÖD 3 -->
+  <rect x="80" y="310" width="120" height="40" fill="#e74c3c" rx="8"/>
+  <text x="140" y="337" text-anchor="middle" class="header">RÖD</text>
+
+  <line x1="400" y1="350" x2="400" y2="380" stroke="#333" stroke-width="2"/>
+  <text x="450" y="368" class="decision">JA</text>
+
+  <!-- GUL -->
+  <rect x="340" y="380" width="120" height="40" fill="#f1c40f" rx="8"/>
+  <text x="400" y="407" text-anchor="middle" class="header">GUL</text>
+
+  <!-- Förklaring -->
+  <rect x="50" y="450" width="700" height="120" fill="#1a5276" rx="8"/>
+  <text x="400" y="480" text-anchor="middle" class="header">KATEGORIER</text>
+  <text x="70" y="510" class="text" fill="white">RÖD: Omedelbar - livshotande men räddningsbar</text>
+  <text x="70" y="530" class="text" fill="white">GUL: Fördröjd - allvarligt skadad men kan vänta</text>
+  <text x="400" y="510" class="text" fill="white">GRÖN: Lindrig - kan vänta längre</text>
+  <text x="400" y="530" class="text" fill="white">SVART: Avliden/ej räddningsbar</text>
+  <text x="70" y="555" class="text" fill="white">⚠ Retriagering kontinuerligt - tillstånd förändras!</text>
+</svg>`;
+}
+
+function getFasciotomySVG(): string {
+  return `<svg viewBox="0 0 800 550" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title { font: bold 20px sans-serif; fill: #1a5276; }
+    .header { font: bold 14px sans-serif; fill: white; }
+    .text { font: 12px sans-serif; fill: #333; }
+    .compartment { font: bold 11px sans-serif; }
+  </style>
+
+  <text x="400" y="30" text-anchor="middle" class="title">Fasciotomi Underben - Dubbelincisionsteknik</text>
+
+  <!-- Tvärsnittsvy -->
+  <ellipse cx="200" cy="200" rx="130" ry="100" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+
+  <!-- Tibia -->
+  <ellipse cx="160" cy="180" rx="35" ry="40" fill="#e0e0e0" stroke="#333" stroke-width="2"/>
+  <text x="160" y="185" text-anchor="middle" class="compartment">TIBIA</text>
+
+  <!-- Fibula -->
+  <ellipse cx="280" cy="200" rx="15" ry="20" fill="#e0e0e0" stroke="#333" stroke-width="2"/>
+  <text x="280" y="205" text-anchor="middle" class="compartment" style="font-size:9px">FIB</text>
+
+  <!-- Kompartment - Anteriort -->
+  <path d="M 130 120 Q 200 100 270 140" fill="#3498db" fill-opacity="0.5" stroke="#2980b9" stroke-width="2"/>
+  <text x="200" y="125" text-anchor="middle" class="compartment" fill="#2980b9">ANTERIORT</text>
+
+  <!-- Kompartment - Lateralt -->
+  <path d="M 280 150 Q 320 200 280 250" fill="#27ae60" fill-opacity="0.5" stroke="#1e8449" stroke-width="2"/>
+  <text x="310" y="200" class="compartment" fill="#1e8449">LAT</text>
+
+  <!-- Kompartment - Ytligt posteriort -->
+  <path d="M 130 280 Q 200 320 270 280" fill="#9b59b6" fill-opacity="0.5" stroke="#7d3c98" stroke-width="2"/>
+  <text x="200" y="300" text-anchor="middle" class="compartment" fill="#7d3c98">YT. POST</text>
+
+  <!-- Kompartment - Djupt posteriort -->
+  <path d="M 130 220 Q 180 260 130 280" fill="#e74c3c" fill-opacity="0.5" stroke="#c0392b" stroke-width="2"/>
+  <text x="110" y="260" class="compartment" fill="#c0392b">DJ.</text>
+
+  <!-- Incision markör lateral -->
+  <line x1="320" y1="150" x2="350" y2="130" stroke="#e74c3c" stroke-width="3"/>
+  <text x="360" y="135" class="text" fill="#e74c3c">LATERAL INCISION</text>
+
+  <!-- Incision markör medial -->
+  <line x1="80" y1="230" x2="50" y2="250" stroke="#e74c3c" stroke-width="3"/>
+  <text x="20" y="270" class="text" fill="#e74c3c">MEDIAL</text>
+
+  <!-- Instruktioner -->
+  <rect x="420" y="80" width="350" height="180" fill="#3498db" rx="8"/>
+  <text x="595" y="105" text-anchor="middle" class="header">LATERAL INCISION</text>
+  <text x="430" y="130" class="text" fill="white">1. Markera fibulahuvud + laterala malleol</text>
+  <text x="430" y="150" class="text" fill="white">2. Incision 1 cm framför fibula</text>
+  <text x="430" y="170" class="text" fill="white">3. Öppna ANTERIORT först</text>
+  <text x="430" y="190" class="text" fill="white">4. Identifiera intermuskulära septum</text>
+  <text x="430" y="210" class="text" fill="white">5. Öppna LATERALT</text>
+  <text x="430" y="240" class="text" fill="white">→ Når 2 kompartment</text>
+
+  <rect x="420" y="280" width="350" height="160" fill="#9b59b6" rx="8"/>
+  <text x="595" y="305" text-anchor="middle" class="header">MEDIAL INCISION</text>
+  <text x="430" y="330" class="text" fill="white">1. 2 cm posteriort om tibiakanten</text>
+  <text x="430" y="350" class="text" fill="white">2. Incision hel underbenslängden</text>
+  <text x="430" y="370" class="text" fill="white">3. Öppna YTLIGT POSTERIORT</text>
+  <text x="430" y="390" class="text" fill="white">4. Incision djupt genom soleus-fascia</text>
+  <text x="430" y="410" class="text" fill="white">5. Öppna DJUPT POSTERIORT</text>
+  <text x="430" y="435" class="text" fill="white">→ Når 2 kompartment</text>
+
+  <!-- Nyckelbudskap -->
+  <rect x="50" y="460" width="700" height="60" fill="#e74c3c" rx="8"/>
+  <text x="400" y="485" text-anchor="middle" class="header">KRITISKT: Alla 4 kompartment MÅSTE öppnas!</text>
+  <text x="400" y="505" text-anchor="middle" class="text" fill="white">Lämna sår öppna • VAC-förband • Second-look 48-72h • Aldrig primärstäng</text>
 </svg>`;
 }
 
