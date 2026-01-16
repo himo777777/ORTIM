@@ -367,6 +367,10 @@ async function main() {
 
   console.log('✅ A-ORTIM learning objectives created');
 
+  // Create A-ORTIM OSCE Stations (as reference data)
+  const advancedOsceStations = getAdvancedOSCEStations();
+  console.log(`✅ A-ORTIM OSCE stations data prepared (${advancedOsceStations.length} stations)`);
+
   // Create A-ORTIM cohort
   const advancedCohort = await prisma.cohort.upsert({
     where: { id: 'a-ortim-cohort-1' },
@@ -1791,6 +1795,122 @@ function getOSCEStations() {
         { item: 'R: Ger tydlig rekommendation', points: 20, critical: true },
         { item: 'Använder closed-loop kommunikation', points: 10, critical: false },
         { item: 'Bekräftar att mottagaren förstått', points: 5, critical: false },
+      ],
+    },
+  ];
+}
+
+// OSCE Stations for A-ORTIM (Advanced)
+function getAdvancedOSCEStations() {
+  return [
+    {
+      stationNumber: 1,
+      stationName: 'Fasciotomi dubbelincision',
+      duration: 15,
+      passingScore: 80,
+      checklist: [
+        { item: 'Identifierar korrekt indikation för fasciotomi', points: 5, critical: true },
+        { item: 'Markerar fibulahuvud och laterala malleol', points: 5, critical: false },
+        { item: 'Utför lateral incision 1 cm framför fibula', points: 10, critical: true },
+        { item: 'Öppnar anteriora kompartmentet först', points: 10, critical: true },
+        { item: 'Identifierar intermuskulära septum', points: 5, critical: false },
+        { item: 'Öppnar laterala kompartmentet', points: 10, critical: true },
+        { item: 'Utför medial incision 2 cm posteriort om tibiakant', points: 10, critical: true },
+        { item: 'Öppnar ytliga posteriora kompartmentet', points: 10, critical: true },
+        { item: 'Inciderar genom soleus-fascia', points: 5, critical: false },
+        { item: 'Öppnar djupa posteriora kompartmentet', points: 10, critical: true },
+        { item: 'Verifierar att alla 4 kompartment är öppnade', points: 15, critical: true },
+        { item: 'Applicerar korrekt förband (fuktigt/VAC)', points: 5, critical: false },
+      ],
+    },
+    {
+      stationNumber: 2,
+      stationName: 'MESS-beräkning och beslut',
+      duration: 10,
+      passingScore: 75,
+      checklist: [
+        { item: 'Bedömer skelett/mjukdelsskada korrekt (1-4p)', points: 15, critical: true },
+        { item: 'Bedömer ischemigrad korrekt', points: 15, critical: true },
+        { item: 'Identifierar ischemitid och dubblar poäng om >6h', points: 10, critical: true },
+        { item: 'Bedömer chockgrad korrekt (0-2p)', points: 10, critical: true },
+        { item: 'Inkluderar ålder i beräkningen', points: 5, critical: false },
+        { item: 'Summerar MESS-score korrekt', points: 10, critical: true },
+        { item: 'Tolkar score (<7 vs ≥7) korrekt', points: 10, critical: true },
+        { item: 'Bedömer n. tibialis posterior-funktion', points: 10, critical: true },
+        { item: 'Kommunicerar beslutsunderlag till patient/anhöriga', points: 10, critical: false },
+        { item: 'Dokumenterar MESS-score och beslut', points: 5, critical: false },
+      ],
+    },
+    {
+      stationNumber: 3,
+      stationName: 'Traumateamledning',
+      duration: 15,
+      passingScore: 75,
+      checklist: [
+        { item: 'Tar emot MIST-rapport och sammanfattar för teamet', points: 10, critical: true },
+        { item: 'Fördelar tydliga roller innan patient anländer', points: 10, critical: true },
+        { item: 'Positionerar sig vid fotändan för överblick', points: 5, critical: false },
+        { item: 'Leder ABCDE-genomgång strukturerat', points: 15, critical: true },
+        { item: 'Delegerar uppgifter istället för att utföra själv', points: 10, critical: true },
+        { item: 'Använder closed-loop kommunikation konsekvent', points: 10, critical: true },
+        { item: 'Efterfrågar input från teammedlemmar', points: 5, critical: false },
+        { item: 'Sammanfattar regelbundet ("Så just nu har vi...")', points: 10, critical: true },
+        { item: 'Fattar tydliga beslut och kommunicerar plan', points: 15, critical: true },
+        { item: 'Hanterar avvikelser/konflikter professionellt', points: 10, critical: false },
+      ],
+    },
+    {
+      stationNumber: 4,
+      stationName: 'START-triage masskada',
+      duration: 10,
+      passingScore: 80,
+      checklist: [
+        { item: 'Ber gående patienter förflytta sig (→ GRÖN)', points: 10, critical: true },
+        { item: 'Kontrollerar andning hos icke-gående', points: 10, critical: true },
+        { item: 'Frigör luftväg om ej spontan andning', points: 10, critical: true },
+        { item: 'Klassificerar som SVART om ej andning efter friläggning', points: 10, critical: true },
+        { item: 'Bedömer andningsfrekvens (>30 → RÖD)', points: 10, critical: true },
+        { item: 'Bedömer kapillär återfyllnad (>2s → RÖD)', points: 10, critical: true },
+        { item: 'Testar om patient följer uppmaningar', points: 10, critical: true },
+        { item: 'Klassificerar korrekt som GUL vid normala parametrar', points: 10, critical: true },
+        { item: 'Markerar patient tydligt med färgkod', points: 10, critical: false },
+        { item: 'Fortsätter till nästa patient utan dröjsmål', points: 10, critical: true },
+      ],
+    },
+    {
+      stationNumber: 5,
+      stationName: 'Neurovaskulär undersökning',
+      duration: 12,
+      passingScore: 75,
+      checklist: [
+        { item: 'Inspekterar extremitet (färg, svullnad, deformitet)', points: 5, critical: false },
+        { item: 'Palperar a. dorsalis pedis', points: 10, critical: true },
+        { item: 'Palperar a. tibialis posterior', points: 10, critical: true },
+        { item: 'Bedömer kapillär återfyllnad', points: 10, critical: true },
+        { item: 'Testar n. peroneus profundus (dorsalflexion stortå)', points: 10, critical: true },
+        { item: 'Testar n. peroneus superficialis (eversion)', points: 10, critical: true },
+        { item: 'Testar n. tibialis (plantarflexion, sensorik fotsula)', points: 10, critical: true },
+        { item: 'Testar n. suralis (sensorik lateral fotrygg)', points: 5, critical: false },
+        { item: 'Jämför med kontralateral sida', points: 10, critical: false },
+        { item: 'Dokumenterar fynd systematiskt', points: 10, critical: false },
+        { item: 'Drar korrekt slutsats om nervskada', points: 10, critical: true },
+      ],
+    },
+    {
+      stationNumber: 6,
+      stationName: 'DCO-beslutsfattande',
+      duration: 10,
+      passingScore: 75,
+      checklist: [
+        { item: 'Identifierar fysiologiska DCO-kriterier (pH, temp, koag)', points: 15, critical: true },
+        { item: 'Bedömer skadefaktorer (ISS, bilateral femur, etc)', points: 10, critical: true },
+        { item: 'Bedömer laktat och base excess', points: 10, critical: true },
+        { item: 'Fattar korrekt beslut ETC vs DCO', points: 15, critical: true },
+        { item: 'Planerar akut fas (blödningskontroll, ex-fix)', points: 10, critical: true },
+        { item: 'Kommunicerar plan till traumateam', points: 10, critical: true },
+        { item: 'Planerar intensivvårdsfas (korrigera triad)', points: 10, critical: false },
+        { item: 'Sätter mål för definitiv kirurgi (>72h)', points: 10, critical: false },
+        { item: 'Dokumenterar beslutsunderlag', points: 10, critical: false },
       ],
     },
   ];
