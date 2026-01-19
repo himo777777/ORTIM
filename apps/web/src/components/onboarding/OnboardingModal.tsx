@@ -20,9 +20,9 @@ interface OnboardingStep {
 
 const steps: OnboardingStep[] = [
   {
-    title: 'Välkommen till B-ORTIM!',
+    title: 'Välkommen till ORTAC!',
     description:
-      'B-ORTIM är en interaktiv utbildningsplattform för ortopedisk traumahantering. Här lär du dig genom att läsa, öva och repetera.',
+      'ORTAC är en interaktiv utbildningsplattform för ortopedisk traumahantering. Här lär du dig genom att läsa, öva och repetera.',
     icon: <BookOpen className="h-8 w-8" />,
   },
   {
@@ -40,7 +40,7 @@ const steps: OnboardingStep[] = [
   {
     title: 'Få ditt certifikat',
     description:
-      'Slutför kursen och OSCE-examinationen för att få ditt B-ORTIM-certifikat. Certifikatet är giltigt i 3 år.',
+      'Slutför kursen och OSCE-examinationen för att få ditt ORTAC-certifikat. Certifikatet är giltigt i 4 år.',
     icon: <Award className="h-8 w-8" />,
   },
   {

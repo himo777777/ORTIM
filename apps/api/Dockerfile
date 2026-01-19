@@ -21,7 +21,7 @@ COPY apps/api/ ./apps/api/
 RUN npx prisma generate --schema=./apps/api/prisma/schema.prisma
 
 # Build
-RUN npm run build --workspace=@b-ortim/api
+RUN npm run build --workspace=@ortac/api
 
 # Production stage
 FROM node:20-alpine AS runner
@@ -33,7 +33,7 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/apps/api/package*.json ./apps/api/
 COPY --from=builder /app/packages/ ./packages/
 
-RUN npm ci --omit=dev --workspace=@b-ortim/api
+RUN npm ci --omit=dev --workspace=@ortac/api
 
 # Copy built application
 COPY --from=builder /app/apps/api/dist ./apps/api/dist

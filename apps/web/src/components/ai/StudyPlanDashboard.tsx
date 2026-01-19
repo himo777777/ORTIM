@@ -13,8 +13,10 @@ import {
   Calendar,
   BarChart3,
   Zap,
+  FileQuestion,
 } from 'lucide-react';
 import { useAILearningStore, StudyRecommendation, KnowledgeGap } from '@/stores/aiLearningStore';
+import { useRecommendations, Recommendation } from '@/hooks/useAI';
 import { ProgressRing } from '@/components/dashboard/ProgressRing';
 
 interface StudyPlanDashboardProps {
@@ -39,6 +41,9 @@ export function StudyPlanDashboard({
     getDueReviewCards,
   } = useAILearningStore();
 
+  // Fetch AI recommendations from API
+  const { data: apiRecommendations, isLoading: isLoadingRecommendations, refetch: refetchRecommendations } = useRecommendations();
+
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Generate plan on mount if none exists or is stale
@@ -54,7 +59,9 @@ export function StudyPlanDashboard({
 
   const handleRefreshPlan = async () => {
     setIsGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated delay
+    // Refetch from API
+    await refetchRecommendations();
+    // Also update local store
     generateDailyPlan(chapters);
     analyzeKnowledgeGaps(chapters);
     setIsGenerating(false);
@@ -187,20 +194,34 @@ export function StudyPlanDashboard({
         <div className="flex items-center gap-2 mb-4">
           <Sparkles className="w-5 h-5 text-purple-500" />
           <h3 className="font-semibold">AI-rekommendationer</h3>
+          {isLoadingRecommendations && (
+            <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />
+          )}
         </div>
 
         <AnimatePresence mode="popLayout">
           <div className="space-y-3">
-            {currentPlan?.recommendations.map((rec, index) => (
-              <RecommendationCard
-                key={`${rec.type}-${rec.chapterId || index}`}
-                recommendation={rec}
-                index={index}
-                onStart={() => rec.chapterId && onStartStudy?.(rec.chapterId)}
-              />
-            ))}
-
-            {(!currentPlan?.recommendations || currentPlan.recommendations.length === 0) && (
+            {/* Show API recommendations if available, otherwise fall back to local */}
+            {apiRecommendations?.recommendations && apiRecommendations.recommendations.length > 0 ? (
+              apiRecommendations.recommendations.map((rec, index) => (
+                <APIRecommendationCard
+                  key={`api-${rec.type}-${rec.contentId}-${index}`}
+                  recommendation={rec}
+                  index={index}
+                  onStart={() => rec.contentId && onStartStudy?.(rec.contentId)}
+                  onStartReview={onStartReview}
+                />
+              ))
+            ) : currentPlan?.recommendations && currentPlan.recommendations.length > 0 ? (
+              currentPlan.recommendations.map((rec, index) => (
+                <RecommendationCard
+                  key={`local-${rec.type}-${rec.chapterId || index}`}
+                  recommendation={rec}
+                  index={index}
+                  onStart={() => rec.chapterId && onStartStudy?.(rec.chapterId)}
+                />
+              ))
+            ) : (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -356,6 +377,114 @@ function RecommendationCard({
         </div>
         <button
           onClick={onStart}
+          className="px-3 py-1.5 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
+        >
+          Starta
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// API Recommendation Card - handles recommendations from the backend
+function APIRecommendationCard({
+  recommendation,
+  index,
+  onStart,
+  onStartReview,
+}: {
+  recommendation: Recommendation;
+  index: number;
+  onStart: () => void;
+  onStartReview?: () => void;
+}) {
+  const typeConfig: Record<Recommendation['type'], {
+    icon: React.ReactNode;
+    color: string;
+    badge: string;
+  }> = {
+    weakness_focus: {
+      icon: <Target className="w-4 h-4" />,
+      color: 'bg-red-100 dark:bg-red-800 text-red-600 dark:text-red-400',
+      badge: 'Förbättra',
+    },
+    chapter_review: {
+      icon: <BookOpen className="w-4 h-4" />,
+      color: 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-400',
+      badge: 'Fortsätt',
+    },
+    spaced_repetition: {
+      icon: <RefreshCw className="w-4 h-4" />,
+      color: 'bg-amber-100 dark:bg-amber-800 text-amber-600 dark:text-amber-400',
+      badge: 'Repetition',
+    },
+    new_content: {
+      icon: <Sparkles className="w-4 h-4" />,
+      color: 'bg-purple-100 dark:bg-purple-800 text-purple-600 dark:text-purple-400',
+      badge: 'Utforska',
+    },
+    quiz_practice: {
+      icon: <FileQuestion className="w-4 h-4" />,
+      color: 'bg-green-100 dark:bg-green-800 text-green-600 dark:text-green-400',
+      badge: 'Öva',
+    },
+  };
+
+  const config = typeConfig[recommendation.type];
+
+  const handleClick = () => {
+    if (recommendation.type === 'spaced_repetition' && onStartReview) {
+      onStartReview();
+    } else {
+      onStart();
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className="p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm"
+    >
+      <div className="flex items-start gap-3">
+        <div className={`w-8 h-8 rounded-lg ${config.color} flex items-center justify-center flex-shrink-0`}>
+          {config.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-xs px-2 py-0.5 rounded-full ${config.color}`}>
+              {config.badge}
+            </span>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${
+              recommendation.priority >= 8
+                ? 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400'
+                : recommendation.priority >= 5
+                ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400'
+                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+            }`}>
+              {recommendation.priority >= 8 ? 'Hög' : recommendation.priority >= 5 ? 'Medel' : 'Låg'} prioritet
+            </span>
+          </div>
+          <h4 className="font-medium truncate">
+            {recommendation.title}
+          </h4>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {recommendation.description}
+          </p>
+          <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+            <Clock className="w-3 h-3" />
+            <span>~{recommendation.estimatedMinutes} min</span>
+            {recommendation.metadata?.lastAttemptScore !== undefined && (
+              <>
+                <BarChart3 className="w-3 h-3 ml-2" />
+                <span>{recommendation.metadata.lastAttemptScore}% behärskning</span>
+              </>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={handleClick}
           className="px-3 py-1.5 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
         >
           Starta

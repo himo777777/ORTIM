@@ -317,7 +317,7 @@ export const useGamificationStore = create<GamificationState>()(
       },
     }),
     {
-      name: 'bortim-gamification',
+      name: 'ortac-gamification',
     }
   )
 );

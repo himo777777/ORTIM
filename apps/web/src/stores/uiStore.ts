@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { STORAGE_KEYS } from '@b-ortim/shared';
+import { STORAGE_KEYS } from '@ortac/shared';
 
 interface UIState {
   sidebarOpen: boolean;

@@ -17,7 +17,7 @@ export function ChapterNav({ previousChapter, nextChapter }: ChapterNavProps) {
     <div className="flex items-stretch gap-4 py-6 border-t">
       {previousChapter ? (
         <Link
-          to={`/chapters/${previousChapter.id}`}
+          to={`/chapter/${previousChapter.id}`}
           className={cn(
             'flex-1 group flex items-center gap-3 p-4 rounded-lg border',
             'hover:bg-accent hover:border-accent transition-colors'
@@ -35,7 +35,7 @@ export function ChapterNav({ previousChapter, nextChapter }: ChapterNavProps) {
 
       {nextChapter ? (
         <Link
-          to={`/chapters/${nextChapter.id}`}
+          to={`/chapter/${nextChapter.id}`}
           className={cn(
             'flex-1 group flex items-center justify-end gap-3 p-4 rounded-lg border',
             'hover:bg-accent hover:border-accent transition-colors'

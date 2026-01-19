@@ -573,7 +573,7 @@ export const useSocialStore = create<SocialState>()(
         get().sharedNotes.filter(n => n.chapterId === chapterId && n.sharedWith === 'public'),
     }),
     {
-      name: 'bortim-social',
+      name: 'ortac-social',
       partialize: (state) => ({
         groups: state.groups,
         myGroups: state.myGroups,

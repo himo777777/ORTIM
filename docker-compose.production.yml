@@ -1,0 +1,184 @@
+version: '3.9'
+
+# Production Docker Compose with SSL/Certbot
+# Usage: docker compose -f docker-compose.production.yml up -d
+
+services:
+  # Nginx reverse proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: ortac-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - api
+      - web
+    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
+    networks:
+      - ortac-network
+
+  # Certbot for automatic SSL certificates
+  certbot:
+    image: certbot/certbot
+    container_name: ortac-certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - ortac-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ortac-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-ortac}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-ortac}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-ortac} -d ${DB_NAME:-ortac}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ortac-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ortac-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    networks:
+      - ortac-network
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: ortac-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${DB_USER:-ortac}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-ortac}?sslmode=prefer
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRATION: 1h
+      REFRESH_TOKEN_EXPIRATION: 7d
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_SUBJECT: mailto:admin@ortac.se
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: noreply@ortac.se
+      APP_URL: https://app.ortac.se
+      API_URL: https://api.ortac.se
+      CRIIPTO_DOMAIN: ${CRIIPTO_DOMAIN}
+      CRIIPTO_CLIENT_ID: ${CRIIPTO_CLIENT_ID}
+      CRIIPTO_CLIENT_SECRET: ${CRIIPTO_CLIENT_SECRET}
+      CRIIPTO_CALLBACK_URL: https://app.ortac.se/auth/callback
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      SENTRY_DSN: ${SENTRY_DSN}
+      RATE_LIMIT_TTL: 60
+      RATE_LIMIT_MAX: 100
+    expose:
+      - '3000'
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - ortac-network
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: https://api.ortac.se
+        VITE_APP_URL: https://app.ortac.se
+    container_name: ortac-web
+    restart: unless-stopped
+    expose:
+      - '80'
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - ortac-network
+
+  # Database migrations (run once)
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: ortac-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-ortac}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-ortac}
+    command: npx prisma migrate deploy --schema=./apps/api/prisma/schema.prisma
+    restart: 'no'
+    profiles:
+      - migrate
+    networks:
+      - ortac-network
+
+  # Database seeding (run once after migrate)
+  seed:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: ortac-seed
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-ortac}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-ortac}
+    command: npx prisma db seed
+    restart: 'no'
+    profiles:
+      - seed
+    networks:
+      - ortac-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  ortac-network:
+    name: ortac-network
+    driver: bridge

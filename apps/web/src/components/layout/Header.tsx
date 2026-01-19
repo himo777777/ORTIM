@@ -57,9 +57,9 @@ export function Header() {
 
             <Link to="/" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-                B
+                O
               </div>
-              <span className="font-semibold text-lg hidden sm:inline">B-ORTIM</span>
+              <span className="font-semibold text-lg hidden sm:inline">ORTAC</span>
             </Link>
           </div>
 

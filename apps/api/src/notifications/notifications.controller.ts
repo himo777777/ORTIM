@@ -178,7 +178,7 @@ export class NotificationsController {
   async sendTestNotification(@Req() req: AuthRequest) {
     return this.notificationsService.sendToUser(req.user.userId, {
       title: 'Testnotifikation',
-      body: 'Detta är en testnotifikation från B-ORTIM',
+      body: 'Detta är en testnotifikation från ORTAC',
       data: { type: 'test', timestamp: new Date().toISOString() },
     });
   }

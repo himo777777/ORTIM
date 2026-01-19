@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { useNavigate } from 'react-router-dom';
-import type { UserRole } from '@b-ortim/shared';
+import type { UserRole } from '@ortac/shared';
 
 export function useInitiateBankID() {
   const queryClient = useQueryClient();

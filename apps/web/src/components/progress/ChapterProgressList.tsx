@@ -100,7 +100,7 @@ function ChapterProgressItem({ chapter }: { chapter: ChapterProgress }) {
   }
 
   return (
-    <Link to={`/chapters/${chapter.id}`} className={className}>
+    <Link to={`/chapter/${chapter.id}`} className={className}>
       {content}
     </Link>
   );

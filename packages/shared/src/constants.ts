@@ -1,14 +1,15 @@
 // ===========================================
-// B-ORTIM Shared Constants
+// ORTAC Shared Constants
+// Orthopaedic Resuscitation and Trauma Acute Care
 // ===========================================
 
 // Application Info
-export const APP_NAME = 'B-ORTIM';
-export const APP_FULL_NAME = 'Basic Orthopaedic Resuscitation and Trauma Initial Management';
+export const APP_NAME = 'ORTAC';
+export const APP_FULL_NAME = 'Orthopaedic Resuscitation and Trauma Acute Care';
 export const APP_VERSION = '1.0.0';
 
 // Course Configuration
-export const COURSE_CODE = 'B-ORTIM-2025';
+export const COURSE_CODE = 'ORTAC-2025';
 export const PASSING_SCORE = 70; // percentage
 export const CERTIFICATE_VALIDITY_YEARS = 4;
 export const ESTIMATED_COURSE_HOURS = 16;
@@ -54,7 +55,7 @@ export const COURSE_STRUCTURE = {
       number: 1,
       title: 'Del I – Principer och systematik',
       chapters: [
-        { number: 1, title: 'Introduktion – Varför B-ORTIM?', slug: 'introduktion' },
+        { number: 1, title: 'Introduktion – Varför ORTAC?', slug: 'introduktion' },
         { number: 2, title: 'Den ortopediska primärundersökningen', slug: 'primarundersokning' },
         { number: 3, title: 'Extremitetsskador och prioritering', slug: 'prioritering' },
       ],
@@ -98,7 +99,7 @@ export const BLOOM_LEVELS = {
 } as const;
 
 // Certificate Number Format
-export const CERTIFICATE_NUMBER_PREFIX = 'B-ORTIM';
+export const CERTIFICATE_NUMBER_PREFIX = 'ORTAC';
 
 // API Routes
 export const API_ROUTES = {
@@ -178,16 +179,16 @@ export const PWA_CONFIG = {
 
 // Local Storage Keys
 export const STORAGE_KEYS = {
-  AUTH_TOKEN: 'bortim_auth_token',
-  REFRESH_TOKEN: 'bortim_refresh_token',
-  USER: 'bortim_user',
-  THEME: 'bortim_theme',
-  LAST_SYNC: 'bortim_last_sync',
+  AUTH_TOKEN: 'ortac_auth_token',
+  REFRESH_TOKEN: 'ortac_refresh_token',
+  USER: 'ortac_user',
+  THEME: 'ortac_theme',
+  LAST_SYNC: 'ortac_last_sync',
 };
 
 // IndexedDB Configuration
 export const IDB_CONFIG = {
-  name: 'bortim',
+  name: 'ortac',
   version: 1,
   stores: {
     chapters: 'id, slug, version',

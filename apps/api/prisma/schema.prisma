@@ -1,4 +1,5 @@
-// B-ORTIM Database Schema
+// ORTAC Database Schema
+// Orthopaedic Resuscitation and Trauma Acute Care
 // PostgreSQL with Prisma ORM
 
 generator client {
@@ -34,21 +35,43 @@ model User {
   updatedAt    DateTime  @updatedAt
   lastLoginAt  DateTime?
 
+  // Gamification fields
+  totalXP         Int       @default(0)
+  level           Int       @default(1)
+  currentStreak   Int       @default(0)
+  longestStreak   Int       @default(0)
+  lastActivityAt  DateTime?
+  weeklyXP        Int       @default(0)
+  monthlyXP       Int       @default(0)
+  weekStartedAt   DateTime?
+  monthStartedAt  DateTime?
+
   // Relations
-  enrollments         Enrollment[]
-  quizAttempts        QuizAttempt[]
-  chapterProgress     ChapterProgress[]
-  certificates        Certificate[]
-  instructorCohorts   Cohort[]           @relation("CohortInstructor")
-  osceAssessments     OSCEAssessment[]   @relation("AssessedBy")
-  lipusEvaluations    LipusEvaluation[]
-  reviewCards         SpacedRepetitionCard[]
-  pushSubscriptions   PushSubscription[]
-  notifications       Notification[]
-  passwordResetTokens PasswordResetToken[]
+  enrollments              Enrollment[]
+  quizAttempts             QuizAttempt[]
+  chapterProgress          ChapterProgress[]
+  certificates             Certificate[]
+  instructorCohorts        Cohort[]           @relation("CohortInstructor")
+  osceAssessments          OSCEAssessment[]   @relation("AssessedBy")
+  lipusEvaluations         LipusEvaluation[]
+  reviewCards              SpacedRepetitionCard[]
+  pushSubscriptions        PushSubscription[]
+  notifications            Notification[]
+  passwordResetTokens      PasswordResetToken[]
+  badges                   UserBadge[]
+  organizationMemberships  OrganizationMember[]
+  uploadedMedia            MediaAsset[]
+  chatConversations        ChatConversation[]
+  learningProfile          UserLearningProfile?
+
+  // Fas 11: Avancerad Analytics
+  sessions                 UserSession[]
+  savedReports             SavedReport[]
+  predictions              UserPrediction[]
 
   @@index([personnummer])
   @@index([email])
+  @@index([totalXP])
 }
 
 // ============================================
@@ -67,14 +90,47 @@ model Course {
   estimatedHours  Int       @default(16)
   passingScore    Int       @default(70)
   isActive        Boolean   @default(true)
+  instructorOnly  Boolean   @default(false)  // Endast för instruktörer/admin
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
   // Relations
-  parts   CoursePart[]
-  cohorts Cohort[]
+  parts        CoursePart[]
+  cohorts      Cohort[]
+  examCriteria CourseExamCriteria?
+  certTemplate CertificateTemplate?
 
   @@index([code])
+}
+
+// Examinationskriterier för kursen
+model CourseExamCriteria {
+  id                    String   @id @default(cuid())
+  courseId              String   @unique
+  course                Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Quiz/Posttest kriterier
+  quizPassingScore      Int      @default(70)     // Procent för godkänt
+  quizRetakeAllowed     Int      @default(2)      // Max antal omtentering
+  quizRetakeWaitDays    Int      @default(7)      // Väntedagar mellan försök
+
+  // OSCE kriterier
+  osceMinStationsPassed Int      @default(6)      // Minsta antal godkända stationer
+  osceTotalStations     Int      @default(8)      // Totalt antal stationer
+  osceAllowRetake       Boolean  @default(true)
+  osceRetakeWaitDays    Int      @default(14)
+
+  // EPA kriterier
+  epaMinEntrustment     Int      @default(3)      // Minsta entrustment-nivå (1-5)
+  epaAllRequired        Boolean  @default(true)   // Alla 12 EPA måste nås
+
+  // Kritiska fel
+  criticalErrorPolicy   String   @default("AUTO_FAIL") // AUTO_FAIL, REVIEW, WARNING
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([courseId])
 }
 
 model CoursePart {
@@ -308,41 +364,92 @@ model Enrollment {
 }
 
 model OSCEAssessment {
-  id            String     @id @default(cuid())
-  enrollmentId  String
-  enrollment    Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  assessorId    String
-  assessor      User       @relation("AssessedBy", fields: [assessorId], references: [id])
-  stationNumber Int
-  stationName   String
-  passed        Boolean
-  score         Float?
-  comments      String?    @db.Text
-  assessedAt    DateTime   @default(now())
+  id               String     @id @default(cuid())
+  enrollmentId     String
+  enrollment       Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  assessorId       String
+  assessor         User       @relation("AssessedBy", fields: [assessorId], references: [id])
+  stationNumber    Int
+  stationName      String
+  passed           Boolean
+  score            Float?
+  comments         String?    @db.Text
+  assessedAt       DateTime   @default(now())
+
+  // Kritiska fel och detaljerad bedömning
+  criticalErrors   String[]              // Lista över kritiska fel som begicks
+  hasCriticalError Boolean   @default(false)
+  checklistItems   Json?                 // Detaljerad checklista-bedömning
 
   @@index([enrollmentId])
 }
 
 model Certificate {
-  id                String   @id @default(cuid())
-  certificateNumber String   @unique
-  userId            String
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohortId          String?
-  courseCode        String
-  courseName        String
-  issuedAt          DateTime @default(now())
-  validUntil        DateTime
-  examScore         Float
-  examPassed        Boolean
-  oscePassed        Boolean?
-  lipusNumber       String?
-  verificationUrl   String   @unique
-  pdfUrl            String?
+  id                  String   @id @default(cuid())
+  certificateNumber   String   @unique
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohortId            String?
+  courseCode          String
+  courseName          String
+  issuedAt            DateTime @default(now())
+  validUntil          DateTime
+  examScore           Float
+  examPassed          Boolean
+  oscePassed          Boolean?
+  lipusNumber         String?
+  verificationUrl     String   @unique
+  pdfUrl              String?
+
+  // Utökade fält för detaljerade resultat
+  osceScore           Float?            // Genomsnittlig OSCE-poäng
+  osceStationsPassed  Int?              // Antal godkända stationer
+  epaAverageLevel     Float?            // Genomsnittlig EPA-entrustment
+  epaAllPassed        Boolean?          // Alla EPA godkända
+
+  // Recertifikation
+  isRecertification    Boolean  @default(false)
+  previousCertId       String?           // Tidigare certifikat-ID vid recertifikation
+  recertificationCount Int      @default(0)
 
   @@index([userId])
   @@index([certificateNumber])
   @@index([verificationUrl])
+}
+
+// Certifikatmall för kursen
+model CertificateTemplate {
+  id                  String    @id @default(cuid())
+  courseId            String    @unique
+  course              Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Mall-information
+  title               String    @default("ORTAC Certifikat")
+  subtitle            String?   @default("Orthopaedic Resuscitation and Trauma Acute Care")
+  description         String?   @db.Text
+
+  // Giltighetstid
+  validityYears       Int       @default(3)          // Standardgiltighetstid
+
+  // Recertifikationskrav
+  recertRequired      Boolean   @default(true)
+  recertCourseName    String?   @default("ORTAC Uppdateringskurs")
+  recertValidityYears Int       @default(3)
+
+  // LIPUS-referens
+  lipusNumber         String?
+  lipusValidUntil     DateTime?
+
+  // Designelement
+  logoUrl             String?
+  signatureImageUrl   String?
+  signerName          String?   @default("Kursansvarig")
+  signerTitle         String?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([courseId])
 }
 
 // ============================================
@@ -460,4 +567,491 @@ model PasswordResetToken {
 
   @@index([token])
   @@index([userId])
+}
+
+// ============================================
+// GAMIFICATION
+// ============================================
+
+model Badge {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String
+  iconUrl     String?
+  category    String   // PROGRESS, ACHIEVEMENT, STREAK, SPECIAL
+  xpReward    Int      @default(0)
+  requirement Json?    // Flexible requirements (e.g., { "chaptersCompleted": 5 })
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  users UserBadge[]
+
+  @@index([category])
+  @@index([code])
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt  DateTime @default(now())
+  notified  Boolean  @default(false)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+  @@index([earnedAt])
+}
+
+// ============================================
+// EPA - ENTRUSTABLE PROFESSIONAL ACTIVITIES
+// ============================================
+
+model EPA {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  title       String
+  description String   @db.Text
+  objectives  String[] // Mål för denna EPA
+  criteria    String[] // Bedömningskriterier
+  sortOrder   Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  assessments EPAAssessment[]
+
+  @@index([code])
+}
+
+model EPAAssessment {
+  id              String   @id @default(cuid())
+  epaId           String
+  epa             EPA      @relation(fields: [epaId], references: [id], onDelete: Cascade)
+  participantId   String
+  assessorId      String
+  entrustmentLevel Int     // 1-5
+  comments        String?  @db.Text
+  assessedAt      DateTime @default(now())
+
+  @@index([epaId])
+  @@index([participantId])
+  @@index([assessorId])
+}
+
+// ============================================
+// OSCE STATIONER
+// ============================================
+
+model OSCEStation {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  title          String
+  scenario       String   @db.Text
+  checklist      String[] // Checklista-items
+  criticalErrors String[] // Kritiska fel (automatiskt underkänt)
+  timeLimit      Int      // Minuter
+  sortOrder      Int
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@index([code])
+}
+
+// ============================================
+// KIRKPATRICK PILOT EVALUATION
+// ============================================
+
+enum KirkpatrickLevel {
+  REACTION    // Nivå 1: Deltagarnas reaktion
+  LEARNING    // Nivå 2: Kunskapsinhämtning
+  BEHAVIOR    // Nivå 3: Beteendeförändring
+  RESULTS     // Nivå 4: Organisatoriska resultat
+}
+
+model PilotAssessment {
+  id               String            @id @default(cuid())
+  participantId    String
+  kirkpatrickLevel KirkpatrickLevel
+  assessmentType   String            // Typ av mätning (ex: "satisfaction", "pretest", "posttest", "audit")
+  score            Float?
+  maxScore         Float?
+  responses        Json?             // Detaljerade svar
+  notes            String?           @db.Text
+  assessedAt       DateTime          @default(now())
+
+  @@index([participantId])
+  @@index([kirkpatrickLevel])
+  @@index([assessmentType])
+}
+
+// ============================================
+// INSTRUKTÖRSGUIDER
+// ============================================
+
+model InstructorGuide {
+  id            String   @id @default(cuid())
+  courseId      String?
+  type          String   // OSCE_EXAMINER, EPA_ASSESSOR, GENERAL, CHECKLIST
+  title         String
+  content       String   @db.Text
+  version       Int      @default(1)
+  sortOrder     Int
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([courseId, type])
+  @@index([type])
+}
+
+// ============================================
+// ORGANISATIONER & ARBETSGIVARPORTAL
+// ============================================
+
+enum ReportFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum OrganizationMemberRole {
+  EMPLOYEE
+  MANAGER
+  ADMIN
+}
+
+model Organization {
+  id                  String            @id @default(cuid())
+  name                String
+  organizationNumber  String?           @unique
+  contactEmail        String
+  contactPhone        String?
+  address             String?
+  reportFrequency     ReportFrequency   @default(MONTHLY)
+  reportEnabled       Boolean           @default(true)
+  lastReportSentAt    DateTime?
+  nextReportDueAt     DateTime?
+  logoUrl             String?
+  isActive            Boolean           @default(true)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  // Relations
+  members             OrganizationMember[]
+  reportRecipients    OrganizationReportRecipient[]
+
+  @@index([organizationNumber])
+  @@index([isActive])
+}
+
+model OrganizationMember {
+  id              String                  @id @default(cuid())
+  organizationId  String
+  organization    Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role            OrganizationMemberRole  @default(EMPLOYEE)
+  department      String?
+  addedAt         DateTime                @default(now())
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model OrganizationReportRecipient {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email           String
+  name            String?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+
+  @@index([organizationId])
+}
+
+// ============================================
+// MEDIABIBLIOTEK (Cloudflare R2)
+// ============================================
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  PDF
+}
+
+model MediaAsset {
+  id            String    @id @default(cuid())
+  filename      String
+  originalName  String
+  mimeType      String
+  size          Int
+  type          MediaType
+  r2Key         String    @unique
+  r2Bucket      String    @default("ortim-media")
+  url           String
+  thumbnailUrl  String?
+  alt           String?
+  caption       String?
+  videoProvider String?   // 'youtube', 'vimeo' för inbäddad video
+  videoId       String?   // Video-ID från provider
+  width         Int?
+  height        Int?
+  uploadedById  String
+  uploadedBy    User      @relation(fields: [uploadedById], references: [id])
+  tags          String[]
+  usageCount    Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([type])
+  @@index([uploadedById])
+  @@index([createdAt])
+}
+
+// ============================================
+// AI & PERSONALISERING
+// ============================================
+
+model ChatConversation {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model ChatMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String           // "user" | "assistant"
+  content        String           @db.Text
+  contextUsed    Json?            // Vilka kapitel/frågor användes som kontext
+  tokensUsed     Int?
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model ContentEmbedding {
+  id          String   @id @default(cuid())
+  contentType String   // "CHAPTER" | "QUESTION" | "OBJECTIVE"
+  contentId   String
+  chunkIndex  Int      @default(0)
+  content     String   @db.Text
+  embedding   Float[]  // Vector som array
+  createdAt   DateTime @default(now())
+
+  @@unique([contentType, contentId, chunkIndex])
+  @@index([contentType])
+}
+
+model UserLearningProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weakTopics      Json     // Array av topic IDs med låga poäng
+  strongTopics    Json     // Array av topic IDs med höga poäng
+  preferredTimes  Json?    // Vilka tider användaren studerar
+  averageSession  Int?     // Genomsnittlig sessionslängd i minuter
+  learningStyle   String?  // "visual" | "reading" | "practice"
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ============================================
+// AVANCERAD ANALYTICS (Fas 11)
+// ============================================
+
+// Sessionsspårning för korrekt mätning av studietid
+model UserSession {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  durationSeconds Int?
+  pageViews       Int       @default(0)
+  actions         Int       @default(0)
+  deviceType      String?   // "mobile", "tablet", "desktop"
+  browser         String?
+  isActive        Boolean   @default(true)
+
+  @@index([userId, startedAt])
+  @@index([isActive])
+}
+
+// Sparade rapporter för instruktörer
+model SavedReport {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  reportType    String    // "cohort", "question", "progress", "custom"
+  configuration Json      // Rapportparametrar
+  schedule      String?   // Cron för schemalagda rapporter
+  lastRunAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([reportType])
+}
+
+// Prediktioner för riskidentifiering
+model UserPrediction {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  predictionType String   // "dropout_risk", "exam_score", "completion_date"
+  value          Float    // Predikterat värde (0-100 för risk, poäng, eller dagar)
+  confidence     Float    // Konfidensgrad (0-1)
+  factors        Json     // Bidragande faktorer
+  generatedAt    DateTime @default(now())
+
+  @@index([userId, predictionType])
+  @@index([generatedAt])
+}
+
+// Custom event tracking för granulär spårning
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  userId     String?
+  sessionId  String?
+  eventType  String   // "click", "scroll", "video_play", "search", "quiz_start"
+  eventName  String   // Specifikt händelsenamn
+  properties Json?    // Händelsespecifik data
+  pageUrl    String?
+  referrer   String?
+  timestamp  DateTime @default(now())
+
+  @@index([eventType, timestamp])
+  @@index([userId, timestamp])
+  @@index([eventName])
+  @@index([sessionId])
+}
+
+// ============================================
+// FAS 13: A/B-TESTNING
+// ============================================
+
+enum ABTestStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+}
+
+model ABTest {
+  id          String       @id @default(cuid())
+  name        String
+  description String?      @db.Text
+  status      ABTestStatus @default(DRAFT)
+
+  // Test configuration
+  testType    String       // "content", "ui", "quiz", "algorithm"
+  targetPage  String?      // Vilken sida/komponent som testas
+
+  // Traffic allocation
+  trafficPercent Int       @default(100) // Andel av trafik som ingår i testet
+
+  // Goals and metrics
+  primaryMetric  String    // "completion_rate", "quiz_score", "time_on_page", "click_rate"
+  secondaryMetrics Json?   // Array av sekundära mätvärden
+
+  // Dates
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdById String?
+
+  // Relations
+  variants    ABTestVariant[]
+  assignments ABTestAssignment[]
+  conversions ABTestConversion[]
+
+  @@index([status])
+  @@index([testType])
+  @@index([startDate, endDate])
+}
+
+model ABTestVariant {
+  id          String   @id @default(cuid())
+  testId      String
+  test        ABTest   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  name        String   // "Control", "Variant A", "Variant B"
+  description String?
+  isControl   Boolean  @default(false) // Markera kontrollgruppen
+
+  // Configuration
+  config      Json     // Variantspecifik konfiguration
+  weight      Int      @default(50) // Viktning för fördelning (summan ska vara 100)
+
+  // Aggregated stats (uppdateras periodiskt)
+  impressions Int      @default(0)
+  conversions Int      @default(0)
+
+  // Relations
+  assignments ABTestAssignment[]
+  conversionRecords ABTestConversion[]
+
+  @@index([testId])
+}
+
+model ABTestAssignment {
+  id        String   @id @default(cuid())
+  testId    String
+  test      ABTest   @relation(fields: [testId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ABTestVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  // User identification (can be userId or sessionId for anonymous)
+  userId    String?
+  sessionId String?
+
+  assignedAt DateTime @default(now())
+
+  @@unique([testId, userId])
+  @@unique([testId, sessionId])
+  @@index([testId, variantId])
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model ABTestConversion {
+  id        String   @id @default(cuid())
+  testId    String
+  test      ABTest   @relation(fields: [testId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ABTestVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  userId    String?
+  sessionId String?
+
+  // Conversion data
+  metricName  String   // Vilket mätvärde
+  metricValue Float    // Värdet (t.ex. poäng, tid i sekunder)
+
+  convertedAt DateTime @default(now())
+
+  @@index([testId, variantId])
+  @@index([metricName])
+  @@index([convertedAt])
 }

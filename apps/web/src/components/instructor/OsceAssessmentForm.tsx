@@ -1,21 +1,25 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Save, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Standard OSCE stations for B-ORTIM
-const OSCE_STATIONS = [
-  { number: 1, name: 'Anamnes och undersökning - Akut smärta' },
-  { number: 2, name: 'Röntgentolkning - Frakturer' },
-  { number: 3, name: 'Handläggning - Mjukdelsskador' },
-  { number: 4, name: 'Praktisk färdighet - Gipsning' },
-  { number: 5, name: 'Kommunikation - Patientinformation' },
-];
+// Station type from API
+export interface OSCEStation {
+  id: string;
+  code: string;
+  title: string;
+  scenario: string;
+  checklist: string[];
+  criticalErrors: string[];
+  timeLimit: number;
+  sortOrder: number;
+}
 
 // Type matching the API response
 interface OsceAssessment {
@@ -32,6 +36,7 @@ interface OsceAssessmentFormProps {
   enrollmentId: string;
   participantName: string;
   existingAssessments: OsceAssessment[];
+  stations: OSCEStation[];
   onSubmit: (data: {
     stationNumber: number;
     stationName: string;
@@ -45,6 +50,7 @@ interface OsceAssessmentFormProps {
 export function OsceAssessmentForm({
   participantName,
   existingAssessments,
+  stations,
   onSubmit,
   isSubmitting,
 }: OsceAssessmentFormProps) {
@@ -74,12 +80,12 @@ export function OsceAssessmentForm({
   const handleSubmit = async () => {
     if (selectedStation === null || passed === null) return;
 
-    const station = OSCE_STATIONS.find((s) => s.number === selectedStation);
+    const station = stations.find((s) => s.sortOrder === selectedStation);
     if (!station) return;
 
     await onSubmit({
-      stationNumber: station.number,
-      stationName: station.name,
+      stationNumber: station.sortOrder,
+      stationName: station.title,
       passed,
       score: score ? parseInt(score, 10) : undefined,
       comments: comments || undefined,
@@ -104,7 +110,7 @@ export function OsceAssessmentForm({
             <span>OSCE-bedömning för {participantName}</span>
             <div className="flex items-center gap-4 text-sm font-normal">
               <span className="text-muted-foreground">
-                {completedCount}/{OSCE_STATIONS.length} stationer avklarade
+                {completedCount}/{stations.length} stationer avklarade
               </span>
               <span className={cn(
                 passedCount === completedCount && completedCount > 0
@@ -118,15 +124,15 @@ export function OsceAssessmentForm({
         </CardHeader>
         <CardContent>
           {/* Station grid */}
-          <div className="grid gap-3 md:grid-cols-5">
-            {OSCE_STATIONS.map((station) => {
-              const assessment = getAssessmentForStation(station.number);
-              const isSelected = selectedStation === station.number;
+          <div className="grid gap-3 md:grid-cols-4">
+            {stations.map((station) => {
+              const assessment = getAssessmentForStation(station.sortOrder);
+              const isSelected = selectedStation === station.sortOrder;
 
               return (
                 <button
-                  key={station.number}
-                  onClick={() => handleStationSelect(station.number)}
+                  key={station.id}
+                  onClick={() => handleStationSelect(station.sortOrder)}
                   className={cn(
                     'p-3 rounded-lg border-2 text-left transition-all',
                     isSelected && 'border-primary ring-2 ring-primary/20',
@@ -136,7 +142,7 @@ export function OsceAssessmentForm({
                   )}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold">Station {station.number}</span>
+                    <span className="font-semibold">{station.code}</span>
                     {assessment && (
                       assessment.passed ? (
                         <CheckCircle className="h-4 w-4 text-green-600" />
@@ -146,7 +152,7 @@ export function OsceAssessmentForm({
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground line-clamp-2">
-                    {station.name}
+                    {station.title}
                   </p>
                   {assessment && (
                     <p className="text-xs mt-1">
@@ -165,7 +171,7 @@ export function OsceAssessmentForm({
         <Card>
           <CardHeader>
             <CardTitle>
-              Station {selectedStation}: {OSCE_STATIONS.find((s) => s.number === selectedStation)?.name}
+              {stations.find((s) => s.sortOrder === selectedStation)?.code}: {stations.find((s) => s.sortOrder === selectedStation)?.title}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">

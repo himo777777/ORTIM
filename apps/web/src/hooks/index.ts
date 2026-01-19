@@ -12,3 +12,16 @@ export * from './useWebSocket';
 export * from './useAnalytics';
 export * from './useDebounce';
 export { useToast, toast } from './use-toast';
+
+// Analytics Fas 11
+export * from './useSessionTracking';
+export * from './useReportBuilder';
+export * from './useCohortComparison';
+export * from './useAnalyticsEvents';
+export * from './usePredictions';
+
+// BI Export Fas 12
+export * from './useBiExport';
+
+// A/B Testing Fas 13
+export * from './useABTest';

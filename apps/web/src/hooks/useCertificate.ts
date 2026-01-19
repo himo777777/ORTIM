@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 export function useCertificates() {
@@ -36,9 +36,59 @@ export function useVerifyCertificate(certificateNumber: string) {
 
 export function useDownloadCertificate() {
   return useMutation({
-    mutationFn: async (_certificateId: string) => {
-      // PDF download would be handled by window.open to the PDF URL
+    mutationFn: async (certificateId: string) => {
+      const blob = await api.certificates.downloadPdf(certificateId);
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `certifikat-${certificateId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
       return { success: true };
+    },
+  });
+}
+
+export function useCheckAndGenerateCertificate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (courseCode: string) => api.certificates.checkAndGenerate(courseCode),
+    onSuccess: (data) => {
+      // Invalidate certificates list if a new certificate was generated
+      if (data.certificate && !data.alreadyHasCertificate) {
+        queryClient.invalidateQueries({ queryKey: ['certificates'] });
+      }
+      // Also invalidate instructor training status
+      queryClient.invalidateQueries({ queryKey: ['instructor', 'my-training'] });
+    },
+  });
+}
+
+export function useCertificateExpirationStatus(certificateId: string) {
+  return useQuery({
+    queryKey: ['certificate', certificateId, 'status'],
+    queryFn: () => api.certificates.getExpirationStatus(certificateId),
+    enabled: !!certificateId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useRecertify() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (certificateId: string) => api.certificates.recertify(certificateId),
+    onSuccess: () => {
+      // Invalidate certificates list to show new certificate
+      queryClient.invalidateQueries({ queryKey: ['certificates'] });
+      // Invalidate instructor training status
+      queryClient.invalidateQueries({ queryKey: ['instructor', 'my-training'] });
     },
   });
 }

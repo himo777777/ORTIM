@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { GamificationService } from '../gamification/gamification.service';
 
 @Injectable()
 export class QuizService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private gamificationService: GamificationService,
+  ) {}
 
   async getQuestions(chapterId?: string, count = 10) {
     const whereClause = chapterId
@@ -67,12 +71,21 @@ export class QuizService {
       include: { answers: true },
     });
 
+    // Award XP and check badges
+    const gamificationResult = await this.gamificationService.onQuizComplete(
+      userId,
+      score,
+      passed,
+    );
+
     return {
       attemptId: attempt.id,
       score,
       passed,
       correctAnswers,
       totalQuestions: data.answers.length,
+      xpEarned: gamificationResult.xpEarned,
+      newBadges: gamificationResult.newBadges,
     };
   }
 }

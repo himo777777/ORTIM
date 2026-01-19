@@ -367,9 +367,9 @@ export class ReportsService {
 <body>
   <div class="certificate">
     <div class="header">
-      <div class="logo">B-ORTIM</div>
+      <div class="logo">ORTAC</div>
       <h1 class="title">Certifikat</h1>
-      <p class="subtitle">Basic Orthopaedic Resuscitation and Trauma Initial Management</p>
+      <p class="subtitle">Orthopaedic Resuscitation and Trauma Acute Care</p>
     </div>
 
     <div class="recipient">
@@ -612,7 +612,7 @@ export class ReportsService {
 <body>
   <div class="header">
     <div>
-      <div class="logo">B-ORTIM</div>
+      <div class="logo">ORTAC</div>
       <div class="report-title">Progressrapport - ${data.cohort.name}</div>
     </div>
     <div class="meta">
@@ -670,7 +670,7 @@ export class ReportsService {
   </table>
 
   <div class="footer">
-    B-ORTIM - Basic Orthopaedic Resuscitation and Trauma Initial Management
+    ORTAC - Orthopaedic Resuscitation and Trauma Acute Care
   </div>
 </body>
 </html>
@@ -806,7 +806,7 @@ export class ReportsService {
 </head>
 <body>
   <div class="header">
-    <div class="logo">B-ORTIM</div>
+    <div class="logo">ORTAC</div>
     <div>Genererad: ${generatedAt}</div>
   </div>
 
@@ -857,7 +857,7 @@ export class ReportsService {
   ` : ''}
 
   <div class="footer">
-    B-ORTIM - Basic Orthopaedic Resuscitation and Trauma Initial Management
+    ORTAC - Orthopaedic Resuscitation and Trauma Acute Care
   </div>
 </body>
 </html>

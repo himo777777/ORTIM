@@ -13,6 +13,7 @@ import {
   UserCog,
   LayoutDashboard,
   ChevronRight,
+  BarChart3,
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -150,6 +151,12 @@ export default function AdminDashboard() {
               icon={GitBranch}
               title="Algoritmer"
               description="Hantera kliniska beslutsträd"
+            />
+            <QuickActionLink
+              href="/admin/statistics"
+              icon={BarChart3}
+              title="Statistik & Rapporter"
+              description="Detaljerad analys och CSV-export"
             />
           </CardContent>
         </Card>

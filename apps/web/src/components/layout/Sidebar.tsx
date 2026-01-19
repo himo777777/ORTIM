@@ -11,6 +11,12 @@ import {
   BarChart3,
   ClipboardCheck,
   Workflow,
+  AlertTriangle,
+  FileText,
+  Download,
+  FlaskConical,
+  Settings,
+  Activity,
 } from 'lucide-react';
 
 interface NavItem {
@@ -43,6 +49,30 @@ const instructorItems: NavItem[] = [
     icon: ClipboardCheck,
     roles: ['INSTRUCTOR', 'ADMIN'],
   },
+  {
+    to: '/instructor/at-risk',
+    label: 'Riskdeltagare',
+    icon: AlertTriangle,
+    roles: ['INSTRUCTOR', 'ADMIN'],
+  },
+  {
+    to: '/instructor/reports',
+    label: 'Rapporter',
+    icon: FileText,
+    roles: ['INSTRUCTOR', 'ADMIN'],
+  },
+  {
+    to: '/instructor/export',
+    label: 'Dataexport',
+    icon: Download,
+    roles: ['INSTRUCTOR', 'ADMIN'],
+  },
+];
+
+const adminItems: NavItem[] = [
+  { to: '/admin', label: 'Adminpanel', icon: Settings, roles: ['ADMIN'] },
+  { to: '/admin/analytics', label: 'Analytics', icon: Activity, roles: ['ADMIN'] },
+  { to: '/admin/ab-tests', label: 'A/B-tester', icon: FlaskConical, roles: ['ADMIN'] },
 ];
 
 interface SidebarProps {
@@ -53,6 +83,7 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
   const { user } = useAuthStore();
 
   const isInstructorOrAdmin = user?.role === 'INSTRUCTOR' || user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'ADMIN';
 
   const renderNavItem = (item: NavItem) => (
     <NavLink
@@ -92,6 +123,20 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
           )}
           <div className="space-y-1">
             {instructorItems.map(renderNavItem)}
+          </div>
+        </>
+      )}
+
+      {isAdmin && (
+        <>
+          <div className="my-4 border-t" />
+          {!collapsed && (
+            <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Admin
+            </p>
+          )}
+          <div className="space-y-1">
+            {adminItems.map(renderNavItem)}
           </div>
         </>
       )}

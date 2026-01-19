@@ -22,7 +22,7 @@ export class EmailService {
     private configService: ConfigService,
     private prisma: PrismaService,
   ) {
-    this.fromAddress = this.configService.get('SMTP_FROM') || 'noreply@bortim.se';
+    this.fromAddress = this.configService.get('SMTP_FROM') || 'noreply@ortac.se';
     this.appUrl = this.configService.get('APP_URL') || 'http://localhost:3000';
 
     // Configure transporter
@@ -90,7 +90,7 @@ export class EmailService {
 
     return this.send({
       to: email,
-      subject: 'Återställ ditt lösenord - B-ORTIM',
+      subject: 'Återställ ditt lösenord - ORTAC',
       html: this.getPasswordResetTemplate(resetUrl),
       text: `Klicka på länken för att återställa ditt lösenord: ${resetUrl}`,
     });
@@ -124,7 +124,7 @@ export class EmailService {
   ): Promise<boolean> {
     return this.send({
       to: email,
-      subject: 'Välkommen till B-ORTIM!',
+      subject: 'Välkommen till ORTAC!',
       html: this.getWelcomeTemplate(firstName, courseName),
     });
   }
@@ -156,7 +156,7 @@ export class EmailService {
   ): Promise<boolean> {
     return this.send({
       to: email,
-      subject: `Inskriven i ${courseName} - B-ORTIM`,
+      subject: `Inskriven i ${courseName} - ORTAC`,
       html: this.getEnrollmentTemplate(firstName, courseName, cohortName, startDate),
     });
   }
@@ -171,7 +171,7 @@ export class EmailService {
   ): Promise<boolean> {
     return this.send({
       to: email,
-      subject: 'Påminnelse: OSCE-examination - B-ORTIM',
+      subject: 'Påminnelse: OSCE-examination - ORTAC',
       html: this.getOsceReminderTemplate(firstName, date, location),
     });
   }
@@ -201,13 +201,13 @@ export class EmailService {
 <body>
   <div class="container">
     <div class="header">
-      <h1>B-ORTIM</h1>
+      <h1>ORTAC</h1>
     </div>
     <div class="content">
       ${content}
     </div>
     <div class="footer">
-      <p>B-ORTIM - Basic Orthopaedic Resuscitation and Trauma Initial Management</p>
+      <p>ORTAC - Orthopaedic Resuscitation and Trauma Acute Care</p>
       <p>Detta är ett automatiskt meddelande. Vänligen svara inte på detta mail.</p>
     </div>
   </div>
@@ -219,7 +219,7 @@ export class EmailService {
   private getPasswordResetTemplate(resetUrl: string): string {
     return this.getBaseTemplate(`
       <h2>Återställ ditt lösenord</h2>
-      <p>Du har begärt att återställa ditt lösenord för B-ORTIM.</p>
+      <p>Du har begärt att återställa ditt lösenord för ORTAC.</p>
       <p>Klicka på knappen nedan för att välja ett nytt lösenord:</p>
       <p style="text-align: center;">
         <a href="${resetUrl}" class="button">Återställ lösenord</a>
@@ -236,9 +236,9 @@ export class EmailService {
   private getWelcomeTemplate(firstName: string, courseName?: string): string {
     return this.getBaseTemplate(`
       <h2>Välkommen ${firstName}!</h2>
-      <p>Ditt konto på B-ORTIM har skapats.</p>
+      <p>Ditt konto på ORTAC har skapats.</p>
       ${courseName ? `<p>Du har blivit inskriven i kursen <span class="highlight">${courseName}</span>.</p>` : ''}
-      <p>Med B-ORTIM får du tillgång till:</p>
+      <p>Med ORTAC får du tillgång till:</p>
       <ul>
         <li>Interaktiva utbildningsmaterial</li>
         <li>Quiz och kunskapstester</li>

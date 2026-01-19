@@ -1,4 +1,4 @@
-# B-ORTIM Deployment Runbook
+# ORTAC Deployment Runbook
 
 ## Innehåll
 
@@ -29,8 +29,8 @@
 | Miljö | URL | Beskrivning |
 |-------|-----|-------------|
 | Development | localhost:3000 | Lokal utveckling |
-| Staging | staging.bortim.se | Testmiljö |
-| Production | app.bortim.se | Produktionsmiljö |
+| Staging | staging.ortac.se | Testmiljö |
+| Production | app.ortac.se | Produktionsmiljö |
 
 ### GitHub Secrets som krävs
 
@@ -102,9 +102,9 @@ SLACK_WEBHOOK_URL     # För deployment-notifikationer
 ssh deploy@your-server.com
 
 # Skapa mappar
-sudo mkdir -p /opt/bortim
+sudo mkdir -p /opt/ortac
 sudo mkdir -p /backups
-sudo chown -R deploy:deploy /opt/bortim /backups
+sudo chown -R deploy:deploy /opt/ortac /backups
 
 # Installera Docker
 curl -fsSL https://get.docker.com | sh
@@ -119,17 +119,17 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 ```bash
 # Från lokal maskin
-scp docker-compose.yml deploy@server:/opt/bortim/
-scp nginx.conf deploy@server:/opt/bortim/
-scp .env.production deploy@server:/opt/bortim/.env
-scp -r scripts/ deploy@server:/opt/bortim/
+scp docker-compose.yml deploy@server:/opt/ortac/
+scp nginx.conf deploy@server:/opt/ortac/
+scp .env.production deploy@server:/opt/ortac/.env
+scp -r scripts/ deploy@server:/opt/ortac/
 ```
 
 ### 3. Konfigurera miljövariabler
 
 ```bash
 # På servern
-cd /opt/bortim
+cd /opt/ortac
 nano .env
 
 # Fyll i ALLA värden, speciellt:
@@ -145,7 +145,7 @@ nano .env
 ### 4. Starta tjänster
 
 ```bash
-cd /opt/bortim
+cd /opt/ortac
 
 # Starta databas och redis först
 docker-compose up -d db redis
@@ -167,7 +167,7 @@ docker-compose up -d
 sudo apt install certbot python3-certbot-nginx
 
 # Generera certifikat
-sudo certbot --nginx -d app.bortim.se -d api.bortim.se
+sudo certbot --nginx -d app.ortac.se -d api.ortac.se
 
 # Auto-renewal (redan konfigurerat via cron)
 sudo certbot renew --dry-run
@@ -192,12 +192,12 @@ sudo certbot renew --dry-run
 
 ```bash
 # Staging
-export STAGING_HOST=staging.bortim.se
+export STAGING_HOST=staging.ortac.se
 export IMAGE_TAG=latest
 ./scripts/deploy-staging.sh
 
 # Produktion (kräver bekräftelse)
-export PRODUCTION_HOST=app.bortim.se
+export PRODUCTION_HOST=app.ortac.se
 export IMAGE_TAG=v1.2.3  # Specifik version!
 ./scripts/deploy-production.sh
 ```
@@ -221,14 +221,14 @@ export IMAGE_TAG=v1.2.3  # Specifik version!
 # SSH till servern
 ssh deploy@production-server
 
-cd /opt/bortim
+cd /opt/ortac
 
 # Se tidigare versioner
-docker images | grep b-ortim
+docker images | grep ortac
 
 # Byt till tidigare version
-export API_IMAGE=ghcr.io/your-org/b-ortim/api:previous-sha
-export WEB_IMAGE=ghcr.io/your-org/b-ortim/web:previous-sha
+export API_IMAGE=ghcr.io/your-org/ortac/api:previous-sha
+export WEB_IMAGE=ghcr.io/your-org/ortac/web:previous-sha
 
 docker-compose up -d api web
 ```
@@ -242,7 +242,7 @@ docker-compose up -d api web
 ls -la /backups/
 
 # Välj backup att återställa
-./scripts/restore-database.sh /backups/bortim_production_20240115_020000.dump
+./scripts/restore-database.sh /backups/ortac_production_20240115_020000.dump
 ```
 
 ---
@@ -253,14 +253,14 @@ ls -la /backups/
 
 ```bash
 # Basic health
-curl https://api.bortim.se/api/health
+curl https://api.ortac.se/api/health
 
 # Detaljerad status (med dependencies)
-curl https://api.bortim.se/api/health/detailed
+curl https://api.ortac.se/api/health/detailed
 
 # Kubernetes probes
-curl https://api.bortim.se/api/health/ready  # Readiness
-curl https://api.bortim.se/api/health/live   # Liveness
+curl https://api.ortac.se/api/health/ready  # Readiness
+curl https://api.ortac.se/api/health/live   # Liveness
 ```
 
 ### Exempel-svar (health/detailed)
@@ -269,7 +269,7 @@ curl https://api.bortim.se/api/health/live   # Liveness
 {
   "status": "healthy",
   "timestamp": "2024-01-15T10:30:00.000Z",
-  "service": "b-ortim-api",
+  "service": "ortac-api",
   "version": "1.0.0",
   "uptime": 86400,
   "dependencies": {
@@ -297,7 +297,7 @@ docker-compose logs -t api
 
 ### Metrics
 
-- **Sentry**: https://sentry.io/your-org/b-ortim/
+- **Sentry**: https://sentry.io/your-org/ortac/
 - **Uptime**: Konfigureras i externa tjänster (Uptime Robot, etc.)
 
 ---
@@ -320,7 +320,7 @@ docker-compose logs api
 
 ```bash
 # Testa anslutning direkt
-docker-compose exec db psql -U bortim -d bortim -c "SELECT 1"
+docker-compose exec db psql -U ortac -d ortac -c "SELECT 1"
 
 # Kontrollera att db kör
 docker-compose ps db
@@ -359,7 +359,7 @@ sudo certbot renew
 sudo certbot certificates
 
 # Testa SSL
-curl -vI https://api.bortim.se/api/health
+curl -vI https://api.ortac.se/api/health
 ```
 
 ---
@@ -396,10 +396,10 @@ docker-compose exec api npx prisma migrate status
 
 ```bash
 # Vacuum (frigör utrymme)
-docker-compose exec db psql -U bortim -d bortim -c "VACUUM ANALYZE"
+docker-compose exec db psql -U ortac -d ortac -c "VACUUM ANALYZE"
 
 # Se tabellstorlekar
-docker-compose exec db psql -U bortim -d bortim -c "
+docker-compose exec db psql -U ortac -d ortac -c "
   SELECT relname, pg_size_pretty(pg_total_relation_size(relid))
   FROM pg_catalog.pg_statio_user_tables
   ORDER BY pg_total_relation_size(relid) DESC
@@ -424,12 +424,12 @@ docker-compose exec db psql -U bortim -d bortim -c "
 
 1. **Identifiera** - Kör health check
    ```bash
-   curl https://api.bortim.se/api/health/detailed
+   curl https://api.ortac.se/api/health/detailed
    ```
 
 2. **Kommunicera** - Informera i Slack
    ```
-   @here 🔴 B-ORTIM är nere. Undersöker.
+   @here 🔴 ORTAC är nere. Undersöker.
    ```
 
 3. **Diagnostisera** - Kolla loggar
@@ -451,8 +451,8 @@ docker-compose exec db psql -U bortim -d bortim -c "
 | Roll | Kontakt |
 |------|---------|
 | On-call | Se PagerDuty/schema |
-| Teknik-lead | namn@bortim.se |
-| Operations | ops@bortim.se |
+| Teknik-lead | namn@ortac.se |
+| Operations | ops@ortac.se |
 
 ---
 
@@ -465,7 +465,7 @@ docker-compose exec db psql -U bortim -d bortim -c "
 docker-compose exec api npx ts-node scripts/create-admin.ts
 
 # Lista användare
-docker-compose exec db psql -U bortim -d bortim -c "SELECT id, personnummer, role FROM \"User\""
+docker-compose exec db psql -U ortac -d ortac -c "SELECT id, personnummer, role FROM \"User\""
 ```
 
 ### Rensa cache
@@ -478,7 +478,7 @@ docker-compose exec redis redis-cli FLUSHDB
 docker-compose exec api node -e "
   const Redis = require('ioredis');
   const r = new Redis(process.env.REDIS_URL);
-  r.keys('bortim:*').then(keys => keys.length && r.del(...keys));
+  r.keys('ortac:*').then(keys => keys.length && r.del(...keys));
 "
 ```
 

@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Put, Param, Body, UseGuards, NotFoundException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Param, Body, UseGuards, NotFoundException, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { InstructorService } from './instructor.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -100,5 +100,94 @@ export class InstructorController {
   @ApiOperation({ summary: 'Get OSCE assessments for enrollment' })
   async getOsceAssessments(@Param('enrollmentId') enrollmentId: string) {
     return this.instructorService.getOsceAssessments(enrollmentId);
+  }
+
+  // ===========================================
+  // EPA (Entrustable Professional Activities)
+  // ===========================================
+
+  @Get('epa/list')
+  @ApiOperation({ summary: 'Get all EPAs' })
+  async listEPAs() {
+    return this.instructorService.listEPAs();
+  }
+
+  @Post('epa/assess')
+  @ApiOperation({ summary: 'Create EPA assessment' })
+  async createEPAAssessment(
+    @CurrentUser() user: User,
+    @Body() body: {
+      participantId: string;
+      epaId: string;
+      entrustmentLevel: number;
+      comments?: string;
+    },
+  ) {
+    return this.instructorService.createEPAAssessment(user.id, body);
+  }
+
+  @Get('epa/assessments/:participantId')
+  @ApiOperation({ summary: 'Get EPA assessments for participant' })
+  async getEPAAssessments(@Param('participantId') participantId: string) {
+    return this.instructorService.getEPAAssessments(participantId);
+  }
+
+  @Get('epa/cohort/:cohortId')
+  @ApiOperation({ summary: 'Get all EPA assessments for a cohort' })
+  async getCohortEPAAssessments(@Param('cohortId') cohortId: string) {
+    return this.instructorService.getCohortEPAAssessments(cohortId);
+  }
+
+  // ===========================================
+  // OSCE Stations (from database)
+  // ===========================================
+
+  @Get('osce-stations')
+  @ApiOperation({ summary: 'Get all OSCE stations' })
+  async getOSCEStations() {
+    return this.instructorService.getOSCEStations();
+  }
+
+  // ===========================================
+  // Pilot Evaluation (Kirkpatrick)
+  // ===========================================
+
+  @Post('pilot/evaluation')
+  @ApiOperation({ summary: 'Submit pilot evaluation (Kirkpatrick Level 1)' })
+  async submitPilotEvaluation(
+    @CurrentUser() user: User,
+    @Body() body: {
+      kirkpatrickLevel: 'REACTION' | 'LEARNING' | 'BEHAVIOR' | 'RESULTS';
+      assessmentType: string;
+      score?: number;
+      maxScore?: number;
+      responses?: Record<string, unknown>;
+      notes?: string;
+    },
+  ) {
+    return this.instructorService.submitPilotEvaluation(user.id, body);
+  }
+
+  @Get('pilot/results')
+  @ApiOperation({ summary: 'Get pilot evaluation results' })
+  @ApiQuery({ name: 'cohortId', required: false })
+  async getPilotResults(@Query('cohortId') cohortId?: string) {
+    return this.instructorService.getPilotResults(cohortId);
+  }
+
+  @Get('pilot/results/:participantId')
+  @ApiOperation({ summary: 'Get pilot results for specific participant' })
+  async getParticipantPilotResults(@Param('participantId') participantId: string) {
+    return this.instructorService.getParticipantPilotResults(participantId);
+  }
+
+  // ===========================================
+  // Instructor Training Status
+  // ===========================================
+
+  @Get('my-training')
+  @ApiOperation({ summary: 'Get current instructor\'s training status (TTT course, OSCE, certificate)' })
+  async getMyTrainingStatus(@CurrentUser() user: User) {
+    return this.instructorService.getMyTrainingStatus(user.id);
   }
 }

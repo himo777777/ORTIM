@@ -61,11 +61,12 @@ export function AITutor({ context }: AITutorProps) {
   const handleSend = () => {
     if (!input.trim()) return;
 
-    addMessage({
-      role: 'user',
-      content: input.trim(),
-      context: context ? { chapterId: context.chapterId, topic: context.chapterTitle } : undefined,
-    });
+    // Use the real API for AI responses
+    const sendMessage = useAITutorStore.getState().sendMessageToAPI;
+    sendMessage(
+      input.trim(),
+      context ? { chapterId: context.chapterId, topic: context.chapterTitle } : undefined
+    );
 
     setInput('');
   };
@@ -78,11 +79,12 @@ export function AITutor({ context }: AITutorProps) {
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    addMessage({
-      role: 'user',
-      content: suggestion,
-      context: context ? { chapterId: context.chapterId, topic: context.chapterTitle } : undefined,
-    });
+    // Use the real API for AI responses
+    const sendMessage = useAITutorStore.getState().sendMessageToAPI;
+    sendMessage(
+      suggestion,
+      context ? { chapterId: context.chapterId, topic: context.chapterTitle } : undefined
+    );
   };
 
   const handleNewChat = () => {

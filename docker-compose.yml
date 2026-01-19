@@ -3,25 +3,25 @@ version: '3.9'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: bortim-postgres
+    container_name: ortac-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USER:-bortim}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-bortim_secret}
-      POSTGRES_DB: ${DB_NAME:-bortim}
+      POSTGRES_USER: ${DB_USER:-ortac}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ortac_secret}
+      POSTGRES_DB: ${DB_NAME:-ortac}
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-bortim} -d ${DB_NAME:-bortim}']
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-ortac} -d ${DB_NAME:-ortac}']
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: bortim-redis
+    container_name: ortac-redis
     restart: unless-stopped
     ports:
       - '6379:6379'
@@ -39,7 +39,7 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    container_name: bortim-api
+    container_name: ortac-api
     restart: unless-stopped
     depends_on:
       postgres:
@@ -49,19 +49,19 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://${DB_USER:-bortim}:${DB_PASSWORD:-bortim_secret}@postgres:5432/${DB_NAME:-bortim}
+      DATABASE_URL: postgresql://${DB_USER:-ortac}:${DB_PASSWORD:-ortac_secret}@postgres:5432/${DB_NAME:-ortac}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
       JWT_EXPIRATION: 1h
       REFRESH_TOKEN_EXPIRATION: 7d
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
-      VAPID_SUBJECT: mailto:admin@bortim.se
+      VAPID_SUBJECT: mailto:admin@ortac.se
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-noreply@bortim.se}
+      SMTP_FROM: ${SMTP_FROM:-noreply@ortac.se}
       APP_URL: ${APP_URL:-http://localhost}
       BANKID_API_URL: ${BANKID_API_URL:-https://appapi2.test.bankid.com}
       RATE_LIMIT_TTL: 60
@@ -84,7 +84,7 @@ services:
       args:
         VITE_API_URL: /api
         VITE_APP_URL: ${APP_URL:-http://localhost}
-    container_name: bortim-web
+    container_name: ortac-web
     restart: unless-stopped
     depends_on:
       - api
@@ -103,12 +103,12 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    container_name: bortim-migrate
+    container_name: ortac-migrate
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${DB_USER:-bortim}:${DB_PASSWORD:-bortim_secret}@postgres:5432/${DB_NAME:-bortim}
+      DATABASE_URL: postgresql://${DB_USER:-ortac}:${DB_PASSWORD:-ortac_secret}@postgres:5432/${DB_NAME:-ortac}
     command: npx prisma migrate deploy --schema=./apps/api/prisma/schema.prisma
     restart: 'no'
     profiles:
@@ -117,7 +117,7 @@ services:
   # Adminer for database management (dev only)
   adminer:
     image: adminer:latest
-    container_name: bortim-adminer
+    container_name: ortac-adminer
     restart: unless-stopped
     ports:
       - '8080:8080'
@@ -134,4 +134,4 @@ volumes:
 
 networks:
   default:
-    name: bortim-network
+    name: ortac-network

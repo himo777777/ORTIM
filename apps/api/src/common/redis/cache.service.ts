@@ -10,7 +10,7 @@ export interface CacheOptions {
 @Injectable()
 export class CacheService {
   private readonly defaultTTL = 300; // 5 minutes
-  private readonly prefix = 'bortim:';
+  private readonly prefix = 'ortac:';
 
   constructor(
     @Optional() @Inject(REDIS_CLIENT) private readonly redis: Redis | null

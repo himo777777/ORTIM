@@ -67,8 +67,8 @@ async function bootstrap() {
   // Swagger (disabled in production)
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('B-ORTIM API')
-      .setDescription('API for B-ORTIM medical education platform')
+      .setTitle('ORTAC API')
+      .setDescription('API for ORTAC medical education platform')
       .setVersion('1.0')
       .addBearerAuth()
       .addTag('Auth', 'Authentication endpoints')
@@ -87,7 +87,7 @@ async function bootstrap() {
   const port = process.env.PORT || 4000;
   await app.listen(port);
 
-  console.log(`🚀 B-ORTIM API running on http://localhost:${port}`);
+  console.log(`🚀 ORTAC API running on http://localhost:${port}`);
   if (process.env.NODE_ENV !== 'production') {
     console.log(`📚 Swagger docs at http://localhost:${port}/api/docs`);
   }

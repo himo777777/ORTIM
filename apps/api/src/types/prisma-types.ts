@@ -1,6 +1,4 @@
-// Prisma type stubs for build compatibility
-// These mirror the schema.prisma definitions
-
+// Enum definitions matching Prisma schema
 export enum UserRole {
   PARTICIPANT = 'PARTICIPANT',
   INSTRUCTOR = 'INSTRUCTOR',
@@ -28,6 +26,16 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt: Date | null;
+  // Gamification fields
+  totalXP: number;
+  level: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityAt: Date | null;
+  weeklyXP: number;
+  monthlyXP: number;
+  weekStartedAt: Date | null;
+  monthStartedAt: Date | null;
 }
 
 export interface Course {
@@ -222,4 +230,105 @@ export interface LipusEvaluation {
   responses: Record<string, unknown>;
   freeTextFeedback: string | null;
   submittedAt: Date;
+}
+
+export interface Badge {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  iconUrl: string | null;
+  category: string;
+  xpReward: number;
+  requirement: Record<string, unknown> | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+export interface UserBadge {
+  id: string;
+  userId: string;
+  badgeId: string;
+  earnedAt: Date;
+  notified: boolean;
+}
+
+// Organization enums
+export enum ReportFrequency {
+  WEEKLY = 'WEEKLY',
+  BIWEEKLY = 'BIWEEKLY',
+  MONTHLY = 'MONTHLY',
+}
+
+export enum OrganizationMemberRole {
+  EMPLOYEE = 'EMPLOYEE',
+  MANAGER = 'MANAGER',
+  ADMIN = 'ADMIN',
+}
+
+export enum MediaType {
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
+  PDF = 'PDF',
+}
+
+// Organization interfaces
+export interface Organization {
+  id: string;
+  name: string;
+  organizationNumber: string | null;
+  contactEmail: string;
+  contactPhone: string | null;
+  address: string | null;
+  reportFrequency: ReportFrequency;
+  reportEnabled: boolean;
+  lastReportSentAt: Date | null;
+  nextReportDueAt: Date | null;
+  logoUrl: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface OrganizationMember {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: OrganizationMemberRole;
+  department: string | null;
+  addedAt: Date;
+}
+
+export interface OrganizationReportRecipient {
+  id: string;
+  organizationId: string;
+  email: string;
+  name: string | null;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+export interface MediaAsset {
+  id: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  type: MediaType;
+  r2Key: string;
+  r2Bucket: string;
+  url: string;
+  thumbnailUrl: string | null;
+  alt: string | null;
+  caption: string | null;
+  videoProvider: string | null;
+  videoId: string | null;
+  width: number | null;
+  height: number | null;
+  uploadedById: string;
+  tags: string[];
+  usageCount: number;
+  createdAt: Date;
+  updatedAt: Date;
 }

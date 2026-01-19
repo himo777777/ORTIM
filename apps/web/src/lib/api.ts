@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/stores/authStore';
 
 // ===========================================
-// B-ORTIM API Client
+// ORTAC API Client
 // ===========================================
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -20,6 +20,10 @@ class ApiError extends Error {
     this.name = 'ApiError';
   }
 }
+
+// Refresh token lock to prevent race conditions
+let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
 
 async function request<T>(
   endpoint: string,
@@ -51,20 +55,27 @@ async function request<T>(
     const refreshToken = useAuthStore.getState().refreshToken;
     if (refreshToken) {
       try {
+        // Use shared refresh promise to prevent race conditions
         const refreshed = await refreshAccessToken(refreshToken);
         if (refreshed) {
           // Retry original request with new token
-          (headers as Record<string, string>)['Authorization'] =
-            `Bearer ${useAuthStore.getState().token}`;
+          const newToken = useAuthStore.getState().token;
+          (headers as Record<string, string>)['Authorization'] = `Bearer ${newToken}`;
           const retryResponse = await fetch(url, { ...fetchOptions, headers });
           if (retryResponse.ok) {
-            return retryResponse.json();
+            const text = await retryResponse.text();
+            return text ? JSON.parse(text) : ({} as T);
           }
         }
       } catch {
         // Refresh failed, logout
         useAuthStore.getState().logout();
+        window.location.href = '/login';
       }
+    } else {
+      // No refresh token, redirect to login
+      useAuthStore.getState().logout();
+      window.location.href = '/login';
     }
   }
 
@@ -87,6 +98,23 @@ async function request<T>(
 }
 
 async function refreshAccessToken(refreshToken: string): Promise<boolean> {
+  // If already refreshing, wait for that promise
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  refreshPromise = doRefresh(refreshToken);
+
+  try {
+    return await refreshPromise;
+  } finally {
+    isRefreshing = false;
+    refreshPromise = null;
+  }
+}
+
+async function doRefresh(refreshToken: string): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
@@ -96,13 +124,22 @@ async function refreshAccessToken(refreshToken: string): Promise<boolean> {
 
     if (response.ok) {
       const data = await response.json();
-      useAuthStore.getState().setTokens(data.accessToken, data.refreshToken);
-      return true;
+      // Handle both accessToken and token names for compatibility
+      const newAccessToken = data.accessToken || data.token;
+      const newRefreshToken = data.refreshToken;
+      if (newAccessToken && newRefreshToken) {
+        useAuthStore.getState().setTokens(newAccessToken, newRefreshToken);
+        return true;
+      }
     }
+
+    // Refresh failed - logout
+    useAuthStore.getState().logout();
+    return false;
   } catch {
-    // Ignore
+    useAuthStore.getState().logout();
+    return false;
   }
-  return false;
 }
 
 // ===========================================
@@ -110,6 +147,9 @@ async function refreshAccessToken(refreshToken: string): Promise<boolean> {
 // ===========================================
 
 export const api = {
+  // Generic request method
+  request,
+
   // Auth
   auth: {
     initiateBankId: () =>
@@ -159,6 +199,7 @@ export const api = {
           fullName: string;
           description: string | null;
           estimatedHours: number;
+          instructorOnly?: boolean;
           parts: Array<{
             id: string;
             partNumber: number;
@@ -275,19 +316,50 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+
+    getHistory: () =>
+      request<
+        Array<{
+          id: string;
+          type: 'practice' | 'chapter' | 'exam';
+          chapterId: string | null;
+          score: number;
+          passed: boolean;
+          correctAnswers: number;
+          totalQuestions: number;
+          timeSpent: number;
+          completedAt: string;
+          answers?: Array<{
+            questionId: string;
+            bloomLevel?: string;
+            isCorrect: boolean;
+          }>;
+        }>
+      >('/quiz/history'),
   },
 
   // Progress
   progress: {
     get: () =>
-      request<
-        Array<{
+      request<{
+        totalChapters: number;
+        completedChapters: number;
+        overallProgress: number;
+        chapters: Array<{
           chapterId: string;
           readProgress: number;
           quizPassed: boolean;
           bestQuizScore: number | null;
-        }>
-      >('/progress'),
+          completedAt: string | null;
+          chapter: {
+            id: string;
+            chapterNumber: number;
+            title: string;
+            slug: string;
+            part: { partNumber: number; title: string };
+          };
+        }>;
+      }>('/progress'),
 
     update: (chapterId: string, data: { readProgress?: number; quizPassed?: boolean }) =>
       request(`/progress/chapter/${chapterId}`, {
@@ -300,6 +372,26 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+
+    getByCourse: (courseCode: string) =>
+      request<{
+        courseCode: string;
+        courseName: string;
+        totalChapters: number;
+        completedChapters: number;
+        overallProgress: number;
+        chapters: Array<{
+          chapterId: string;
+          chapterNumber: number;
+          title: string;
+          slug: string;
+          partNumber: number;
+          readProgress: number;
+          quizPassed: boolean;
+          completed: boolean;
+          completedAt: string | null;
+        }>;
+      }>(`/progress/course/${courseCode}`),
   },
 
   // Review (Spaced Repetition)
@@ -373,6 +465,74 @@ export const api = {
           holderName: string;
         };
       }>(`/verify/${code}`, { skipAuth: true }),
+
+    checkAndGenerate: (courseCode: string) =>
+      request<{
+        eligible: boolean;
+        alreadyHasCertificate: boolean;
+        certificate: {
+          id: string;
+          certificateNumber: string;
+          courseName: string;
+          issuedAt: string;
+          validUntil: string;
+          examScore: number;
+          examPassed: boolean;
+          verificationUrl: string;
+        } | null;
+        requirements?: {
+          chaptersCompleted: number;
+          chaptersRequired: number;
+          quizzesPassed: number;
+          quizzesRequired: number;
+        };
+        message: string;
+      }>(`/certificates/check/${courseCode}`, { method: 'POST' }),
+
+    downloadPdf: async (certificateId: string): Promise<Blob> => {
+      const token = useAuthStore.getState().token;
+      const response = await fetch(`${API_BASE_URL}/certificates/${certificateId}/pdf`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new ApiError(response.status, 'Failed to download PDF');
+      }
+      return response.blob();
+    },
+
+    getExpirationStatus: (certificateId: string) =>
+      request<{
+        certificateId: string;
+        validUntil: string;
+        daysUntilExpiry: number;
+        status: 'valid' | 'expiring_soon' | 'expired';
+        canRecertify: boolean;
+        isRecertification: boolean;
+        recertificationCount: number;
+      }>(`/certificates/${certificateId}/status`),
+
+    recertify: (certificateId: string) =>
+      request<{
+        eligible: boolean;
+        certificate?: {
+          id: string;
+          certificateNumber: string;
+          courseName: string;
+          validUntil: string;
+        };
+        message: string;
+        requirements?: {
+          quizzesPassed: number;
+          quizzesRequired: number;
+        };
+        previousCertificate?: {
+          id: string;
+          certificateNumber: string;
+          validUntil: string;
+        };
+      }>(`/certificates/${certificateId}/recertify`, { method: 'POST' }),
   },
 
   // Instructor
@@ -508,6 +668,185 @@ export const api = {
           };
         }>
       >(`/instructor/enrollments/${enrollmentId}/osce`),
+
+    // EPA (Entrustable Professional Activities)
+    listEPAs: () =>
+      request<
+        Array<{
+          id: string;
+          code: string;
+          title: string;
+          description: string;
+          objectives: string[];
+          criteria: string[];
+          sortOrder: number;
+        }>
+      >('/instructor/epa/list'),
+
+    createEPAAssessment: (data: {
+      participantId: string;
+      epaId: string;
+      entrustmentLevel: number;
+      comments?: string;
+    }) =>
+      request('/instructor/epa/assess', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    getEPAAssessments: (participantId: string) =>
+      request<
+        Array<{
+          id: string;
+          entrustmentLevel: number;
+          comments: string | null;
+          assessedAt: string;
+          epa: {
+            id: string;
+            code: string;
+            title: string;
+            description: string;
+          };
+        }>
+      >(`/instructor/epa/assessments/${participantId}`),
+
+    getCohortEPAAssessments: (cohortId: string) =>
+      request<{
+        cohort: { id: string; name: string };
+        epas: Array<{
+          id: string;
+          code: string;
+          title: string;
+          description: string;
+          objectives: string[];
+          criteria: string[];
+        }>;
+        participants: Array<{
+          userId: string;
+          firstName: string;
+          lastName: string;
+          assessments: Array<{
+            id: string;
+            epaId: string;
+            entrustmentLevel: number;
+            comments: string | null;
+            assessedAt: string;
+            epa: { code: string; title: string };
+          }>;
+          completedEPAs: number;
+          totalEPAs: number;
+        }>;
+      }>(`/instructor/epa/cohort/${cohortId}`),
+
+    // OSCE Stations
+    getOSCEStations: () =>
+      request<
+        Array<{
+          id: string;
+          code: string;
+          title: string;
+          scenario: string;
+          checklist: string[];
+          criticalErrors: string[];
+          timeLimit: number;
+          sortOrder: number;
+        }>
+      >('/instructor/osce-stations'),
+
+    // Pilot Evaluation (Kirkpatrick)
+    submitPilotEvaluation: (data: {
+      kirkpatrickLevel: 'REACTION' | 'LEARNING' | 'BEHAVIOR' | 'RESULTS';
+      assessmentType: string;
+      score?: number;
+      maxScore?: number;
+      responses?: Record<string, unknown>;
+      notes?: string;
+    }) =>
+      request('/instructor/pilot/evaluation', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    getPilotResults: (cohortId?: string) =>
+      request<{
+        summary: {
+          totalParticipants: number;
+          reactionCount: number;
+          learningCount: number;
+          behaviorCount: number;
+          resultsCount: number;
+          averageSatisfaction: number | null;
+        };
+        assessments: Record<string, Array<{
+          id: string;
+          participantId: string;
+          kirkpatrickLevel: string;
+          assessmentType: string;
+          score: number | null;
+          maxScore: number | null;
+          responses: Record<string, unknown> | null;
+          notes: string | null;
+          assessedAt: string;
+        }>>;
+      }>(`/instructor/pilot/results${cohortId ? `?cohortId=${cohortId}` : ''}`),
+
+    getParticipantPilotResults: (participantId: string) =>
+      request<{
+        pilotAssessments: Array<{
+          id: string;
+          kirkpatrickLevel: string;
+          assessmentType: string;
+          score: number | null;
+          maxScore: number | null;
+          responses: Record<string, unknown> | null;
+          notes: string | null;
+          assessedAt: string;
+        }>;
+        epaAssessments: Array<{
+          id: string;
+          entrustmentLevel: number;
+          comments: string | null;
+          assessedAt: string;
+          epa: { code: string; title: string };
+        }>;
+      }>(`/instructor/pilot/results/${participantId}`),
+
+    // Instructor Training Status
+    getMyTraining: () =>
+      request<{
+        tttProgress: {
+          courseCode: string;
+          courseName: string;
+          totalChapters: number;
+          completedChapters: number;
+          quizzesPassed: number;
+          percentage: number;
+          chapters: Array<{
+            chapterId: string;
+            readProgress: number;
+            quizPassed: boolean;
+            completed: boolean;
+          }>;
+        } | null;
+        osceStatus: {
+          enrolled: boolean;
+          cohortId: string | null;
+          cohortName: string | null;
+          assessmentsCompleted: number;
+          assessmentsPassed: number;
+          totalStations: number;
+          passed: boolean | null;
+        } | null;
+        certificate: {
+          id: string;
+          certificateNumber: string;
+          issuedAt: string;
+          validUntil: string;
+          verificationUrl: string;
+        } | null;
+        eligibleForCertificate: boolean;
+        message?: string;
+      }>('/instructor/my-training'),
   },
 
   // Content (for offline sync)
@@ -964,6 +1303,528 @@ export const api = {
 
     deleteAlgorithm: (id: string) =>
       request(`/admin/algorithms/${id}`, { method: 'DELETE' }),
+
+    // Statistics
+    getDetailedStats: (params?: {
+      courseCode?: string;
+      cohortId?: string;
+      startDate?: string;
+      endDate?: string;
+    }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.courseCode) searchParams.set('courseCode', params.courseCode);
+      if (params?.cohortId) searchParams.set('cohortId', params.cohortId);
+      if (params?.startDate) searchParams.set('startDate', params.startDate);
+      if (params?.endDate) searchParams.set('endDate', params.endDate);
+      return request<{
+        completionByWeek: Array<{ week: string; count: number }>;
+        scoreDistribution: Array<{ range: string; count: number }>;
+        chapterPassRates: Array<{
+          chapterNumber: number;
+          title: string;
+          passRate: number;
+          totalAttempts: number;
+        }>;
+        certificateStats: {
+          total: number;
+          thisMonth: number;
+          expiringIn30Days: number;
+          expired: number;
+        };
+        enrollmentByMonth: Array<{ month: string; count: number }>;
+      }>(`/admin/stats/detailed?${searchParams}`);
+    },
+
+    // Exports
+    exportParticipants: async (cohortId?: string): Promise<Blob> => {
+      const token = useAuthStore.getState().token;
+      const params = cohortId ? `?cohortId=${cohortId}` : '';
+      const response = await fetch(`${API_BASE_URL}/admin/export/participants${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        throw new ApiError(response.status, 'Failed to export participants');
+      }
+      return response.blob();
+    },
+
+    exportProgress: async (courseCode?: string): Promise<Blob> => {
+      const token = useAuthStore.getState().token;
+      const params = courseCode ? `?courseCode=${courseCode}` : '';
+      const response = await fetch(`${API_BASE_URL}/admin/export/progress${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        throw new ApiError(response.status, 'Failed to export progress');
+      }
+      return response.blob();
+    },
+
+    exportCertificates: async (courseCode?: string): Promise<Blob> => {
+      const token = useAuthStore.getState().token;
+      const params = courseCode ? `?courseCode=${courseCode}` : '';
+      const response = await fetch(`${API_BASE_URL}/admin/export/certificates${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        throw new ApiError(response.status, 'Failed to export certificates');
+      }
+      return response.blob();
+    },
+  },
+
+  // ===========================================
+  // MEDIA
+  // ===========================================
+  media: {
+    upload: async (file: File, metadata?: { alt?: string; caption?: string; tags?: string[] }): Promise<{
+      id: string;
+      filename: string;
+      url: string;
+      thumbnailUrl: string | null;
+      type: string;
+      mimeType: string;
+      size: number;
+      width: number | null;
+      height: number | null;
+    }> => {
+      const token = useAuthStore.getState().token;
+      const formData = new FormData();
+      formData.append('file', file);
+      if (metadata?.alt) formData.append('alt', metadata.alt);
+      if (metadata?.caption) formData.append('caption', metadata.caption);
+      if (metadata?.tags) formData.append('tags', metadata.tags.join(','));
+
+      const response = await fetch(`${API_BASE_URL}/media/upload`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(response.status, errorData.message || 'Failed to upload file');
+      }
+
+      return response.json();
+    },
+
+    embed: (data: { url: string; alt?: string; caption?: string; tags?: string[] }) =>
+      request<{
+        id: string;
+        url: string;
+        thumbnailUrl: string | null;
+        videoProvider: string;
+        videoId: string;
+      }>('/media/embed', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    list: (params?: { skip?: number; take?: number; search?: string; type?: 'IMAGE' | 'VIDEO' | 'PDF' }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.skip) searchParams.set('skip', params.skip.toString());
+      if (params?.take) searchParams.set('take', params.take.toString());
+      if (params?.search) searchParams.set('search', params.search);
+      if (params?.type) searchParams.set('type', params.type);
+      return request<{
+        assets: Array<{
+          id: string;
+          filename: string;
+          originalName: string;
+          mimeType: string;
+          size: number;
+          type: 'IMAGE' | 'VIDEO' | 'PDF';
+          url: string;
+          thumbnailUrl: string | null;
+          alt: string | null;
+          caption: string | null;
+          videoProvider: string | null;
+          videoId: string | null;
+          width: number | null;
+          height: number | null;
+          tags: string[];
+          usageCount: number;
+          createdAt: string;
+          uploadedBy: { id: string; firstName: string; lastName: string };
+        }>;
+        total: number;
+        skip: number;
+        take: number;
+      }>(`/media?${searchParams}`);
+    },
+
+    search: (query: string, type?: 'IMAGE' | 'VIDEO' | 'PDF') => {
+      const searchParams = new URLSearchParams({ q: query });
+      if (type) searchParams.set('type', type);
+      return request<{
+        assets: Array<{
+          id: string;
+          filename: string;
+          url: string;
+          thumbnailUrl: string | null;
+          type: 'IMAGE' | 'VIDEO' | 'PDF';
+          alt: string | null;
+        }>;
+        total: number;
+      }>(`/media/search?${searchParams}`);
+    },
+
+    get: (id: string) =>
+      request<{
+        id: string;
+        filename: string;
+        originalName: string;
+        mimeType: string;
+        size: number;
+        type: 'IMAGE' | 'VIDEO' | 'PDF';
+        url: string;
+        thumbnailUrl: string | null;
+        alt: string | null;
+        caption: string | null;
+        videoProvider: string | null;
+        videoId: string | null;
+        width: number | null;
+        height: number | null;
+        tags: string[];
+        usageCount: number;
+        createdAt: string;
+        uploadedBy: { id: string; firstName: string; lastName: string };
+      }>(`/media/${id}`),
+
+    update: (id: string, data: { alt?: string; caption?: string; tags?: string[] }) =>
+      request(`/media/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/media/${id}`, { method: 'DELETE' }),
+  },
+
+  // ===========================================
+  // ORGANIZATION (Admin)
+  // ===========================================
+  organization: {
+    list: (params?: { skip?: number; take?: number; search?: string }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.skip) searchParams.set('skip', params.skip.toString());
+      if (params?.take) searchParams.set('take', params.take.toString());
+      if (params?.search) searchParams.set('search', params.search);
+      return request<{
+        organizations: Array<{
+          id: string;
+          name: string;
+          organizationNumber: string | null;
+          contactEmail: string;
+          reportFrequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+          reportEnabled: boolean;
+          isActive: boolean;
+          createdAt: string;
+          _count: { members: number; reportRecipients: number };
+        }>;
+        total: number;
+        skip: number;
+        take: number;
+      }>(`/admin/organizations?${searchParams}`);
+    },
+
+    get: (id: string) =>
+      request<{
+        id: string;
+        name: string;
+        organizationNumber: string | null;
+        contactEmail: string;
+        contactPhone: string | null;
+        address: string | null;
+        reportFrequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+        reportEnabled: boolean;
+        logoUrl: string | null;
+        isActive: boolean;
+        createdAt: string;
+        members: Array<{
+          id: string;
+          role: 'EMPLOYEE' | 'MANAGER' | 'ADMIN';
+          department: string | null;
+          addedAt: string;
+          user: { id: string; firstName: string; lastName: string; email: string | null; workplace: string | null };
+        }>;
+        reportRecipients: Array<{
+          id: string;
+          email: string;
+          name: string | null;
+          isActive: boolean;
+        }>;
+      }>(`/admin/organizations/${id}`),
+
+    create: (data: {
+      name: string;
+      organizationNumber?: string;
+      contactEmail: string;
+      contactPhone?: string;
+      address?: string;
+      reportFrequency?: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+      logoUrl?: string;
+    }) =>
+      request('/admin/organizations', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    update: (id: string, data: {
+      name?: string;
+      organizationNumber?: string;
+      contactEmail?: string;
+      contactPhone?: string;
+      address?: string;
+      reportFrequency?: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+      reportEnabled?: boolean;
+      logoUrl?: string;
+      isActive?: boolean;
+    }) =>
+      request(`/admin/organizations/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/admin/organizations/${id}`, { method: 'DELETE' }),
+
+    addMember: (organizationId: string, data: {
+      userId: string;
+      role?: 'EMPLOYEE' | 'MANAGER' | 'ADMIN';
+      department?: string;
+    }) =>
+      request(`/admin/organizations/${organizationId}/members`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    updateMember: (organizationId: string, userId: string, data: {
+      role?: 'EMPLOYEE' | 'MANAGER' | 'ADMIN';
+      department?: string;
+    }) =>
+      request(`/admin/organizations/${organizationId}/members/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    removeMember: (organizationId: string, userId: string) =>
+      request<{ success: boolean }>(`/admin/organizations/${organizationId}/members/${userId}`, {
+        method: 'DELETE',
+      }),
+
+    addRecipient: (organizationId: string, data: { email: string; name?: string }) =>
+      request(`/admin/organizations/${organizationId}/recipients`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    removeRecipient: (recipientId: string) =>
+      request<{ success: boolean }>(`/admin/organizations/recipients/${recipientId}`, {
+        method: 'DELETE',
+      }),
+  },
+
+  // ===========================================
+  // ORGANIZATION PORTAL
+  // ===========================================
+  organizationPortal: {
+    getDashboard: () =>
+      request<{
+        organization: {
+          id: string;
+          name: string;
+          organizationNumber: string | null;
+          contactEmail: string;
+          logoUrl: string | null;
+        };
+        stats: {
+          totalEmployees: number;
+          employeesWithCertificates: number;
+          certificationRate: number;
+          expiringCertificates: number;
+          averageProgress: number;
+        };
+        recentCertificates: Array<{
+          id: string;
+          certificateNumber: string;
+          courseName: string;
+          issuedAt: string;
+          validUntil: string;
+          user: { firstName: string; lastName: string };
+        }>;
+      }>('/organization-portal'),
+
+    getEmployees: (params?: { skip?: number; take?: number; search?: string }) => {
+      const searchParams = new URLSearchParams();
+      if (params?.skip) searchParams.set('skip', params.skip.toString());
+      if (params?.take) searchParams.set('take', params.take.toString());
+      if (params?.search) searchParams.set('search', params.search);
+      return request<{
+        employees: Array<{
+          id: string;
+          role: 'EMPLOYEE' | 'MANAGER' | 'ADMIN';
+          department: string | null;
+          user: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            email: string | null;
+            workplace: string | null;
+            certificates: Array<{
+              id: string;
+              courseName: string;
+              issuedAt: string;
+              validUntil: string;
+            }>;
+            _count: { chapterProgress: number; certificates: number };
+          };
+        }>;
+        total: number;
+        skip: number;
+        take: number;
+      }>(`/organization-portal/employees?${searchParams}`);
+    },
+
+    getEmployee: (id: string) =>
+      request<{
+        id: string;
+        firstName: string;
+        lastName: string;
+        email: string | null;
+        workplace: string | null;
+        createdAt: string;
+        department: string | null;
+        memberRole: 'EMPLOYEE' | 'MANAGER' | 'ADMIN';
+        certificates: Array<{
+          id: string;
+          certificateNumber: string;
+          courseName: string;
+          courseCode: string;
+          issuedAt: string;
+          validUntil: string;
+          examScore: number;
+          examPassed: boolean;
+        }>;
+        chapterProgress: Array<{
+          id: string;
+          readProgress: number;
+          completedAt: string | null;
+          chapter: { title: string; chapterNumber: number };
+        }>;
+        enrollments: Array<{
+          id: string;
+          status: string;
+          enrolledAt: string;
+          cohort: {
+            id: string;
+            name: string;
+            course: { name: string; code: string };
+          };
+        }>;
+      }>(`/organization-portal/employees/${id}`),
+
+    exportData: async (): Promise<Blob> => {
+      const token = useAuthStore.getState().token;
+      const response = await fetch(`${API_BASE_URL}/organization-portal/export`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        throw new ApiError(response.status, 'Failed to export data');
+      }
+      return response.blob();
+    },
+  },
+
+  // ===========================================
+  // GAMIFICATION
+  // ===========================================
+  gamification: {
+    getStats: () =>
+      request<{
+        totalXP: number;
+        level: number;
+        currentStreak: number;
+        longestStreak: number;
+        weeklyXP: number;
+        monthlyXP: number;
+        xpToNextLevel: number;
+        progressToNextLevel: number;
+        rank: {
+          weekly: number | null;
+          monthly: number | null;
+          allTime: number | null;
+        };
+      }>('/gamification/stats'),
+
+    getLeaderboard: (period: 'weekly' | 'monthly' | 'allTime' = 'weekly', limit = 10) =>
+      request<{
+        leaderboard: Array<{
+          rank: number;
+          userId: string;
+          firstName: string;
+          lastName: string;
+          xp: number;
+          level: number;
+          streak: number;
+        }>;
+        currentUserRank: number | null;
+        currentUserXP: number;
+      }>(`/gamification/leaderboard?period=${period}&limit=${limit}`),
+
+    getAllBadges: () =>
+      request<
+        Array<{
+          id: string;
+          code: string;
+          name: string;
+          description: string;
+          icon: string;
+          category: 'PROGRESS' | 'ACHIEVEMENT' | 'STREAK' | 'SPECIAL';
+          xpReward: number;
+          requirement: Record<string, unknown>;
+          isActive: boolean;
+        }>
+      >('/gamification/badges'),
+
+    getMyBadges: () =>
+      request<
+        Array<{
+          id: string;
+          earnedAt: string;
+          badge: {
+            id: string;
+            code: string;
+            name: string;
+            description: string;
+            icon: string;
+            category: 'PROGRESS' | 'ACHIEVEMENT' | 'STREAK' | 'SPECIAL';
+            xpReward: number;
+          };
+        }>
+      >('/gamification/badges/mine'),
+
+    recordActivity: () =>
+      request<{
+        streak: number;
+        xpAwarded: number;
+        message: string;
+      }>('/gamification/activity', { method: 'POST' }),
+
+    checkBadges: () =>
+      request<{
+        newBadges: Array<{
+          id: string;
+          code: string;
+          name: string;
+          description: string;
+          icon: string;
+          xpReward: number;
+        }>;
+      }>('/gamification/check-badges', { method: 'POST' }),
   },
 
   // ===========================================
@@ -1047,6 +1908,126 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+  },
+
+  // ===========================================
+  // AI & PERSONALIZATION
+  // ===========================================
+  ai: {
+    // Chat
+    chat: (data: { message: string; conversationId?: string; contextChapterId?: string }) =>
+      request<{
+        conversationId: string;
+        messageId: string;
+        content: string;
+        sourcesUsed: Array<{
+          type: string;
+          id: string;
+          title: string;
+          relevance: number;
+        }>;
+        tokensUsed: number;
+      }>('/ai/chat', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    // Stream chat - returns EventSource URL
+    getStreamUrl: () => `${API_BASE_URL}/ai/chat/stream`,
+
+    // Conversations
+    getConversations: (limit = 20) =>
+      request<
+        Array<{
+          id: string;
+          title: string | null;
+          createdAt: string;
+          updatedAt: string;
+          messages: Array<{
+            id: string;
+            role: 'user' | 'assistant';
+            content: string;
+            createdAt: string;
+          }>;
+        }>
+      >(`/ai/conversations?limit=${limit}`),
+
+    getConversation: (id: string) =>
+      request<{
+        id: string;
+        title: string | null;
+        createdAt: string;
+        updatedAt: string;
+        messages: Array<{
+          id: string;
+          role: 'user' | 'assistant';
+          content: string;
+          contextUsed: Array<{
+            type: string;
+            id: string;
+            title: string;
+            relevance: number;
+          }> | null;
+          tokensUsed: number | null;
+          createdAt: string;
+        }>;
+      }>(`/ai/conversations/${id}`),
+
+    deleteConversation: (id: string) =>
+      request<{ success: boolean }>(`/ai/conversations/${id}`, { method: 'DELETE' }),
+
+    // Content assistance
+    summarizeChapter: (chapterId: string, format: 'brief' | 'detailed' | 'bullet_points' = 'brief') =>
+      request<{
+        summary: string;
+        keyPoints: string[];
+      }>(`/ai/summarize/${chapterId}?format=${format}`),
+
+    explainQuestion: (questionId: string, includeRelatedConcepts = true) =>
+      request<{
+        explanation: string;
+        correctAnswer: string;
+        whyOthersWrong: Array<{ option: string; reason: string }>;
+        relatedConcepts?: string[];
+      }>(`/ai/explain/${questionId}?includeRelatedConcepts=${includeRelatedConcepts}`),
+
+    // Recommendations & Learning Profile
+    getRecommendations: () =>
+      request<{
+        recommendations: Array<{
+          type: 'chapter_review' | 'quiz_practice' | 'spaced_repetition' | 'new_content' | 'weakness_focus';
+          title: string;
+          description: string;
+          contentId: string;
+          contentType: 'chapter' | 'quiz' | 'question';
+          priority: number;
+          estimatedMinutes?: number;
+          metadata?: {
+            lastAttemptScore?: number;
+            daysAgo?: number;
+            reviewCount?: number;
+          };
+        }>;
+        generatedAt: string;
+        learningProfile?: {
+          strongTopics: string[];
+          weakTopics: string[];
+          preferredStudyTime?: string;
+          averageSessionMinutes?: number;
+          learningStyle?: string;
+        };
+      }>('/ai/recommendations'),
+
+    getLearningProfile: () =>
+      request<{
+        userId: string;
+        weakTopics: string[];
+        strongTopics: string[];
+        preferredTimes?: string[];
+        averageSession?: number;
+        learningStyle?: 'visual' | 'reading' | 'practice';
+        updatedAt: string;
+      } | null>('/ai/learning-profile'),
   },
 };
 

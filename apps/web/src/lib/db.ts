@@ -1,7 +1,7 @@
 import Dexie, { type Table } from 'dexie';
 
 // ===========================================
-// B-ORTIM Offline Database (IndexedDB)
+// ORTAC Offline Database (IndexedDB)
 // ===========================================
 
 // Types for local storage
@@ -102,7 +102,7 @@ export interface LocalUser {
 }
 
 // Database class
-class BORTIMDatabase extends Dexie {
+class ORTACDatabase extends Dexie {
   chapters!: Table<LocalChapter>;
   questions!: Table<LocalQuizQuestion>;
   algorithms!: Table<LocalAlgorithm>;
@@ -113,7 +113,7 @@ class BORTIMDatabase extends Dexie {
   user!: Table<LocalUser>;
 
   constructor() {
-    super('bortim');
+    super('ortac');
 
     this.version(1).stores({
       chapters: 'id, slug, chapterNumber, version',
@@ -333,7 +333,7 @@ class BORTIMDatabase extends Dexie {
 }
 
 // Singleton instance
-export const db = new BORTIMDatabase();
+export const db = new ORTACDatabase();
 
 // Export types
-export type { BORTIMDatabase };
+export type { ORTACDatabase };

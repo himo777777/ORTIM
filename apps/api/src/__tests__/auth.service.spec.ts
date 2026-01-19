@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../auth/auth.service';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { UserRole } from '../types/prisma-types';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -16,10 +17,22 @@ describe('AuthService', () => {
     firstName: 'Test',
     lastName: 'User',
     email: 'test@example.com',
-    role: 'PARTICIPANT',
+    phone: null,
+    role: UserRole.PARTICIPANT,
+    workplace: null,
+    speciality: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     lastLoginAt: null,
+    totalXP: 0,
+    level: 1,
+    currentStreak: 0,
+    longestStreak: 0,
+    lastActivityAt: null,
+    weeklyXP: 0,
+    monthlyXP: 0,
+    weekStartedAt: null,
+    monthStartedAt: null,
   };
 
   const mockPrismaService = {

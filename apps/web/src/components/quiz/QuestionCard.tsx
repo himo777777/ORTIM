@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { BLOOM_LEVELS } from '@b-ortim/shared';
+import { BLOOM_LEVELS } from '@ortac/shared';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 interface Option {

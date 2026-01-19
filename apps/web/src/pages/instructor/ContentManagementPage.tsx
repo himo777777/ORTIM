@@ -26,6 +26,7 @@ import {
   BarChart3,
   Settings,
   ChevronRight,
+  GraduationCap,
 } from 'lucide-react';
 
 export default function ContentManagementPage() {
@@ -304,9 +305,16 @@ export default function ContentManagementPage() {
                         </p>
                       </div>
                     </div>
-                    <Badge variant={course.isActive ? 'default' : 'secondary'}>
-                      {course.isActive ? 'Aktiv' : 'Inaktiv'}
-                    </Badge>
+                    <div className="flex gap-1">
+                      <Badge variant={course.isActive ? 'default' : 'secondary'}>
+                        {course.isActive ? 'Aktiv' : 'Inaktiv'}
+                      </Badge>
+                      {(course as any).instructorOnly && (
+                        <Badge className="bg-amber-500 hover:bg-amber-600 text-white">
+                          <GraduationCap className="h-3 w-3" />
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {(!courses || courses.length === 0) && (

@@ -13,6 +13,7 @@ import {
   Code,
   Link,
   Image,
+  Film,
   Undo,
   Redo,
   AlignLeft,
@@ -22,7 +23,9 @@ import {
   Minus,
   Eye,
   Edit3,
+  Library,
 } from 'lucide-react';
+import { MediaPickerModal } from './MediaPickerModal';
 import ReactMarkdown from 'react-markdown';
 
 interface RichTextEditorProps {
@@ -75,6 +78,8 @@ export function RichTextEditor({
   );
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [mediaPickerTypes, setMediaPickerTypes] = useState<('image' | 'video')[]>(['image', 'video']);
   const editorRef = useRef<HTMLDivElement>(null);
 
   // Sync content to editor
@@ -114,6 +119,16 @@ export function RichTextEditor({
   const insertImage = (url: string, alt: string) => {
     execCommand('insertImage', url);
     setShowImageModal(false);
+  };
+
+  const insertMediaHtml = (html: string) => {
+    execCommand('insertHTML', html);
+    setShowMediaPicker(false);
+  };
+
+  const openMediaPicker = (types: ('image' | 'video')[]) => {
+    setMediaPickerTypes(types);
+    setShowMediaPicker(true);
   };
 
   const insertTable = () => {
@@ -274,6 +289,16 @@ export function RichTextEditor({
           title="Infoga bild"
         />
         <ToolbarButton
+          icon={<Film className="w-4 h-4" />}
+          onClick={() => openMediaPicker(['video'])}
+          title="Infoga video"
+        />
+        <ToolbarButton
+          icon={<Library className="w-4 h-4" />}
+          onClick={() => openMediaPicker(['image', 'video'])}
+          title="Mediabibliotek"
+        />
+        <ToolbarButton
           icon={<Table className="w-4 h-4" />}
           onClick={insertTable}
           title="Infoga tabell"
@@ -346,6 +371,15 @@ export function RichTextEditor({
         <ImageModal
           onClose={() => setShowImageModal(false)}
           onInsert={insertImage}
+        />
+      )}
+
+      {/* Media Picker Modal */}
+      {showMediaPicker && (
+        <MediaPickerModal
+          onClose={() => setShowMediaPicker(false)}
+          onInsert={insertMediaHtml}
+          allowedTypes={mediaPickerTypes}
         />
       )}
     </div>

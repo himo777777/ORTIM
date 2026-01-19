@@ -6,6 +6,7 @@ import {
   useOsceAssessments,
   useCreateOsceAssessment,
   useUpdateOsceAssessment,
+  useOSCEStations,
 } from '@/hooks/useInstructor';
 import { OsceAssessmentForm } from '@/components/instructor';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,7 @@ export default function OSCEPage() {
   const { data: cohort, isLoading: cohortLoading } = useCohort(cohortId || '');
   const { data: participants, isLoading: participantsLoading } = useCohortParticipants(cohortId || '');
   const { data: assessments, isLoading: assessmentsLoading } = useOsceAssessments(currentEnrollmentId);
+  const { data: stations, isLoading: stationsLoading } = useOSCEStations();
   const createAssessment = useCreateOsceAssessment();
   const updateAssessment = useUpdateOsceAssessment();
 
@@ -140,9 +142,10 @@ export default function OSCEPage() {
   }
 
   // Calculate overall OSCE status from assessments
+  const totalStations = stations?.length || 8;
   const getOverallStatus = () => {
     if (!assessments || assessments.length === 0) return 'pending';
-    if (assessments.length < 5) return 'in_progress';
+    if (assessments.length < totalStations) return 'in_progress';
     const allPassed = assessments.every((a: ApiOsceAssessment) => a.passed);
     return allPassed ? 'passed' : 'failed';
   };
@@ -252,7 +255,7 @@ export default function OSCEPage() {
                   {overallStatus === 'in_progress' && (
                     <Badge variant="secondary" className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      Pågående ({assessments?.length || 0}/5 stationer)
+                      Pågående ({assessments?.length || 0}/{totalStations} stationer)
                     </Badge>
                   )}
                   {overallStatus === 'pending' && (
@@ -278,7 +281,7 @@ export default function OSCEPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Stationer bedömda:</span>
-                  <span className="ml-2 font-medium">{assessments?.length || 0} av 5</span>
+                  <span className="ml-2 font-medium">{assessments?.length || 0} av {totalStations}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Total poäng:</span>
@@ -289,13 +292,14 @@ export default function OSCEPage() {
           </Card>
 
           {/* Assessment Form */}
-          {assessmentsLoading ? (
+          {assessmentsLoading || stationsLoading ? (
             <Skeleton className="h-[600px]" />
           ) : (
             <OsceAssessmentForm
               enrollmentId={currentEnrollmentId}
               participantName={`${selectedParticipant.user.firstName} ${selectedParticipant.user.lastName}`}
               existingAssessments={assessments || []}
+              stations={stations || []}
               onSubmit={handleSaveAssessment}
               isSubmitting={createAssessment.isPending || updateAssessment.isPending}
             />

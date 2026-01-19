@@ -4,7 +4,7 @@
 // Based on the SuperMemo SM-2 algorithm
 // https://www.supermemo.com/en/archives1990-2015/english/ol/sm2
 
-import { SM2_INITIAL_EASE_FACTOR, SM2_MIN_EASE_FACTOR, SM2_INITIAL_INTERVAL } from '@b-ortim/shared';
+import { SM2_INITIAL_EASE_FACTOR, SM2_MIN_EASE_FACTOR, SM2_INITIAL_INTERVAL } from '@ortac/shared';
 
 export interface SM2Card {
   easeFactor: number;

@@ -93,3 +93,19 @@ export function useQuizStats() {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+export function useQuizHistory() {
+  return useQuery({
+    queryKey: ['quiz', 'history'],
+    queryFn: async () => {
+      try {
+        const response = await api.quiz.getHistory();
+        return response;
+      } catch {
+        // Return empty array if endpoint doesn't exist
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}

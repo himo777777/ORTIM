@@ -47,6 +47,7 @@ import {
   Save,
   Eye,
   LayoutList,
+  GraduationCap,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -200,9 +201,17 @@ export default function CourseBuilderPage() {
                         {courseItem.fullName}
                       </CardDescription>
                     </div>
-                    <Badge variant={courseItem.isActive ? 'default' : 'secondary'}>
-                      {courseItem.isActive ? 'Aktiv' : 'Inaktiv'}
-                    </Badge>
+                    <div className="flex flex-col gap-1 items-end">
+                      <Badge variant={courseItem.isActive ? 'default' : 'secondary'}>
+                        {courseItem.isActive ? 'Aktiv' : 'Inaktiv'}
+                      </Badge>
+                      {(courseItem as any).instructorOnly && (
+                        <Badge className="bg-amber-500 hover:bg-amber-600 text-white">
+                          <GraduationCap className="h-3 w-3 mr-1" />
+                          Instruktörskurs
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -273,6 +282,12 @@ export default function CourseBuilderPage() {
             <Badge variant={course.isActive ? 'default' : 'secondary'}>
               {course.isActive ? 'Aktiv' : 'Inaktiv'}
             </Badge>
+            {(course as any).instructorOnly && (
+              <Badge className="bg-amber-500 hover:bg-amber-600 text-white">
+                <GraduationCap className="h-3 w-3 mr-1" />
+                Instruktörskurs
+              </Badge>
+            )}
           </div>
         </div>
         <div className="flex gap-2">

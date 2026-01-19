@@ -576,7 +576,7 @@ i18n
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage'],
-      lookupLocalStorage: 'bortim-language',
+      lookupLocalStorage: 'ortac-language',
     },
   });
 

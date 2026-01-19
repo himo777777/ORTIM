@@ -19,13 +19,13 @@ COPY apps/web/ ./apps/web/
 
 # Build arguments for environment variables
 ARG VITE_API_URL=/api
-ARG VITE_APP_URL=https://bortim.se
+ARG VITE_APP_URL=https://ortac.se
 
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_APP_URL=$VITE_APP_URL
 
 # Build
-RUN npm run build --workspace=@b-ortim/web
+RUN npm run build --workspace=@ortac/web
 
 # Production stage with nginx
 FROM nginx:alpine AS runner

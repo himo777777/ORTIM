@@ -1,8 +1,8 @@
 {
-  "name": "b-ortim",
+  "name": "ortac",
   "version": "1.0.0",
   "private": true,
-  "description": "B-ORTIM - Basic Orthopaedic Resuscitation and Trauma Initial Management PWA",
+  "description": "ORTAC - Orthopaedic Resuscitation and Trauma Acute Care PWA",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -34,7 +34,9 @@
   "dependencies": {
     "@nestjs/platform-socket.io": "^11.1.9",
     "@nestjs/websockets": "^11.1.9",
+    "@sentry/node": "^10.34.0",
     "framer-motion": "^12.23.26",
+    "react-dropzone": "^14.3.8",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
   }

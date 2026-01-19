@@ -2,6 +2,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { db } from '@/lib/db';
 
+// Fetch all available courses (filters by user role on server)
+export function useCourses() {
+  return useQuery({
+    queryKey: ['courses'],
+    queryFn: () => api.courses.list(),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
 export function useCourse(courseCode: string) {
   return useQuery({
     queryKey: ['course', courseCode],
@@ -87,7 +96,7 @@ export function useChapterProgress(chapterId: string) {
     queryKey: ['progress', 'chapter', chapterId],
     queryFn: async () => {
       const progress = await api.progress.get();
-      return progress.find((p) => p.chapterId === chapterId) || {
+      return progress.chapters.find((p: { chapterId: string }) => p.chapterId === chapterId) || {
         chapterId,
         readProgress: 0,
         quizPassed: false,
@@ -138,31 +147,42 @@ export function useOverallProgress() {
   return useQuery<OverallProgressResult>({
     queryKey: ['progress', 'overall'],
     queryFn: async () => {
-      const progress = await api.progress.get();
-      const completed = progress.filter((p) => p.quizPassed).length;
-      const current = progress.find((p) => !p.quizPassed);
-      const lastCompleted = progress.filter((p) => p.quizPassed).pop();
+      const data = await api.progress.get();
+      const chapters = data.chapters || [];
+      const completed = chapters.filter((p) => p.completedAt !== null).length;
+      const current = chapters.find((p) => p.completedAt === null);
+      const lastCompleted = chapters.filter((p) => p.completedAt !== null).pop();
 
       return {
-        chaptersCompleted: completed,
-        totalChapters: 17,
-        chapterProgress: progress.map((p) => ({
+        chaptersCompleted: data.completedChapters || completed,
+        totalChapters: data.totalChapters || 17,
+        chapterProgress: chapters.map((p) => ({
           chapterId: p.chapterId,
-          chapterNumber: 0, // Would need to map this
+          chapterNumber: p.chapter?.chapterNumber || 0,
           scrollPosition: p.readProgress,
-          completed: p.quizPassed,
+          completed: p.completedAt !== null,
         })),
         currentChapter: current ? {
           id: current.chapterId,
-          title: 'Current Chapter',
+          title: current.chapter?.title || 'Current Chapter',
           progress: current.readProgress,
         } : undefined,
         lastCompletedChapter: lastCompleted ? {
           id: lastCompleted.chapterId,
-          title: 'Last Completed Chapter',
+          title: lastCompleted.chapter?.title || 'Last Completed Chapter',
         } : undefined,
       };
     },
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// Get progress for a specific course
+export function useCourseProgress(courseCode: string) {
+  return useQuery({
+    queryKey: ['progress', 'course', courseCode],
+    queryFn: () => api.progress.getByCourse(courseCode),
+    staleTime: 5 * 60 * 1000,
+    enabled: !!courseCode,
   });
 }

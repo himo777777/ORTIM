@@ -256,7 +256,7 @@ export const useStudyStore = create<StudyState>()(
       },
     }),
     {
-      name: 'bortim-study',
+      name: 'ortac-study',
     }
   )
 );

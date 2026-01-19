@@ -29,7 +29,7 @@ export class NotificationsService {
     // Configure web-push with VAPID keys
     const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-    const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@bortim.se';
+    const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@ortac.se';
 
     if (vapidPublicKey && vapidPrivateKey) {
       webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { AuthUser, UserRole } from '@b-ortim/shared';
-import { STORAGE_KEYS } from '@b-ortim/shared';
+import type { AuthUser, UserRole } from '@ortac/shared';
+import { STORAGE_KEYS } from '@ortac/shared';
 
 interface AuthState {
   user: AuthUser | null;

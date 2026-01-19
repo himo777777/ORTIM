@@ -14,12 +14,12 @@ describe('CertificatesService', () => {
 
   const mockCertificate = {
     id: 'cert-123',
-    certificateNumber: 'BORTIM-2024-001',
+    certificateNumber: 'ORTAC-2024-001',
     userId: 'user-123',
     user: mockUser,
     cohortId: 'cohort-123',
-    courseCode: 'B-ORTIM-1',
-    courseName: 'B-ORTIM Grundkurs',
+    courseCode: 'ORTAC-2025',
+    courseName: 'ORTAC Grundkurs',
     issuedAt: new Date('2024-01-01'),
     validUntil: new Date('2027-01-01'),
     examScore: 85,

@@ -112,4 +112,29 @@ export class AuthController {
       speciality: user.speciality,
     };
   }
+
+  @Post('dev-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Development login (bypass BankID)' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  async devLogin(@Body() body: { personnummer: string }) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new UnauthorizedException('Dev login not available in production');
+    }
+
+    const user = await this.authService.validateUser(body.personnummer);
+    const tokens = await this.authService.generateTokens(user);
+
+    return {
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: {
+        id: user.id,
+        personnummer: user.personnummer,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      },
+    };
+  }
 }

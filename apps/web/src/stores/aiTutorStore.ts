@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { api } from '@/lib/api';
+import { useAuthStore } from './authStore';
 
 export interface ChatMessage {
   id: string;
@@ -13,6 +15,13 @@ export interface ChatMessage {
   };
   suggestions?: string[];
   isLoading?: boolean;
+  isStreaming?: boolean;
+  sourcesUsed?: Array<{
+    type: string;
+    id: string;
+    title: string;
+    relevance: number;
+  }>;
 }
 
 export interface Conversation {
@@ -33,6 +42,8 @@ export interface AITutorState {
   activeConversationId: string | null;
   isOpen: boolean;
   isTyping: boolean;
+  streamingContent: string;
+  error: string | null;
 
   // Getters
   getActiveConversation: () => Conversation | null;
@@ -49,69 +60,35 @@ export interface AITutorState {
   addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
   updateLastMessage: (content: string, suggestions?: string[]) => void;
   setTyping: (isTyping: boolean) => void;
+  setStreamingContent: (content: string) => void;
+  appendStreamingContent: (chunk: string) => void;
+  finalizeStreamingMessage: (sourcesUsed?: ChatMessage['sourcesUsed']) => void;
+  setError: (error: string | null) => void;
 
   clearHistory: () => void;
+
+  // API Actions
+  sendMessageToAPI: (content: string, context?: { chapterId?: string; topic?: string }) => Promise<void>;
+  sendMessageWithStreaming: (content: string, context?: { chapterId?: string; topic?: string }) => Promise<void>;
+  loadConversationsFromAPI: () => Promise<void>;
+  loadConversationFromAPI: (conversationId: string) => Promise<void>;
 }
 
-// Predefined responses for common questions (offline/fallback mode)
-const PREDEFINED_RESPONSES: Record<string, string> = {
-  'hej': 'Hej! 👋 Jag är din AI-studieassistent för B-ORTIM. Hur kan jag hjälpa dig idag? Du kan fråga mig om:\n\n• Ortopediska begrepp och definitioner\n• Förklaringar av algoritmer\n• Hjälp med quizfrågor\n• Studietekniker och tips',
-  'hjälp': 'Jag kan hjälpa dig med:\n\n📚 **Kursinnehåll** - Förklara koncept, definitioner och procedurer\n🧠 **Quiz** - Gå igenom frågor och förklara rätt svar\n📊 **Studietips** - Personaliserade råd baserat på din prestation\n🔍 **Sök** - Hitta specifik information i kursmaterialet\n\nVad vill du veta mer om?',
-  'tack': 'Varsågod! 😊 Fortsätt gärna fråga om du undrar något mer. Lycka till med studierna!',
+// Default suggestions based on context
+function getDefaultSuggestions(hasContext: boolean): string[] {
+  if (hasContext) {
+    return ['Förklara huvudbegreppen', 'Sammanfatta kapitlet', 'Ge mig övningsfrågor'];
+  }
+  return ['Vad är ORTAC?', 'Hjälp mig förstå trauma', 'Ge mig studietips'];
+}
+
+// Fallback responses for offline mode
+const OFFLINE_RESPONSES: Record<string, { content: string; suggestions: string[] }> = {
+  default: {
+    content: 'Jag är tyvärr inte tillgänglig just nu. Kontrollera din internetanslutning och försök igen.\n\nUnder tiden kan du:\n• Läsa kursmaterialet offline\n• Öva med sparade quiz\n• Repetera med flashcards',
+    suggestions: ['Försök igen', 'Fortsätt offline'],
+  },
 };
-
-// Context-aware response generation
-function generateResponse(
-  message: string,
-  context?: { chapterId?: string; topic?: string }
-): { content: string; suggestions: string[] } {
-  const lowerMessage = message.toLowerCase().trim();
-
-  // Check predefined responses
-  for (const [key, response] of Object.entries(PREDEFINED_RESPONSES)) {
-    if (lowerMessage.includes(key)) {
-      return {
-        content: response,
-        suggestions: ['Berätta mer om kursen', 'Hur studerar jag effektivt?', 'Visa mina framsteg'],
-      };
-    }
-  }
-
-  // Topic-specific responses
-  if (lowerMessage.includes('fraktur') || lowerMessage.includes('brott')) {
-    return {
-      content: '🦴 **Frakturer** är skelettskador där benet bryts helt eller delvis.\n\n**Typer av frakturer:**\n• **Öppen fraktur** - Benet penetrerar huden\n• **Sluten fraktur** - Huden är intakt\n• **Komminut fraktur** - Benet splittras i flera fragment\n• **Stressfraktur** - Mikroskopiska sprickor pga överbelastning\n\n**ABCDE-principen** gäller alltid vid trauma:\n1. Airway\n2. Breathing\n3. Circulation\n4. Disability\n5. Exposure\n\nVill du veta mer om specifika frakturtyper eller behandling?',
-      suggestions: ['Berätta om öppna frakturer', 'Hur behandlas frakturer?', 'Vad är ATLS?'],
-    };
-  }
-
-  if (lowerMessage.includes('trauma') || lowerMessage.includes('skada')) {
-    return {
-      content: '🚑 **Traumaomhändertagande** följer strukturerade protokoll för att säkerställa optimal vård.\n\n**Primary Survey (ABCDE):**\n• **A** - Airway med cervikalstabilisering\n• **B** - Breathing och ventilation\n• **C** - Circulation med blödningskontroll\n• **D** - Disability (neurologisk status)\n• **E** - Exposure/Environment\n\n**Secondary Survey:**\nFullständig undersökning från huvud till tå efter stabilisering.\n\nVad vill du veta mer om?',
-      suggestions: ['Förklara C-spine', 'Vad är GCS?', 'Hur bedömer man blödning?'],
-    };
-  }
-
-  if (lowerMessage.includes('studera') || lowerMessage.includes('lära') || lowerMessage.includes('tips')) {
-    return {
-      content: '📖 **Studietips för B-ORTIM:**\n\n1. **Spaced Repetition** 🔄\n   Använd repetitionskorten dagligen för optimal inlärning\n\n2. **Active Recall** 🧠\n   Testa dig själv istället för att bara läsa passivt\n\n3. **Pomodoro-tekniken** ⏱️\n   25 min fokuserad studie + 5 min paus\n\n4. **Teach Back** 👥\n   Förklara koncept för andra för djupare förståelse\n\n5. **Case-baserat lärande** 📋\n   Koppla teorin till praktiska scenarion\n\nDin AI-studieplan anpassas automatiskt baserat på din prestation!',
-      suggestions: ['Visa min studieplan', 'Starta en quiz', 'Vilka områden behöver jag öva på?'],
-    };
-  }
-
-  if (lowerMessage.includes('quiz') || lowerMessage.includes('fråga') || lowerMessage.includes('test')) {
-    return {
-      content: '📝 **Quiz och övning:**\n\nJag kan hjälpa dig med:\n\n• **Förklara frågor** - Berätta vilken fråga du undrar om\n• **Gå igenom svar** - Förklara varför ett svar är rätt/fel\n• **Rekommendera övningar** - Baserat på dina svaga områden\n\nDu har också tillgång till:\n• Adaptiva quiz som anpassar svårigheten\n• Spaced repetition-kort\n• Bloom-nivåbaserade frågor\n\nVad vill du öva på?',
-      suggestions: ['Starta adaptiv quiz', 'Visa repetitionskort', 'Mina svaga områden'],
-    };
-  }
-
-  // Default response
-  return {
-    content: `Jag förstår att du frågar om "${message}".\n\nSom din AI-studieassistent kan jag hjälpa dig med:\n\n• 📚 Förklara ortopediska koncept\n• 🧠 Gå igenom quizfrågor\n• 📊 Ge studierekommendationer\n• 🔍 Hitta information i kursmaterialet\n\nKan du specificera din fråga lite mer? Till exempel:\n- "Förklara skillnaden mellan X och Y"\n- "Hur fungerar Z?"\n- "Ge mig tips om att studera [ämne]"`,
-    suggestions: ['Vad är B-ORTIM?', 'Hjälp mig förstå trauma', 'Ge mig studietips'],
-  };
-}
 
 export const useAITutorStore = create<AITutorState>()(
   persist(
@@ -120,15 +97,17 @@ export const useAITutorStore = create<AITutorState>()(
       activeConversationId: null,
       isOpen: false,
       isTyping: false,
+      streamingContent: '',
+      error: null,
 
       getActiveConversation: () => {
         const state = get();
-        return state.conversations.find(c => c.id === state.activeConversationId) || null;
+        return state.conversations.find((c) => c.id === state.activeConversationId) || null;
       },
 
       openChat: () => set({ isOpen: true }),
       closeChat: () => set({ isOpen: false }),
-      toggleChat: () => set(state => ({ isOpen: !state.isOpen })),
+      toggleChat: () => set((state) => ({ isOpen: !state.isOpen })),
 
       createConversation: (context) => {
         const id = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -143,9 +122,9 @@ export const useAITutorStore = create<AITutorState>()(
               role: 'assistant',
               content: context?.chapterTitle
                 ? `Hej! 👋 Jag ser att du studerar **${context.chapterTitle}**. Hur kan jag hjälpa dig med detta kapitel?\n\nDu kan fråga mig om:\n• Förklaringar av begrepp\n• Samband mellan koncept\n• Praktiska tillämpningar\n• Hjälp med övningar`
-                : 'Hej! 👋 Jag är din AI-studieassistent för B-ORTIM. Hur kan jag hjälpa dig idag?\n\nDu kan fråga mig om ortopediska koncept, få hjälp med quiz, eller få personliga studierekommendationer.',
+                : 'Hej! 👋 Jag är din AI-studieassistent för ORTAC. Hur kan jag hjälpa dig idag?\n\nDu kan fråga mig om ortopediska koncept, få hjälp med quiz, eller få personliga studierekommendationer.',
               timestamp: now,
-              suggestions: ['Förklara ett begrepp', 'Hjälp med en fråga', 'Ge mig studietips'],
+              suggestions: getDefaultSuggestions(!!context),
             },
           ],
           createdAt: now,
@@ -153,8 +132,8 @@ export const useAITutorStore = create<AITutorState>()(
           context,
         };
 
-        set(state => ({
-          conversations: [newConversation, ...state.conversations].slice(0, 50), // Keep last 50
+        set((state) => ({
+          conversations: [newConversation, ...state.conversations].slice(0, 50),
           activeConversationId: id,
         }));
 
@@ -163,9 +142,16 @@ export const useAITutorStore = create<AITutorState>()(
 
       setActiveConversation: (id) => set({ activeConversationId: id }),
 
-      deleteConversation: (id) => {
-        set(state => {
-          const newConversations = state.conversations.filter(c => c.id !== id);
+      deleteConversation: async (id) => {
+        // Try to delete from API first
+        try {
+          await api.ai.deleteConversation(id);
+        } catch (error) {
+          console.warn('Failed to delete conversation from API:', error);
+        }
+
+        set((state) => {
+          const newConversations = state.conversations.filter((c) => c.id !== id);
           return {
             conversations: newConversations,
             activeConversationId:
@@ -180,58 +166,36 @@ export const useAITutorStore = create<AITutorState>()(
         const now = new Date().toISOString();
         const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        set(state => {
+        set((state) => {
           let conversationId = state.activeConversationId;
 
-          // Create new conversation if none exists
           if (!conversationId) {
             conversationId = get().createConversation();
           }
 
           return {
-            conversations: state.conversations.map(conv =>
+            conversations: state.conversations.map((conv) =>
               conv.id === conversationId
                 ? {
                     ...conv,
-                    messages: [
-                      ...conv.messages,
-                      { ...message, id: messageId, timestamp: now },
-                    ],
+                    messages: [...conv.messages, { ...message, id: messageId, timestamp: now }],
                     updatedAt: now,
                   }
                 : conv
             ),
           };
         });
-
-        // If user message, generate AI response
-        if (message.role === 'user') {
-          set({ isTyping: true });
-
-          // Simulate AI thinking time
-          setTimeout(() => {
-            const { content, suggestions } = generateResponse(message.content, message.context);
-
-            get().addMessage({
-              role: 'assistant',
-              content,
-              suggestions,
-            });
-
-            set({ isTyping: false });
-          }, 500 + Math.random() * 1000);
-        }
       },
 
       updateLastMessage: (content, suggestions) => {
-        set(state => ({
-          conversations: state.conversations.map(conv =>
+        set((state) => ({
+          conversations: state.conversations.map((conv) =>
             conv.id === state.activeConversationId
               ? {
                   ...conv,
                   messages: conv.messages.map((msg, idx) =>
                     idx === conv.messages.length - 1
-                      ? { ...msg, content, suggestions, isLoading: false }
+                      ? { ...msg, content, suggestions, isLoading: false, isStreaming: false }
                       : msg
                   ),
                 }
@@ -241,13 +205,284 @@ export const useAITutorStore = create<AITutorState>()(
       },
 
       setTyping: (isTyping) => set({ isTyping }),
+      setStreamingContent: (content) => set({ streamingContent: content }),
+      appendStreamingContent: (chunk) =>
+        set((state) => ({ streamingContent: state.streamingContent + chunk })),
+      setError: (error) => set({ error }),
+
+      finalizeStreamingMessage: (sourcesUsed) => {
+        const state = get();
+        const content = state.streamingContent;
+
+        set((s) => ({
+          streamingContent: '',
+          isTyping: false,
+          conversations: s.conversations.map((conv) =>
+            conv.id === s.activeConversationId
+              ? {
+                  ...conv,
+                  messages: conv.messages.map((msg, idx) =>
+                    idx === conv.messages.length - 1
+                      ? {
+                          ...msg,
+                          content,
+                          isStreaming: false,
+                          sourcesUsed,
+                          suggestions: ['Berätta mer', 'Relaterade frågor', 'Förklara enklare'],
+                        }
+                      : msg
+                  ),
+                }
+              : conv
+          ),
+        }));
+      },
 
       clearHistory: () => set({ conversations: [], activeConversationId: null }),
+
+      // API Actions
+      sendMessageToAPI: async (content, context) => {
+        const state = get();
+        let conversationId = state.activeConversationId;
+
+        // Create conversation if needed
+        if (!conversationId) {
+          conversationId = get().createConversation(
+            context?.topic ? { chapterTitle: context.topic, chapterId: context.chapterId } : undefined
+          );
+        }
+
+        // Add user message immediately
+        get().addMessage({
+          role: 'user',
+          content,
+          context,
+        });
+
+        set({ isTyping: true, error: null });
+
+        try {
+          // Check if user is authenticated
+          const token = useAuthStore.getState().token;
+          if (!token) {
+            throw new Error('Not authenticated');
+          }
+
+          // Find the backend conversation ID (might be different from local)
+          const activeConv = get().getActiveConversation();
+          const backendConvId = activeConv?.id.startsWith('conv_') ? undefined : activeConv?.id;
+
+          const response = await api.ai.chat({
+            message: content,
+            conversationId: backendConvId,
+            contextChapterId: context?.chapterId,
+          });
+
+          // Update local conversation ID if backend returned one
+          if (response.conversationId && activeConv) {
+            set((s) => ({
+              conversations: s.conversations.map((conv) =>
+                conv.id === s.activeConversationId
+                  ? { ...conv, id: response.conversationId }
+                  : conv
+              ),
+              activeConversationId: response.conversationId,
+            }));
+          }
+
+          // Add assistant response
+          get().addMessage({
+            role: 'assistant',
+            content: response.content,
+            sourcesUsed: response.sourcesUsed,
+            suggestions: ['Berätta mer', 'Relaterade koncept', 'Förklara enklare'],
+          });
+        } catch (error) {
+          console.error('AI chat error:', error);
+          const errorMessage =
+            error instanceof Error ? error.message : 'Ett fel uppstod';
+
+          set({ error: errorMessage });
+
+          // Add fallback response
+          get().addMessage({
+            role: 'assistant',
+            content: OFFLINE_RESPONSES.default.content,
+            suggestions: OFFLINE_RESPONSES.default.suggestions,
+          });
+        } finally {
+          set({ isTyping: false });
+        }
+      },
+
+      sendMessageWithStreaming: async (content, context) => {
+        const state = get();
+        let conversationId = state.activeConversationId;
+
+        // Create conversation if needed
+        if (!conversationId) {
+          conversationId = get().createConversation(
+            context?.topic ? { chapterTitle: context.topic, chapterId: context.chapterId } : undefined
+          );
+        }
+
+        // Add user message
+        get().addMessage({
+          role: 'user',
+          content,
+          context,
+        });
+
+        // Add placeholder for streaming response
+        get().addMessage({
+          role: 'assistant',
+          content: '',
+          isStreaming: true,
+        });
+
+        set({ isTyping: true, streamingContent: '', error: null });
+
+        try {
+          const token = useAuthStore.getState().token;
+          if (!token) {
+            throw new Error('Not authenticated');
+          }
+
+          const activeConv = get().getActiveConversation();
+          const backendConvId = activeConv?.id.startsWith('conv_') ? undefined : activeConv?.id;
+
+          const response = await fetch(api.ai.getStreamUrl(), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              message: content,
+              conversationId: backendConvId,
+              contextChapterId: context?.chapterId,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+          }
+
+          const reader = response.body?.getReader();
+          if (!reader) {
+            throw new Error('No response body');
+          }
+
+          const decoder = new TextDecoder();
+          let buffer = '';
+          let sources: ChatMessage['sourcesUsed'] = [];
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                try {
+                  if (data.startsWith('{')) {
+                    const parsed = JSON.parse(data);
+                    if (parsed.id) {
+                      // Update conversation ID
+                      set((s) => ({
+                        conversations: s.conversations.map((conv) =>
+                          conv.id === s.activeConversationId
+                            ? { ...conv, id: parsed.id }
+                            : conv
+                        ),
+                        activeConversationId: parsed.id,
+                      }));
+                    }
+                  } else if (data.startsWith('[')) {
+                    sources = JSON.parse(data);
+                  } else {
+                    get().appendStreamingContent(data);
+                  }
+                } catch {
+                  get().appendStreamingContent(data);
+                }
+              }
+            }
+          }
+
+          get().finalizeStreamingMessage(sources);
+        } catch (error) {
+          console.error('Streaming error:', error);
+          const errorMessage =
+            error instanceof Error ? error.message : 'Ett fel uppstod';
+
+          set({ error: errorMessage, isTyping: false });
+
+          // Update the streaming message with error
+          get().updateLastMessage(
+            OFFLINE_RESPONSES.default.content,
+            OFFLINE_RESPONSES.default.suggestions
+          );
+        }
+      },
+
+      loadConversationsFromAPI: async () => {
+        try {
+          const conversations = await api.ai.getConversations();
+          set({
+            conversations: conversations.map((conv) => ({
+              id: conv.id,
+              title: conv.title || 'Konversation',
+              messages: conv.messages.map((msg) => ({
+                id: msg.id,
+                role: msg.role,
+                content: msg.content,
+                timestamp: msg.createdAt,
+              })),
+              createdAt: conv.createdAt,
+              updatedAt: conv.updatedAt,
+            })),
+          });
+        } catch (error) {
+          console.warn('Failed to load conversations from API:', error);
+        }
+      },
+
+      loadConversationFromAPI: async (conversationId) => {
+        try {
+          const conv = await api.ai.getConversation(conversationId);
+          if (conv) {
+            set((state) => ({
+              conversations: state.conversations.map((c) =>
+                c.id === conversationId
+                  ? {
+                      ...c,
+                      messages: conv.messages.map((msg) => ({
+                        id: msg.id,
+                        role: msg.role,
+                        content: msg.content,
+                        timestamp: msg.createdAt,
+                        sourcesUsed: msg.contextUsed || undefined,
+                      })),
+                    }
+                  : c
+              ),
+              activeConversationId: conversationId,
+            }));
+          }
+        } catch (error) {
+          console.warn('Failed to load conversation:', error);
+        }
+      },
     }),
     {
-      name: 'bortim-ai-tutor',
+      name: 'ortac-ai-tutor',
       partialize: (state) => ({
-        conversations: state.conversations,
+        conversations: state.conversations.slice(0, 10), // Only persist last 10
         activeConversationId: state.activeConversationId,
       }),
     }

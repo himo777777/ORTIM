@@ -5,6 +5,7 @@ import { useOverallProgress, useCourseStructure } from '@/hooks/useCourse';
 import { useDueReviewCards } from '@/hooks/useReview';
 import { useCertificates } from '@/hooks/useCertificate';
 import { Skeleton } from '@/components/ui/skeleton';
+import { XPProgressCard, StreakCard, BadgeGrid } from '@/components/gamification';
 import {
   BookOpen,
   Brain,
@@ -15,6 +16,7 @@ import {
   Clock,
   GraduationCap,
   Sparkles,
+  Trophy,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -22,7 +24,7 @@ export default function DashboardPage() {
   const { data: progress, isLoading: progressLoading } = useOverallProgress();
   const { data: dueCards, isLoading: dueCardsLoading } = useDueReviewCards();
   const { data: certificates } = useCertificates();
-  const { data: courseStructure } = useCourseStructure('b-ortim-main');
+  const { data: courseStructure } = useCourseStructure('ortac-main');
 
   const completedChapters = progress?.chaptersCompleted ?? 0;
   const totalChapters = progress?.totalChapters ?? 17;
@@ -54,6 +56,29 @@ export default function DashboardPage() {
             </span>
           </div>
         )}
+      </div>
+
+      {/* Gamification overview */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <XPProgressCard />
+        <StreakCard />
+        <div className="bg-card rounded-xl border p-6 flex flex-col justify-between">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+              <Trophy className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Leaderboard</p>
+              <p className="text-lg font-semibold">Se din ranking</p>
+            </div>
+          </div>
+          <Link to="/leaderboard" className="block mt-4">
+            <Button variant="outline" size="sm" className="w-full">
+              Visa topplista
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Progress overview */}
@@ -176,7 +201,7 @@ export default function DashboardPage() {
             )}
             {currentChapter ? (
               <Link
-                to={`/chapters/${currentChapter.id}`}
+                to={`/chapter/${currentChapter.id}`}
                 className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-colors"
               >
                 <Clock className="h-5 w-5 text-primary" />
@@ -321,6 +346,9 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Badges section */}
+      <BadgeGrid maxVisible={8} showHeader={true} />
     </div>
   );
 }

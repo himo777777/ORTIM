@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.bortim.app',
-  appName: 'B-ORTIM',
+  appId: 'com.ortac.app',
+  appName: 'ORTAC',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
@@ -34,7 +34,7 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: 'automatic',
     preferredContentMode: 'mobile',
-    scheme: 'B-ORTIM',
+    scheme: 'ORTAC',
   },
   android: {
     allowMixedContent: true,

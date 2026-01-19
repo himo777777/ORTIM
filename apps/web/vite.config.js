@@ -13,9 +13,9 @@ export default defineConfig({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
             manifest: {
-                name: 'B-ORTIM',
-                short_name: 'B-ORTIM',
-                description: 'Basic Orthopaedic Resuscitation and Trauma Initial Management',
+                name: 'ORTAC',
+                short_name: 'ORTAC',
+                description: 'Orthopaedic Resuscitation and Trauma Acute Care',
                 theme_color: '#1a5276',
                 background_color: '#ffffff',
                 display: 'standalone',
@@ -51,6 +51,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
+            '@ortac/shared': path.resolve(__dirname, '../../packages/shared/src'),
         },
     },
     server: {

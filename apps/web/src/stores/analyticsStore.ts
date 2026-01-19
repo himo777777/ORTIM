@@ -614,7 +614,7 @@ export const useAnalyticsStore = create<AnalyticsState>()(
       },
     }),
     {
-      name: 'bortim-analytics',
+      name: 'ortac-analytics',
       partialize: (state) => ({
         dailyStats: state.dailyStats.slice(-90), // Keep last 90 days
         chapterAnalytics: state.chapterAnalytics,

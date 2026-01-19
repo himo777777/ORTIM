@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
-import { useInstructorDashboard } from '@/hooks/useInstructor';
+import { useInstructorDashboard, useMyTrainingStatus } from '@/hooks/useInstructor';
 import { CohortCard } from '@/components/instructor';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import {
   Users,
   GraduationCap,
@@ -13,11 +15,16 @@ import {
   TrendingUp,
   FileText,
   BarChart3,
+  ClipboardList,
+  Award,
+  CheckCircle,
+  Clock,
 } from 'lucide-react';
 
 export default function InstructorDashboard() {
   const { cohorts, activeCohorts, totalParticipants, totalCohorts, isLoading } =
     useInstructorDashboard();
+  const { data: trainingStatus, isLoading: trainingLoading } = useMyTrainingStatus();
 
   if (isLoading) {
     return (
@@ -122,6 +129,115 @@ export default function InstructorDashboard() {
         </Card>
       </div>
 
+      {/* Instructor Training Status */}
+      {trainingStatus?.tttProgress && (
+        <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <CardTitle className="text-lg">Din instruktörsträning</CardTitle>
+              </div>
+              {trainingStatus.certificate && (
+                <Link to={`/certificates/${trainingStatus.certificate.id}`}>
+                  <Badge className="bg-green-500 hover:bg-green-600 text-white">
+                    <Award className="h-3 w-3 mr-1" />
+                    Certifierad
+                  </Badge>
+                </Link>
+              )}
+              {!trainingStatus.certificate && trainingStatus.eligibleForCertificate && (
+                <Badge className="bg-amber-500 hover:bg-amber-600 text-white">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Redo för certifikat
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* TTT Course Progress */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">TTT-kurs</span>
+                  <span className="text-sm text-amber-700 dark:text-amber-400 font-semibold">
+                    {trainingStatus.tttProgress.percentage}%
+                  </span>
+                </div>
+                <Progress value={trainingStatus.tttProgress.percentage} className="h-2 mb-2" />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>
+                    {trainingStatus.tttProgress.completedChapters}/{trainingStatus.tttProgress.totalChapters} kapitel
+                  </span>
+                  <span>
+                    {trainingStatus.tttProgress.quizzesPassed}/{trainingStatus.tttProgress.totalChapters} quiz
+                  </span>
+                </div>
+                <Link
+                  to="/kurser"
+                  className="mt-3 text-sm text-amber-700 dark:text-amber-400 hover:underline inline-flex items-center"
+                >
+                  Fortsätt läsa
+                  <BookOpen className="h-3 w-3 ml-1" />
+                </Link>
+              </div>
+
+              {/* TTT OSCE Status */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">TTT-OSCE</span>
+                  {trainingStatus.osceStatus ? (
+                    trainingStatus.osceStatus.passed === true ? (
+                      <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-400">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Godkänd
+                      </Badge>
+                    ) : trainingStatus.osceStatus.passed === false ? (
+                      <Badge variant="outline" className="border-red-500 text-red-700">
+                        Ej godkänd
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-amber-500 text-amber-700 dark:text-amber-400">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Pågående
+                      </Badge>
+                    )
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      Ej påbörjad
+                    </Badge>
+                  )}
+                </div>
+                {trainingStatus.osceStatus ? (
+                  <>
+                    <Progress
+                      value={(trainingStatus.osceStatus.assessmentsPassed / trainingStatus.osceStatus.totalStations) * 100}
+                      className="h-2 mb-2"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {trainingStatus.osceStatus.assessmentsPassed}/{trainingStatus.osceStatus.totalStations} stationer godkända
+                    </p>
+                    {trainingStatus.osceStatus.cohortName && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Kohort: {trainingStatus.osceStatus.cohortName}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Du är inte registrerad i en TTT-OSCE-kohort. Kontakta din kursledare.
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {trainingLoading && (
+        <Skeleton className="h-40 rounded-xl" />
+      )}
+
       {/* Active cohorts */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -218,19 +334,37 @@ export default function InstructorDashboard() {
             </Card>
           </Link>
 
-          <Card className="hover:shadow-md transition-shadow cursor-pointer opacity-50">
-            <CardContent className="flex items-center gap-4 py-6">
-              <div className="p-3 rounded-lg bg-amber-500/10">
-                <BarChart3 className="h-6 w-6 text-amber-500" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Statistik & Rapporter</h3>
-                <p className="text-sm text-muted-foreground">
-                  Kommer snart
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <Link to="/instructor/pilot">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="flex items-center gap-4 py-6">
+                <div className="p-3 rounded-lg bg-amber-500/10">
+                  <BarChart3 className="h-6 w-6 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Pilotresultat</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Kirkpatrick-utvärdering
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/instructor/osce/ttt">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/10">
+              <CardContent className="flex items-center gap-4 py-6">
+                <div className="p-3 rounded-lg bg-amber-500/20">
+                  <ClipboardList className="h-6 w-6 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">TTT-OSCE</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Bedöm instruktörskandidater
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </div>
     </div>

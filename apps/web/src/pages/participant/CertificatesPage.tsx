@@ -1,9 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useCertificates, useCertificate } from '@/hooks/useCertificate';
+import { useCertificates, useCertificate, useDownloadCertificate, useCertificateExpirationStatus, useRecertify } from '@/hooks/useCertificate';
 import { CertificateViewer, CertificateCard } from '@/components/certificate';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Award, AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ArrowLeft, Award, AlertTriangle, Download, Loader2, RefreshCcw, Clock, CheckCircle } from 'lucide-react';
 
 export default function CertificatesPage() {
   const { certificateId } = useParams<{ certificateId: string }>();
@@ -90,6 +92,24 @@ function CertificatesList() {
 function CertificateDetail({ certificateId }: { certificateId: string }) {
   const navigate = useNavigate();
   const { data: certificate, isLoading, error } = useCertificate(certificateId);
+  const { data: expirationStatus } = useCertificateExpirationStatus(certificateId);
+  const downloadPdf = useDownloadCertificate();
+  const recertify = useRecertify();
+
+  const handleDownload = () => {
+    downloadPdf.mutate(certificateId);
+  };
+
+  const handleRecertify = () => {
+    recertify.mutate(certificateId, {
+      onSuccess: (data) => {
+        if (data.eligible && data.certificate) {
+          // Navigate to the new certificate
+          navigate(`/certificates/${data.certificate.id}`);
+        }
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -120,13 +140,83 @@ function CertificateDetail({ certificateId }: { certificateId: string }) {
 
   return (
     <div className="space-y-6">
-      <Button
-        variant="ghost"
-        onClick={() => navigate('/certificates')}
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Alla certifikat
-      </Button>
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/certificates')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Alla certifikat
+        </Button>
+
+        <div className="flex items-center gap-2">
+          {expirationStatus?.canRecertify && (
+            <Button
+              variant="outline"
+              onClick={handleRecertify}
+              disabled={recertify.isPending}
+            >
+              {recertify.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCcw className="h-4 w-4 mr-2" />
+              )}
+              Förnya certifikat
+            </Button>
+          )}
+
+          <Button
+            onClick={handleDownload}
+            disabled={downloadPdf.isPending}
+          >
+            {downloadPdf.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            Ladda ner PDF
+          </Button>
+        </div>
+      </div>
+
+      {/* Expiration status alert */}
+      {expirationStatus && (
+        <>
+          {expirationStatus.status === 'expired' && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Certifikatet har gått ut</AlertTitle>
+              <AlertDescription>
+                Detta certifikat gick ut för {Math.abs(expirationStatus.daysUntilExpiry)} dagar sedan.
+                Du kan förnya certifikatet genom att klicka på "Förnya certifikat".
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {expirationStatus.status === 'expiring_soon' && (
+            <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+              <Clock className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-amber-800 dark:text-amber-400">Certifikatet går snart ut</AlertTitle>
+              <AlertDescription className="text-amber-700 dark:text-amber-300">
+                Detta certifikat går ut om {expirationStatus.daysUntilExpiry} dagar.
+                {expirationStatus.canRecertify && ' Du kan förnya det nu.'}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {expirationStatus.status === 'valid' && expirationStatus.daysUntilExpiry > 90 && (
+            <div className="flex items-center gap-2 text-sm text-green-600">
+              <CheckCircle className="h-4 w-4" />
+              <span>Giltigt i {expirationStatus.daysUntilExpiry} dagar</span>
+              {expirationStatus.isRecertification && (
+                <Badge variant="outline" className="ml-2">
+                  Förnyat {expirationStatus.recertificationCount}x
+                </Badge>
+              )}
+            </div>
+          )}
+        </>
+      )}
 
       <CertificateViewer
         certificate={{

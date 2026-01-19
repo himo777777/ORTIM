@@ -30,7 +30,7 @@ export class AuditService {
           action: entry.action,
           entityType: entry.entityType,
           entityId: entry.entityId,
-          details: entry.details,
+          details: entry.details as object | undefined,
           userId: context.userId,
           ipAddress: context.ipAddress,
           userAgent: context.userAgent,
@@ -195,6 +195,60 @@ export class AuditService {
         details: { description },
       },
       context
+    );
+  }
+
+  /**
+   * Log AI chat interaction
+   */
+  async logAIChat(
+    userId: string,
+    conversationId: string,
+    tokensUsed: number,
+    context: AuditContext = {}
+  ) {
+    await this.log(
+      {
+        action: 'ACCESS',
+        entityType: 'AI_Chat',
+        entityId: conversationId,
+        details: { tokensUsed },
+      },
+      { ...context, userId }
+    );
+  }
+
+  /**
+   * Log AI rate limit exceeded
+   */
+  async logAIRateLimitExceeded(userId: string, endpoint: string, context: AuditContext = {}) {
+    await this.log(
+      {
+        action: 'ACCESS',
+        entityType: 'AI_RateLimit',
+        details: { endpoint, blocked: true },
+      },
+      { ...context, userId }
+    );
+  }
+
+  /**
+   * Log AI content generation (summary, explanation)
+   */
+  async logAIContentGeneration(
+    userId: string,
+    contentType: 'summary' | 'explanation',
+    contentId: string,
+    context: AuditContext = {}
+  ) {
+    await this.log(
+      {
+        action: 'ACCESS',
+        entityType: 'AI_Content',
+        entityId: contentId,
+        details: { contentType },
+      },
+      { ...context, userId }
     );
   }
 

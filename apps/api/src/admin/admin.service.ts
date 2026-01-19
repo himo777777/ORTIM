@@ -673,4 +673,393 @@ export class AdminService {
     await this.prisma.algorithm.delete({ where: { id } });
     return { success: true };
   }
+
+  // ============================================
+  // DETAILED STATISTICS
+  // ============================================
+
+  async getDetailedStats(filters: {
+    courseCode?: string;
+    cohortId?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const { courseCode, cohortId, startDate, endDate } = filters;
+
+    // Build date filter
+    const dateFilter: any = {};
+    if (startDate) {
+      dateFilter.gte = new Date(startDate);
+    }
+    if (endDate) {
+      dateFilter.lte = new Date(endDate);
+    }
+
+    // Completion statistics by week
+    const completionByWeek = await this.prisma.chapterProgress.groupBy({
+      by: ['completedAt'],
+      where: {
+        completedAt: {
+          not: null,
+          ...dateFilter,
+        },
+      },
+      _count: true,
+      orderBy: { completedAt: 'asc' },
+    });
+
+    // Process to weekly data
+    const weeklyCompletions: Record<string, number> = {};
+    completionByWeek.forEach((item) => {
+      if (item.completedAt) {
+        const weekStart = this.getWeekStart(item.completedAt);
+        weeklyCompletions[weekStart] = (weeklyCompletions[weekStart] || 0) + item._count;
+      }
+    });
+
+    const completionData = Object.entries(weeklyCompletions).map(([week, count]) => ({
+      week,
+      completions: count,
+    }));
+
+    // Quiz score distribution
+    const quizScores = await this.prisma.chapterProgress.findMany({
+      where: {
+        bestQuizScore: { not: null },
+        ...(cohortId ? {
+          user: {
+            enrollments: {
+              some: { cohortId },
+            },
+          },
+        } : {}),
+      },
+      select: { bestQuizScore: true },
+    });
+
+    const scoreDistribution = this.calculateScoreDistribution(quizScores.map(q => q.bestQuizScore as number));
+
+    // Pass rates by chapter
+    const chapterPassRates = await this.prisma.chapter.findMany({
+      where: {
+        ...(courseCode ? {
+          part: {
+            course: { code: courseCode },
+          },
+        } : {}),
+      },
+      select: {
+        id: true,
+        title: true,
+        chapterNumber: true,
+        _count: {
+          select: {
+            progress: true,
+          },
+        },
+      },
+    });
+
+    const passRatesWithDetails = await Promise.all(
+      chapterPassRates.map(async (chapter) => {
+        const passed = await this.prisma.chapterProgress.count({
+          where: {
+            chapterId: chapter.id,
+            quizPassed: true,
+          },
+        });
+        const total = chapter._count.progress;
+        return {
+          chapterId: chapter.id,
+          chapterNumber: chapter.chapterNumber,
+          title: chapter.title,
+          total,
+          passed,
+          passRate: total > 0 ? Math.round((passed / total) * 100) : 0,
+        };
+      }),
+    );
+
+    // Certificate statistics
+    const certificateStats = await this.prisma.certificate.groupBy({
+      by: ['courseCode'],
+      _count: true,
+    });
+
+    // User activity (enrollments over time)
+    const enrollmentByMonth = await this.prisma.enrollment.groupBy({
+      by: ['enrolledAt'],
+      where: {
+        enrolledAt: dateFilter,
+      },
+      _count: true,
+      orderBy: { enrolledAt: 'asc' },
+    });
+
+    const monthlyEnrollments: Record<string, number> = {};
+    enrollmentByMonth.forEach((item) => {
+      if (item.enrolledAt) {
+        const monthKey = item.enrolledAt.toISOString().substring(0, 7);
+        monthlyEnrollments[monthKey] = (monthlyEnrollments[monthKey] || 0) + item._count;
+      }
+    });
+
+    const enrollmentData = Object.entries(monthlyEnrollments).map(([month, count]) => ({
+      month,
+      enrollments: count,
+    }));
+
+    return {
+      completionByWeek: completionData,
+      scoreDistribution,
+      chapterPassRates: passRatesWithDetails,
+      certificateStats,
+      enrollmentByMonth: enrollmentData,
+    };
+  }
+
+  private getWeekStart(date: Date): string {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    return d.toISOString().split('T')[0];
+  }
+
+  private calculateScoreDistribution(scores: number[]): { range: string; count: number }[] {
+    const ranges = [
+      { min: 0, max: 49, label: '0-49%' },
+      { min: 50, max: 59, label: '50-59%' },
+      { min: 60, max: 69, label: '60-69%' },
+      { min: 70, max: 79, label: '70-79%' },
+      { min: 80, max: 89, label: '80-89%' },
+      { min: 90, max: 100, label: '90-100%' },
+    ];
+
+    return ranges.map((range) => ({
+      range: range.label,
+      count: scores.filter((s) => s >= range.min && s <= range.max).length,
+    }));
+  }
+
+  // ============================================
+  // CSV EXPORT
+  // ============================================
+
+  async exportParticipants(cohortId?: string): Promise<string> {
+    const where: any = {};
+    if (cohortId) {
+      where.enrollments = { some: { cohortId } };
+    }
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        ...where,
+        role: 'PARTICIPANT',
+      },
+      select: {
+        personnummer: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        workplace: true,
+        speciality: true,
+        createdAt: true,
+        lastLoginAt: true,
+        enrollments: {
+          select: {
+            cohort: { select: { name: true } },
+            enrolledAt: true,
+            status: true,
+          },
+        },
+        _count: {
+          select: {
+            certificates: true,
+            chapterProgress: true,
+          },
+        },
+      },
+      orderBy: { lastName: 'asc' },
+    });
+
+    // Build CSV
+    const headers = [
+      'Personnummer',
+      'Förnamn',
+      'Efternamn',
+      'E-post',
+      'Arbetsplats',
+      'Specialitet',
+      'Registrerad',
+      'Senast inloggad',
+      'Kohort',
+      'Kapitel lästa',
+      'Certifikat',
+    ];
+
+    const rows = users.map((u) => [
+      u.personnummer,
+      u.firstName,
+      u.lastName,
+      u.email || '',
+      u.workplace || '',
+      u.speciality || '',
+      u.createdAt.toISOString().split('T')[0],
+      u.lastLoginAt?.toISOString().split('T')[0] || '',
+      u.enrollments.map((e) => e.cohort.name).join('; '),
+      u._count.chapterProgress.toString(),
+      u._count.certificates.toString(),
+    ]);
+
+    return this.arrayToCsv([headers, ...rows]);
+  }
+
+  async exportProgress(courseCode?: string): Promise<string> {
+    const where: any = {};
+    if (courseCode) {
+      where.chapter = { part: { course: { code: courseCode } } };
+    }
+
+    const progress = await this.prisma.chapterProgress.findMany({
+      where,
+      select: {
+        user: {
+          select: {
+            personnummer: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        chapter: {
+          select: {
+            chapterNumber: true,
+            title: true,
+            part: {
+              select: {
+                course: { select: { code: true } },
+              },
+            },
+          },
+        },
+        readProgress: true,
+        completedAt: true,
+        quizPassed: true,
+        bestQuizScore: true,
+        quizAttempts: true,
+      },
+      orderBy: [
+        { user: { lastName: 'asc' } },
+        { chapter: { chapterNumber: 'asc' } },
+      ],
+    });
+
+    const headers = [
+      'Personnummer',
+      'Namn',
+      'Kurskod',
+      'Kapitel',
+      'Kapiteltitel',
+      'Läsprogress %',
+      'Slutfört',
+      'Quiz godkänd',
+      'Bästa resultat %',
+      'Antal försök',
+    ];
+
+    const rows = progress.map((p) => [
+      p.user.personnummer,
+      `${p.user.firstName} ${p.user.lastName}`,
+      p.chapter.part.course.code,
+      p.chapter.chapterNumber.toString(),
+      p.chapter.title,
+      Math.round(p.readProgress).toString(),
+      p.completedAt ? 'Ja' : 'Nej',
+      p.quizPassed ? 'Ja' : 'Nej',
+      p.bestQuizScore?.toString() || '',
+      p.quizAttempts.toString(),
+    ]);
+
+    return this.arrayToCsv([headers, ...rows]);
+  }
+
+  async exportCertificates(courseCode?: string): Promise<string> {
+    const where: any = {};
+    if (courseCode) {
+      where.courseCode = courseCode;
+    }
+
+    const certificates = await this.prisma.certificate.findMany({
+      where,
+      select: {
+        certificateNumber: true,
+        courseName: true,
+        courseCode: true,
+        issuedAt: true,
+        validUntil: true,
+        examScore: true,
+        examPassed: true,
+        isRecertification: true,
+        recertificationCount: true,
+        user: {
+          select: {
+            personnummer: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { issuedAt: 'desc' },
+    });
+
+    const headers = [
+      'Certifikatnummer',
+      'Personnummer',
+      'Namn',
+      'E-post',
+      'Kurs',
+      'Kurskod',
+      'Utfärdat',
+      'Giltigt till',
+      'Resultat %',
+      'Godkänd',
+      'Recertifiering',
+      'Antal förnyelser',
+    ];
+
+    const rows = certificates.map((c) => [
+      c.certificateNumber,
+      c.user.personnummer,
+      `${c.user.firstName} ${c.user.lastName}`,
+      c.user.email || '',
+      c.courseName,
+      c.courseCode,
+      c.issuedAt.toISOString().split('T')[0],
+      c.validUntil.toISOString().split('T')[0],
+      c.examScore?.toFixed(1) || '',
+      c.examPassed ? 'Ja' : 'Nej',
+      c.isRecertification ? 'Ja' : 'Nej',
+      (c.recertificationCount || 0).toString(),
+    ]);
+
+    return this.arrayToCsv([headers, ...rows]);
+  }
+
+  private arrayToCsv(data: string[][]): string {
+    return data
+      .map((row) =>
+        row
+          .map((cell) => {
+            // Escape quotes and wrap in quotes if contains comma, quote, or newline
+            const escaped = cell.replace(/"/g, '""');
+            if (escaped.includes(',') || escaped.includes('"') || escaped.includes('\n')) {
+              return `"${escaped}"`;
+            }
+            return escaped;
+          })
+          .join(','),
+      )
+      .join('\n');
+  }
 }

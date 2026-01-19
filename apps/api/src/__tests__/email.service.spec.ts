@@ -29,7 +29,7 @@ describe('EmailService', () => {
         SMTP_PORT: '587',
         SMTP_USER: 'test@test.com',
         SMTP_PASS: 'password',
-        SMTP_FROM: 'noreply@bortim.se',
+        SMTP_FROM: 'noreply@ortac.se',
         APP_URL: 'http://localhost:3000',
       };
       return config[key];
@@ -149,7 +149,7 @@ describe('EmailService', () => {
       const result = await service.sendWelcomeEmail(
         'test@example.com',
         'Test',
-        'B-ORTIM Course'
+        'ORTAC Course'
       );
 
       expect(result).toBe(true);
@@ -161,7 +161,7 @@ describe('EmailService', () => {
       const result = await service.sendCertificateEmail(
         'test@example.com',
         'Test',
-        'B-ORTIM Course',
+        'ORTAC Course',
         'CERT-001',
         'http://localhost:3000/verify/abc123'
       );

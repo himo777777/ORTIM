@@ -148,3 +148,119 @@ export function useInstructorDashboard() {
     isLoading: cohortsLoading,
   };
 }
+
+// ===========================================
+// EPA (Entrustable Professional Activities) Hooks
+// ===========================================
+
+export function useEPAList() {
+  return useQuery({
+    queryKey: ['instructor', 'epa', 'list'],
+    queryFn: () => api.instructor.listEPAs(),
+    staleTime: 30 * 60 * 1000, // EPAs don't change often
+  });
+}
+
+export function useEPAAssessments(participantId: string) {
+  return useQuery({
+    queryKey: ['instructor', 'epa', 'assessments', participantId],
+    queryFn: () => api.instructor.getEPAAssessments(participantId),
+    enabled: !!participantId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useCohortEPAAssessments(cohortId: string) {
+  return useQuery({
+    queryKey: ['instructor', 'epa', 'cohort', cohortId],
+    queryFn: () => api.instructor.getCohortEPAAssessments(cohortId),
+    enabled: !!cohortId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useCreateEPAAssessment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      participantId: string;
+      epaId: string;
+      entrustmentLevel: number;
+      comments?: string;
+    }) => api.instructor.createEPAAssessment(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['instructor', 'epa', 'assessments', variables.participantId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['instructor', 'epa', 'cohort'],
+      });
+    },
+  });
+}
+
+// ===========================================
+// OSCE Stations Hooks
+// ===========================================
+
+export function useOSCEStations() {
+  return useQuery({
+    queryKey: ['instructor', 'osce-stations'],
+    queryFn: () => api.instructor.getOSCEStations(),
+    staleTime: 30 * 60 * 1000, // Stations don't change often
+  });
+}
+
+// ===========================================
+// Pilot Evaluation (Kirkpatrick) Hooks
+// ===========================================
+
+export function useSubmitPilotEvaluation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      kirkpatrickLevel: 'REACTION' | 'LEARNING' | 'BEHAVIOR' | 'RESULTS';
+      assessmentType: string;
+      score?: number;
+      maxScore?: number;
+      responses?: Record<string, unknown>;
+      notes?: string;
+    }) => api.instructor.submitPilotEvaluation(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['instructor', 'pilot'],
+      });
+    },
+  });
+}
+
+export function usePilotResults(cohortId?: string) {
+  return useQuery({
+    queryKey: ['instructor', 'pilot', 'results', cohortId],
+    queryFn: () => api.instructor.getPilotResults(cohortId),
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useParticipantPilotResults(participantId: string) {
+  return useQuery({
+    queryKey: ['instructor', 'pilot', 'participant', participantId],
+    queryFn: () => api.instructor.getParticipantPilotResults(participantId),
+    enabled: !!participantId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+// ===========================================
+// Instructor Training Status (TTT Course)
+// ===========================================
+
+export function useMyTrainingStatus() {
+  return useQuery({
+    queryKey: ['instructor', 'my-training'],
+    queryFn: () => api.instructor.getMyTraining(),
+    staleTime: 5 * 60 * 1000,
+  });
+}

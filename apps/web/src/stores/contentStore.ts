@@ -382,7 +382,7 @@ export const useContentStore = create<ContentState>()(
       },
     }),
     {
-      name: 'b-ortim-content',
+      name: 'ortac-content',
       partialize: (state) => ({
         drafts: state.drafts,
         templates: state.templates,

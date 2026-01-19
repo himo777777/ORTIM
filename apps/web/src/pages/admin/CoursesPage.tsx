@@ -15,6 +15,7 @@ import {
   Users,
   FileText,
   HelpCircle,
+  GraduationCap,
 } from 'lucide-react';
 
 export default function CoursesPage() {
@@ -92,6 +93,12 @@ export default function CoursesPage() {
                       <Badge variant={course.isActive ? 'default' : 'secondary'}>
                         {course.isActive ? 'Aktiv' : 'Inaktiv'}
                       </Badge>
+                      {(course as any).instructorOnly && (
+                        <Badge className="bg-amber-500 hover:bg-amber-600 text-white">
+                          <GraduationCap className="h-3 w-3 mr-1" />
+                          Instruktörskurs
+                        </Badge>
+                      )}
                     </div>
                     <CardDescription className="mt-1">
                       {course.code} - {course.fullName}

@@ -556,7 +556,7 @@ export const useAILearningStore = create<AILearningState>()(
       setWeeklyGoal: (questions) => set({ weeklyGoalQuestions: questions }),
     }),
     {
-      name: 'bortim-ai-learning',
+      name: 'ortac-ai-learning',
     }
   )
 );

@@ -52,7 +52,7 @@ export function initSentry() {
     // Additional context
     initialScope: {
       tags: {
-        app: 'b-ortim-web',
+        app: 'ortac-web',
       },
     },
   });

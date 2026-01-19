@@ -24,7 +24,9 @@
     /* Paths */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@ortac/shared": ["../../packages/shared/src/index.ts"],
+      "@ortac/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": ["src"],

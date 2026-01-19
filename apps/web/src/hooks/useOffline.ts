@@ -53,7 +53,7 @@ export function useDownloadForOffline() {
 
       // 1. Download and cache chapters
       const coursesData = await api.courses.list();
-      const course = coursesData[0]; // Get first course (B-ORTIM)
+      const course = coursesData[0]; // Get first course (ORTAC)
 
       if (course) {
         const courseDetail = await api.courses.getByCode(course.code);

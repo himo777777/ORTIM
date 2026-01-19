@@ -4,18 +4,47 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Smartphone, AlertCircle, RefreshCw } from 'lucide-react';
-import { BANKID_POLL_INTERVAL_MS, BANKID_TIMEOUT_MS } from '@b-ortim/shared';
+import { Smartphone, AlertCircle, RefreshCw, Code } from 'lucide-react';
+import { BANKID_POLL_INTERVAL_MS, BANKID_TIMEOUT_MS } from '@ortac/shared';
 
 type LoginState = 'idle' | 'initiating' | 'scanning' | 'success' | 'error';
+
+const isDev = import.meta.env.DEV;
 
 export default function LoginPage() {
   const [state, setState] = useState<LoginState>('idle');
   const [qrData, setQrData] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [devLoading, setDevLoading] = useState(false);
   const { login, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+
+  // Dev login function (only for development)
+  const devLogin = async (personnummer: string) => {
+    try {
+      setDevLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/auth/dev-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ personnummer }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Dev login misslyckades');
+      }
+
+      const data = await response.json();
+      login(data.token, data.refreshToken, data.user);
+      navigate('/', { replace: true });
+    } catch {
+      setError('Dev login misslyckades. Kontrollera att användaren finns.');
+    } finally {
+      setDevLoading(false);
+    }
+  };
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -104,12 +133,12 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-2xl">
-              B
+              O
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">B-ORTIM</h1>
+          <h1 className="text-3xl font-bold text-foreground">ORTAC</h1>
           <p className="text-muted-foreground mt-2">
-            Basic Orthopaedic Resuscitation and Trauma Initial Management
+            Orthopaedic Resuscitation and Trauma Acute Care
           </p>
         </div>
 
@@ -126,6 +155,48 @@ export default function LoginPage() {
                 <Smartphone className="mr-2 h-5 w-5" />
                 Logga in med BankID
               </Button>
+
+              {/* Dev login - only shown in development */}
+              {isDev && (
+                <div className="mt-6 pt-6 border-t border-dashed">
+                  <p className="text-center text-muted-foreground text-xs mb-3">
+                    <Code className="inline h-3 w-3 mr-1" />
+                    Dev Login (endast utveckling)
+                  </p>
+                  <div className="space-y-2">
+                    <Button
+                      onClick={() => devLogin('199001011234')}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled={devLoading}
+                    >
+                      {devLoading ? <LoadingSpinner size="sm" className="mr-2" /> : null}
+                      Anna Andersson (Admin)
+                    </Button>
+                    <Button
+                      onClick={() => devLogin('198505152345')}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled={devLoading}
+                    >
+                      {devLoading ? <LoadingSpinner size="sm" className="mr-2" /> : null}
+                      Erik Eriksson (Instruktör)
+                    </Button>
+                    <Button
+                      onClick={() => devLogin('199203203456')}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled={devLoading}
+                    >
+                      {devLoading ? <LoadingSpinner size="sm" className="mr-2" /> : null}
+                      Maria Svensson (Deltagare)
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

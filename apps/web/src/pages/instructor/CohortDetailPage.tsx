@@ -10,6 +10,7 @@ import {
   Users,
   BookOpen,
   ClipboardCheck,
+  ClipboardList,
   Calendar,
   AlertTriangle,
   Settings,
@@ -197,12 +198,20 @@ export default function CohortDetailPage() {
               <Users className="h-5 w-5" />
               Deltagare
             </CardTitle>
-            <Link to={`/instructor/cohorts/${id}/osce`}>
-              <Button size="sm">
-                <ClipboardCheck className="h-4 w-4 mr-2" />
-                OSCE-bedömning
-              </Button>
-            </Link>
+            <div className="flex gap-2">
+              <Link to={`/instructor/cohorts/${id}/epa`}>
+                <Button size="sm" variant="outline">
+                  <ClipboardList className="h-4 w-4 mr-2" />
+                  EPA-bedömning
+                </Button>
+              </Link>
+              <Link to={`/instructor/cohorts/${id}/osce`}>
+                <Button size="sm">
+                  <ClipboardCheck className="h-4 w-4 mr-2" />
+                  OSCE-bedömning
+                </Button>
+              </Link>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

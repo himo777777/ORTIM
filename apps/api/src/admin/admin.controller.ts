@@ -8,7 +8,10 @@ import {
   Body,
   Query,
   UseGuards,
+  Res,
+  Header,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -341,5 +344,68 @@ export class AdminController {
   @ApiOperation({ summary: 'Delete algorithm' })
   async deleteAlgorithm(@Param('id') id: string) {
     return this.adminService.deleteAlgorithm(id);
+  }
+
+  // ============================================
+  // STATISTICS & REPORTS
+  // ============================================
+
+  @Get('stats/detailed')
+  @ApiOperation({ summary: 'Get detailed statistics' })
+  @ApiQuery({ name: 'courseCode', required: false })
+  @ApiQuery({ name: 'cohortId', required: false })
+  @ApiQuery({ name: 'startDate', required: false })
+  @ApiQuery({ name: 'endDate', required: false })
+  async getDetailedStats(
+    @Query('courseCode') courseCode?: string,
+    @Query('cohortId') cohortId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.adminService.getDetailedStats({
+      courseCode,
+      cohortId,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+    });
+  }
+
+  @Get('export/participants')
+  @ApiOperation({ summary: 'Export participants as CSV' })
+  @ApiQuery({ name: 'cohortId', required: false })
+  @Header('Content-Type', 'text/csv')
+  async exportParticipants(
+    @Query('cohortId') cohortId: string | undefined,
+    @Res() res: Response,
+  ) {
+    const csv = await this.adminService.exportParticipants(cohortId);
+    res.set('Content-Disposition', `attachment; filename="participants-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(csv);
+  }
+
+  @Get('export/progress')
+  @ApiOperation({ summary: 'Export progress as CSV' })
+  @ApiQuery({ name: 'courseCode', required: false })
+  @Header('Content-Type', 'text/csv')
+  async exportProgress(
+    @Query('courseCode') courseCode: string | undefined,
+    @Res() res: Response,
+  ) {
+    const csv = await this.adminService.exportProgress(courseCode);
+    res.set('Content-Disposition', `attachment; filename="progress-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(csv);
+  }
+
+  @Get('export/certificates')
+  @ApiOperation({ summary: 'Export certificates as CSV' })
+  @ApiQuery({ name: 'courseCode', required: false })
+  @Header('Content-Type', 'text/csv')
+  async exportCertificates(
+    @Query('courseCode') courseCode: string | undefined,
+    @Res() res: Response,
+  ) {
+    const csv = await this.adminService.exportCertificates(courseCode);
+    res.set('Content-Disposition', `attachment; filename="certificates-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(csv);
   }
 }

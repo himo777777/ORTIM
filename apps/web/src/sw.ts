@@ -79,7 +79,7 @@ self.addEventListener('push', (event) => {
       icon: data.icon || '/pwa-192x192.png',
       badge: data.badge || '/pwa-192x192.png',
       data: data.data,
-      tag: data.tag || 'bortim-notification',
+      tag: data.tag || 'ortac-notification',
     };
 
     event.waitUntil(self.registration.showNotification(data.title, options));
@@ -144,12 +144,165 @@ self.addEventListener('sync', (event: SyncEvent) => {
 
 async function syncQuizAttempts() {
   console.log('Syncing quiz attempts...');
-  // Implementation will sync offline quiz attempts
+
+  try {
+    const db = await openDatabase();
+    const tx = db.transaction(['syncQueue', 'quizAttempts'], 'readwrite');
+    const syncStore = tx.objectStore('syncQueue');
+    const quizStore = tx.objectStore('quizAttempts');
+
+    // Get all quiz sync items
+    const allItems = await getAllFromStore(syncStore);
+    const quizItems = allItems.filter((item: SyncQueueItem) => item.type === 'quiz');
+
+    for (const item of quizItems) {
+      try {
+        const response = await fetch('/api/quiz/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item.payload),
+        });
+
+        if (response.ok) {
+          // Remove from sync queue
+          await deleteFromStore(syncStore, item.id);
+
+          // Update quiz attempt status
+          const attemptId = (item.payload as { id?: string }).id;
+          if (attemptId) {
+            const attempt = await getFromStore(quizStore, attemptId) as Record<string, unknown> | undefined;
+            if (attempt) {
+              attempt.syncStatus = 'synced';
+              await putToStore(quizStore, attempt);
+            }
+          }
+          console.log(`Synced quiz attempt: ${item.id}`);
+        } else {
+          console.error(`Failed to sync quiz attempt: ${response.status}`);
+          await incrementRetryCount(syncStore, item);
+        }
+      } catch (error) {
+        console.error('Error syncing quiz attempt:', error);
+        await incrementRetryCount(syncStore, item);
+      }
+    }
+
+    db.close();
+  } catch (error) {
+    console.error('Error accessing database for quiz sync:', error);
+  }
 }
 
 async function syncProgress() {
   console.log('Syncing progress...');
-  // Implementation will sync offline progress updates
+
+  try {
+    const db = await openDatabase();
+    const tx = db.transaction(['syncQueue', 'progress'], 'readwrite');
+    const syncStore = tx.objectStore('syncQueue');
+    const progressStore = tx.objectStore('progress');
+
+    // Get all progress sync items
+    const allItems = await getAllFromStore(syncStore);
+    const progressItems = allItems.filter((item: SyncQueueItem) => item.type === 'progress');
+
+    for (const item of progressItems) {
+      try {
+        const response = await fetch('/api/progress/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item.payload),
+        });
+
+        if (response.ok) {
+          // Remove from sync queue
+          await deleteFromStore(syncStore, item.id);
+
+          // Update progress status
+          const chapterId = (item.payload as { chapterId?: string }).chapterId;
+          if (chapterId) {
+            const progress = await getFromStore(progressStore, chapterId) as Record<string, unknown> | undefined;
+            if (progress) {
+              progress.syncStatus = 'synced';
+              await putToStore(progressStore, progress);
+            }
+          }
+          console.log(`Synced progress: ${item.id}`);
+        } else {
+          console.error(`Failed to sync progress: ${response.status}`);
+          await incrementRetryCount(syncStore, item);
+        }
+      } catch (error) {
+        console.error('Error syncing progress:', error);
+        await incrementRetryCount(syncStore, item);
+      }
+    }
+
+    db.close();
+  } catch (error) {
+    console.error('Error accessing database for progress sync:', error);
+  }
+}
+
+// IndexedDB helpers for service worker context
+interface SyncQueueItem {
+  id: string;
+  type: 'progress' | 'quiz' | 'review';
+  action: 'create' | 'update';
+  payload: Record<string, unknown>;
+  createdAt: number;
+  retryCount: number;
+}
+
+function openDatabase(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('ortac', 1);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+function getAllFromStore(store: IDBObjectStore): Promise<SyncQueueItem[]> {
+  return new Promise((resolve, reject) => {
+    const request = store.getAll();
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+function getFromStore<T>(store: IDBObjectStore, key: string): Promise<T | undefined> {
+  return new Promise((resolve, reject) => {
+    const request = store.get(key);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+function putToStore<T>(store: IDBObjectStore, value: T): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = store.put(value);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+  });
+}
+
+function deleteFromStore(store: IDBObjectStore, key: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = store.delete(key);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+  });
+}
+
+async function incrementRetryCount(store: IDBObjectStore, item: SyncQueueItem): Promise<void> {
+  item.retryCount += 1;
+  if (item.retryCount < 5) {
+    await putToStore(store, item);
+  } else {
+    // Remove after 5 failed attempts
+    console.warn(`Removing sync item ${item.id} after 5 failed attempts`);
+    await deleteFromStore(store, item.id);
+  }
 }
 
 // Skip waiting and claim clients immediately

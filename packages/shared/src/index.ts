@@ -1,5 +1,5 @@
 // ===========================================
-// B-ORTIM Shared Package - Main Export
+// ORTAC Shared Package - Main Export
 // ===========================================
 
 export * from './types';

@@ -47,17 +47,17 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // B-ORTIM brand colors
-        bortim: {
-          blue: '#1a5276',
-          'blue-light': '#2980b9',
-          'blue-dark': '#154360',
-          red: '#c0392b',
-          'red-light': '#e74c3c',
-          green: '#27ae60',
-          'green-light': '#2ecc71',
-          orange: '#e67e22',
-          yellow: '#f39c12',
+        // ORTAC brand colors
+        ortac: {
+          teal: '#0D7377',
+          'teal-light': '#14A3A8',
+          'teal-dark': '#0A5A5D',
+          coral: '#E85A4F',
+          'coral-light': '#F5ADA8',
+          charcoal: '#2D3436',
+          grey: '#636E72',
+          success: '#00B894',
+          warning: '#FDCB6E',
         },
       },
       borderRadius: {
@@ -90,7 +90,8 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+        heading: ['Poppins', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['Space Mono', 'JetBrains Mono', 'Consolas', 'monospace'],
       },
     },
   },

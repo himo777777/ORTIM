@@ -394,3 +394,68 @@ export function useDeleteAlgorithm() {
     },
   });
 }
+
+// ============================================
+// Statistics
+// ============================================
+
+export function useDetailedStats(params?: {
+  courseCode?: string;
+  cohortId?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  return useQuery({
+    queryKey: ['admin', 'stats', 'detailed', params],
+    queryFn: () => api.admin.getDetailedStats(params),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useExportParticipants() {
+  return useMutation({
+    mutationFn: async (cohortId?: string) => {
+      const blob = await api.admin.exportParticipants(cohortId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `participants-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    },
+  });
+}
+
+export function useExportProgress() {
+  return useMutation({
+    mutationFn: async (courseCode?: string) => {
+      const blob = await api.admin.exportProgress(courseCode);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `progress-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    },
+  });
+}
+
+export function useExportCertificates() {
+  return useMutation({
+    mutationFn: async (courseCode?: string) => {
+      const blob = await api.admin.exportCertificates(courseCode);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `certificates-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    },
+  });
+}
